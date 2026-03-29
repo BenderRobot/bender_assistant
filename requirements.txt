@@ -1,0 +1,9 @@
+google-genai
+SpeechRecognition
+requests
+pyttsx3
+python-dotenv
+fastapi
+uvicorn
+jinja2
+duckduckgo-search
