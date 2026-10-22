@@ -47,8 +47,8 @@ cd "$target"
 bash scripts/install-debian.sh --system-deps --micro
 .venv/bin/python -m pip install -r requirements-dev.txt
 .venv/bin/python -m unittest discover -s tests -v
-# Paths are restricted above; systemd quotes allow spaces in the home directory.
-unit=$(mktemp)
+# WorkingDirectory and EnvironmentFile take literal paths, not shell quotes.
+unit=$(mktemp --suffix=.service)
 cat > "$unit" <<EOF
 [Unit]
 Description=Bender voix et visage
@@ -56,8 +56,8 @@ After=network.target sound.target
 [Service]
 Type=simple
 User=$(id -un)
-WorkingDirectory="$target"
-EnvironmentFile=-"$target/.env"
+WorkingDirectory=$target
+EnvironmentFile=-$target/.env
 Environment=BENDER_HOST=0.0.0.0
 Environment=BENDER_PORT=8000
 Environment="BENDER_VOICE_CONFIG=$target/voice.json"
@@ -68,6 +68,7 @@ UMask=0077
 [Install]
 WantedBy=multi-user.target
 EOF
+systemd-analyze verify "$unit"
 sudo install -m 644 "$unit" /etc/systemd/system/bender.service
 rm -f "$unit"
 sudo systemctl daemon-reload

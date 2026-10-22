@@ -23,7 +23,14 @@ le depot sont incluses dans le commit ; verifier `git status` avant de lancer.
 Le script refuse un main en retard sur GitHub : integrer les modifications avant
 de relancer. Il ne force jamais un push.
 
-SSH et SCP demandent le mot de passe Debian si aucune cle n'est configuree.
+Avant le premier deploiement, lancer le script avec `-SetupSsh`. Il cree une cle
+Ed25519 dediee dans le dossier `.ssh` Windows, installe seulement sa partie publique
+sur Debian (mot de passe Debian demande une fois) puis verifie la connexion.
+Pour automatiser sans ssh-agent, laisser la phrase secrete vide lors de la creation.
+Avec une phrase secrete, charger la cle dans ssh-agent avant les mises a jour.
+La cle privee reste sur ce PC, hors du depot. Chaque autre PC doit configurer sa cle.
+Les executions suivantes utilisent cette cle, sans demander le mot de passe SSH ;
+sudo peut encore demander le mot de passe une fois au moment du deploiement.
 Le script ignore le fichier SSH config Windows via `-F NUL`, mais conserve la
 verification des cles du serveur. GitHub utilise les identifiants Git habituels.
 

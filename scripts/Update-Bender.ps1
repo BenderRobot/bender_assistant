@@ -5,7 +5,9 @@ param(
     [string]$RemoteUser = 'bender',
     [string]$RemoteDirectory = 'applications/bender_assistant',
     [string]$Message = ('Mise a jour Bender ' + (Get-Date -Format 'yyyy-MM-dd HH:mm')),
-    [switch]$PublishOnly
+    [switch]$PublishOnly,
+    [switch]$SetupSsh,
+    [string]$IdentityFile = "$env:USERPROFILE\.ssh\bender_deploy_ed25519"
 )
 $ErrorActionPreference = 'Stop'
 function Run([string]$Program, [string[]]$Arguments) {
@@ -14,7 +16,7 @@ function Run([string]$Program, [string[]]$Arguments) {
     $previousPreference = $ErrorActionPreference
     try {
         $ErrorActionPreference = 'Continue'
-        if ($Program -in @('ssh','scp')) {
+        if ($Program -in @('ssh','scp','ssh-keygen')) {
             # Keep OpenSSH attached to the console for password/sudo prompts.
             & $Program @Arguments
         } else {
@@ -32,6 +34,28 @@ if ($RemoteHost -notmatch '^[a-zA-Z0-9.-]+$' -or $RemoteUser -notmatch '^[a-z_][
     throw 'Adresse ou chemin distant invalide : utiliser un chemin relatif au dossier personnel.'
 }
 if (-not $PSCmdlet.ShouldProcess("$RepoPath -> GitHub -> $RemoteUser@$RemoteHost", 'Tester, commit, push et deployer Bender')) { return }
+$target = "$RemoteUser@$RemoteHost"
+if ($SetupSsh) {
+    if (-not (Test-Path -LiteralPath $IdentityFile)) {
+        New-Item -ItemType Directory -Force -Path (Split-Path $IdentityFile) | Out-Null
+        Write-Host 'Creation de la cle : choisir une phrase secrete (avec ssh-agent), ou Entree deux fois pour une cle sans phrase secrete.'
+        Run ssh-keygen @('-t','ed25519','-f',$IdentityFile,'-C','bender-update')
+    }
+    if (-not (Test-Path -LiteralPath "$IdentityFile.pub")) { throw 'Cle publique .pub manquante.' }
+    $publicKey = (Get-Content -LiteralPath "$IdentityFile.pub" -Raw).Trim()
+    if ($publicKey -notmatch '^ssh-ed25519 [A-Za-z0-9+/=]+(?: [a-zA-Z0-9@._-]+)?$') { throw 'Format de cle publique inattendu.' }
+    $installKey = "umask 077; mkdir -p ~/.ssh; chmod 700 ~/.ssh; touch ~/.ssh/authorized_keys; chmod 600 ~/.ssh/authorized_keys; grep -qxF '$publicKey' ~/.ssh/authorized_keys || printf '%s\n' '$publicKey' >> ~/.ssh/authorized_keys"
+    Run ssh @('-F','NUL',$target,$installKey)
+    Run ssh @('-F','NUL','-i',$IdentityFile,'-o','IdentitiesOnly=yes','-o','BatchMode=yes',$target,'true')
+    Write-Host 'Cle installee et connexion sans mot de passe verifiee. Relancer sans -SetupSsh pour deployer.'
+    return
+}
+$sshOptions = @('-F','NUL')
+if (-not $PublishOnly) {
+    if (-not (Test-Path -LiteralPath $IdentityFile)) { throw 'Executer une fois ce script avec -SetupSsh avant de deployer.' }
+    $sshOptions += @('-i',$IdentityFile,'-o','IdentitiesOnly=yes','-o','BatchMode=yes')
+    Run ssh ($sshOptions + @($target,'true'))
+}
 if (-not (Test-Path -LiteralPath $RepoPath)) {
     New-Item -ItemType Directory -Force -Path (Split-Path $RepoPath) | Out-Null
     Run git @('-c','http.sslBackend=openssl','clone','https://github.com/BenderRobot/bender_assistant.git',$RepoPath)
@@ -74,12 +98,10 @@ try {
     try {
         $archive = Join-Path $temp 'release.tar.gz'
         Run git @('archive','--format=tar.gz',"--output=$archive",$revision)
-        $target = "$RemoteUser@$RemoteHost"
         $remoteStage = ".bender-update-$revision"
-        Run ssh @('-F','NUL',$target,"mkdir -p ~/$remoteStage")
-        Run scp @('-F','NUL',$archive,"${target}:$remoteStage/release.tar.gz")
-        Run scp @('-F','NUL','scripts/deploy-debian.sh',"${target}:$remoteStage/deploy.sh")
-        Run ssh @('-F','NUL','-t',$target,"bash ~/$remoteStage/deploy.sh $RemoteDirectory $revision")
+        Run scp ($sshOptions + @($archive,"${target}:$remoteStage.tar.gz"))
+        $deployCommand = "mkdir -p ~/$remoteStage && mv ~/$remoteStage.tar.gz ~/$remoteStage/release.tar.gz && tar -xOf ~/$remoteStage/release.tar.gz scripts/deploy-debian.sh > ~/$remoteStage/deploy.sh && bash ~/$remoteStage/deploy.sh $RemoteDirectory $revision"
+        Run ssh ($sshOptions + @('-t',$target,$deployCommand))
         Write-Host "Bender mis a jour : http://${RemoteHost}:8000 - revision $revision"
     } finally { Remove-Item -LiteralPath $temp -Recurse -Force }
 } finally { Pop-Location }
