@@ -14,7 +14,12 @@ function Run([string]$Program, [string[]]$Arguments) {
     $previousPreference = $ErrorActionPreference
     try {
         $ErrorActionPreference = 'Continue'
-        & $Program @Arguments 2>&1 | ForEach-Object { Write-Host "$_" }
+        if ($Program -in @('ssh','scp')) {
+            # Keep OpenSSH attached to the console for password/sudo prompts.
+            & $Program @Arguments
+        } else {
+            & $Program @Arguments 2>&1 | ForEach-Object { Write-Host "$_" }
+        }
         $nativeExitCode = $LASTEXITCODE
     } finally { $ErrorActionPreference = $previousPreference }
     if ($nativeExitCode -ne 0) { throw "$Program a echoue (code $nativeExitCode)." }
