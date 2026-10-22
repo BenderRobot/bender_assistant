@@ -1,20 +1,43 @@
 import os
+import asyncio
+import threading
+from pathlib import Path
+from typing import Literal
 import uvicorn
+from dotenv import load_dotenv
 from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from brain import process_command
+load_dotenv()
+from voice_api import router as voice_router, get_voice
+
+brain_lock = threading.Lock()
+
+def process_command(message, image_bytes=None):
+    with brain_lock:
+        from brain import process_command as process
+        return process(message, image_bytes=image_bytes)
 from memory import init_db, add_routine, get_routines, delete_routine
 
 app = FastAPI(title="BenderV2 Web API")
-templates = Jinja2Templates(directory="templates")
+ROOT = Path(__file__).resolve().parent
+app.include_router(voice_router)
+from hardware_api import build_hardware_router
+app.include_router(build_hardware_router(process_command))
+app.mount('/static', StaticFiles(directory=ROOT / 'static'), name='static')
+templates = Jinja2Templates(directory=str(ROOT / 'templates'))
 
 # On s'assure que la DB existe au démarrage
 init_db()
 
 class ChatRequest(BaseModel):
     message: str
+    mode: Literal['auto', 'local', 'cloud', 'cache'] = 'auto'
+    mood: str = 'neutral'
+    allow_quote: bool = False
+    speech: bool = True
 
 class RoutineRequest(BaseModel):
     name: str
@@ -24,6 +47,10 @@ class RoutineRequest(BaseModel):
 async def serve_ui(request: Request):
     """Sert l'interface web (chat)."""
     return templates.TemplateResponse(request=request, name="index.html")
+
+@app.get('/face', response_class=HTMLResponse)
+async def serve_face(request: Request):
+    return templates.TemplateResponse(request=request, name='index.html')
 
 @app.get("/api/routines")
 async def fetch_routines():
@@ -74,12 +101,19 @@ async def chat_endpoint(req: ChatRequest):
             return {"error": "Message vide"}
             
         # Appel à notre intelligence existante
-        response_text = process_command(user_message)
+        response_text = await asyncio.to_thread(process_command, user_message)
         
-        return {"response": response_text}
+        result = {"response": response_text}
+        if req.speech:
+            topic = 'news' if any(w in user_message.casefold() for w in ('actualité', 'actualite', 'news', 'nouvelles du jour')) else ''
+            try:
+                result['speech'] = await asyncio.to_thread(get_voice().prepare, response_text, req.mode,
+                                                          req.mood, user_message, topic, req.allow_quote)
+            except Exception:
+                result['speech_error'] = 'Voix indisponible ; la réponse texte reste accessible'
+        return result
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": "Cerveau indisponible ; vérifier GEMINI_API_KEY et la connexion. Le test voix seul reste disponible."}
 
 if __name__ == "__main__":
-    print("🚀 Démarrage du serveur Web Bender sur http://0.0.0.0:8000")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=os.getenv('BENDER_HOST', '127.0.0.1'), port=int(os.getenv('BENDER_PORT', '8000')))

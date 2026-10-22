@@ -1,0 +1,17 @@
+[Unit]
+Description=Bender voix et visage
+After=network.target sound.target
+
+[Service]
+Type=simple
+User=CHANGE_ME
+WorkingDirectory=/opt/bender_assistant
+EnvironmentFile=/opt/bender_assistant/.env
+Environment=BENDER_VOICE_CONFIG=/opt/bender_assistant/voice.json
+ExecStart=/opt/bender_assistant/.venv/bin/python server.py
+Restart=on-failure
+RestartSec=5
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

@@ -1,7 +1,9 @@
 import sqlite3
 import json
+import os
+from pathlib import Path
 
-DB_PATH = "bender_memory.db"
+DB_PATH = os.getenv('BENDER_MEMORY_DB', str(Path(__file__).resolve().parent / 'bender_memory.db'))
 
 def init_db():
     """Initialise la base de données de mémoire."""

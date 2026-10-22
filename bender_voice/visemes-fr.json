@@ -1,0 +1,144 @@
+{
+  "version": 1,
+  "locale": "fr-FR",
+  "status": "proposition_stylisee_a_valider_sur_video",
+  "implemented_in_playback": true,
+  "note": "Routage stylisé branché au lecteur. Les sons reconnus et les secours acoustiques sont distingués. Associations de poses à valider sur vidéos.",
+  "families": [
+    {
+      "id": "REST",
+      "phonemes": [],
+      "pose": 0,
+      "label": "Repos",
+      "note": "Silence ; pose de base approuvée."
+    },
+    {
+      "id": "MBP",
+      "phonemes": [
+        "m",
+        "b",
+        "p"
+      ],
+      "pose": 3,
+      "label": "Fermeture stylisée",
+      "note": "Traits les plus rapprochés ; aucune fermeture anatomique réelle."
+    },
+    {
+      "id": "A",
+      "phonemes": [
+        "a",
+        "ɑ",
+        "ɑ̃"
+      ],
+      "pose": 2,
+      "label": "Centre largement ouvert",
+      "note": "Amplitude modulable ; nasalité ne crée pas à elle seule une nouvelle pose."
+    },
+    {
+      "id": "EI",
+      "phonemes": [
+        "i",
+        "e",
+        "ɛ",
+        "ɛ̃",
+        "j"
+      ],
+      "pose": 4,
+      "variants": [
+        5
+      ],
+      "label": "Écart horizontal faible à moyen",
+      "note": "Approximation : le simulateur ne modifie pas la largeur du contour."
+    },
+    {
+      "id": "OU_U",
+      "phonemes": [
+        "u",
+        "y",
+        "w",
+        "ɥ"
+      ],
+      "pose": 1,
+      "label": "Centre ouvert discret, coins serrés",
+      "note": "Approximation de l’arrondi ; aucune projection réelle des lèvres."
+    },
+    {
+      "id": "O_EU",
+      "phonemes": [
+        "o",
+        "ɔ",
+        "ɔ̃",
+        "ø",
+        "œ",
+        "œ̃"
+      ],
+      "pose": 8,
+      "label": "Ouverture centrale avec côtés proches et parallèles",
+      "note": "Réduire l’amplitude pour les sons les plus fermés. Ne pas confondre nom de pose et phonème."
+    },
+    {
+      "id": "FV",
+      "phonemes": [
+        "f",
+        "v"
+      ],
+      "pose": 6,
+      "label": "Arc supérieur, bas horizontal",
+      "note": "Substitut provisoire : pas de vraie pose lèvre inférieure contre dents supérieures. À vérifier sur vidéos."
+    },
+    {
+      "id": "CONSONANTS",
+      "phonemes": [
+        "t",
+        "d",
+        "n",
+        "l",
+        "s",
+        "z",
+        "k",
+        "g",
+        "ʁ",
+        "ɲ",
+        "ŋ",
+        "ʃ",
+        "ʒ",
+        "ə"
+      ],
+      "pose": 5,
+      "label": "Transition discrète",
+      "note": "Préserver surtout la forme des voyelles voisines ; ne pas forcer une nouvelle pose pour chaque consonne. CH/J peuvent emprunter OU_U si la vidéo le justifie."
+    }
+  ],
+  "variants_not_unique_visemes": [
+    {
+      "pose": 7,
+      "label": "Contact dents 2 et 5",
+      "use": "Pose de transition propre au dessin de Bender ; phonèmes non établis."
+    },
+    {
+      "pose": 9,
+      "label": "Ouvre la bouche",
+      "use": "Accentuation / exclamation ; les deux rangées supérieures restent fixes, partie inférieure mobile. Ne pas déclencher sur toute voyelle A."
+    },
+    {
+      "pose": 10,
+      "label": "Arc léger",
+      "use": "Variante expressive ou transition, phonème non établi."
+    },
+    {
+      "pose": 11,
+      "label": "Pose 3 · Ouaiiii crié",
+      "use": "Variante de forte intensité de A, sans imposer de mouvement de mâchoire."
+    }
+  ],
+  "timing_initial_guidance": {
+    "transition_ms": 60,
+    "preserve_short_closures": true,
+    "coarticulation": "Interpoler les voyelles voisines ; garder les fermetures M/B/P lisibles. Valeurs à régler sur extrait."
+  },
+  "sources": [
+    "https://learn.microsoft.com/fr-fr/azure/ai-services/speech-service/how-to-speech-synthesis-viseme"
+  ],
+  "source_scope": "Le principe phonème/visème et les horaires sont documentés ; le routage des poses Bender est une proposition de conception.",
+  "recognition_engine": "allosaurus-uni2005, inventaire fra ; expérimental"
+}

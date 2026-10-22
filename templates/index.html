@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bender · voix et visage</title>
+<link rel="stylesheet" href="/static/app.css">
+<main>
+  <header><h1>Bender · voix et visage</h1><span id="state">Prêt</span></header>
+  <section class="screens">
+    <div id="eyesPanel"><h2>Yeux · 800 × 480</h2><canvas id="eyes" width="800" height="480"></canvas></div>
+    <div id="mouthPanel"><h2>Bouche · 128 × 64</h2><canvas id="mouth" width="128" height="64"></canvas><p id="poseState">Repos</p></div>
+  </section>
+  <section id="controls">
+    <h2>Périphériques du Dell</h2>
+    <p id="hardwareStatus">Vérification des périphériques…</p>
+    <label for="controlKey">Clé de contrôle du Dell</label><input type="password" id="controlKey" autocomplete="off" placeholder="Obtenir la clé avec la commande control-token sur Debian">
+    <div class="grid">
+      <label for="output">Sortie de la voix<select id="output"><option value="dell">Enceintes du Dell</option><option value="browser">Ce navigateur · banc d’essai</option></select></label>
+      <label for="recordSeconds">Durée d’écoute<select id="recordSeconds"><option value="6">6 secondes</option><option value="10">10 secondes</option><option value="15">15 secondes</option></select></label>
+    </div>
+    <label class="inline"><input type="checkbox" id="askAfterListen" checked> Envoyer la transcription au cerveau Gemini et répondre</label>
+    <div class="buttons"><button id="listen">Parler à Bender · micro Dell</button><button id="capture">Prendre une photo · LifeCam</button></div>
+    <p id="heard"></p><img id="cameraPreview" alt="Dernière photo prise par la LifeCam du Dell" hidden>
+    <label for="visionQuestion">Question sur la photo</label><input id="visionQuestion" maxlength="2000" value="Décris ce que tu vois devant toi.">
+    <div class="buttons"><button id="vision" disabled>Analyser la photo avec Gemini</button></div>
+    <p>Le micro et la caméra sont ceux du Dell. Écoute sur demande, reconnaissance locale Vosk. La photo est envoyée à Gemini uniquement avec le bouton d’analyse ; cette analyse et le cerveau nécessitent Internet.</p>
+    <p>Test voix seul : aucune clé Gemini nécessaire. Les appels ElevenLabs sont désactivés tant que tu ne les actives pas dans la configuration.</p>
+    <label for="text">Texte à faire prononcer</label>
+    <textarea id="text" rows="3" maxlength="8000">Salut l’organique. Les circuits sont prêts.</textarea>
+    <div class="grid">
+      <label>Routage<select id="mode"><option value="auto">Automatique</option><option value="local">Local uniquement</option><option value="cloud">ElevenLabs puis repli local</option><option value="cache">Enregistrements uniquement</option></select></label>
+      <label>Sujet<select id="topic"><option value="">Réponse habituelle</option><option value="news">Actualités</option><option value="narration">Narration</option></select></label>
+      <label>Référence de voix<select id="mood"><option value="neutral">Neutre</option><option value="sarcastic">Sarcastique</option><option value="angry">Agacé</option><option value="excited">Énergique</option><option value="sad">Triste</option></select></label>
+      <label>Yeux indépendants<select id="emotion"><option value="normal">Normaux</option><option value="angry">Agacés</option><option value="happy">Contents</option><option value="sad">Tristes</option><option value="crying">Sanglots</option><option value="ref1">Référence 1</option><option value="ref2">Référence 2</option><option value="ref3">Référence 3</option><option value="ref4">Référence 4</option><option value="ref5">Référence 5</option></select></label>
+    </div>
+    <label for="context">Contexte pour les répliques (facultatif)</label><input id="context" maxlength="8000" placeholder="Par exemple : lumière du salon">
+    <label class="inline"><input type="checkbox" id="quotes"> Autoriser une réplique contextuelle en complément</label>
+    <div class="buttons"><button id="say">Faire parler</button><button id="chat">Demander au cerveau Gemini</button><button id="stop">Arrêter la lecture</button><button id="replay" disabled>Rejouer</button></div>
+    <label for="speed">Vitesse de comparaison</label><select id="speed"><option value="1">Normale</option><option value="0.5">Moitié</option><option value="0.25">Quart</option></select>
+    <audio id="player" controls></audio>
+    <p id="response"></p><pre id="details"></pre><p id="error" role="alert"></p>
+    <p><a href="/face?display=eyes" target="_blank">Fenêtre yeux</a> · <a href="/face?display=mouth" target="_blank">Fenêtre bouche</a>. Ces fenêtres suivent la lecture du Dell ou du navigateur ; double-clique pour le plein écran.</p>
+    <p>Les poses et leurs références sont conservées. La synchronisation acoustique est une estimation ; activer Allosaurus pour des sons estimés, avec repli acoustique explicite.</p>
+  </section>
+</main>
+<script src="/static/poses.js"></script><script src="/static/app.js"></script>
+</html>

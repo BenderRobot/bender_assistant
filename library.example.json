@@ -1,0 +1,20 @@
+[
+  {
+    "id": "confirmation-lumiere",
+    "type": "basic",
+    "text": "OK, j'allume la lumière.",
+    "audio": "confirmation-lumiere.wav",
+    "enabled": false
+  },
+  {
+    "id": "replique-argent",
+    "type": "quote",
+    "text": "Texte de ta réplique enregistrée",
+    "audio": "replique-argent.wav",
+    "triggers": ["argent", "prix", "budget"],
+    "moods": [],
+    "eyes": "normal",
+    "cooldown_seconds": 3600,
+    "enabled": false
+  }
+]

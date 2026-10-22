@@ -9,11 +9,11 @@ timer_id_counter = 0
 
 def _timer_callback(timer_id: int, reason: str):
     """Fonction appelée quand le minuteur arrive à zéro."""
-    # 1. Alerte vocale sur le serveur (via PowerShell pour éviter les bugs Threading de pyttsx3 sur Windows)
+    # Alerte vocale via le même moteur portable que les réponses.
     alert_text = f"Alerte minuteur organiques ! Il est temps pour : {reason}"
     # Éxecution en fond
-    clean_text = alert_text.replace("'", " ").replace('"', ' ')
-    os.system(f'powershell -c "Add-Type -AssemblyName System.speech; (New-Object System.Speech.Synthesis.SpeechSynthesizer).Speak(\'{clean_text}\')"')
+    from audio import speak
+    speak(alert_text)
     
     # 2. Sauvegarde un message système pour le chat web
     save_message("bot", f"⏰ Bip bip ! Minuteur terminé : {reason}")

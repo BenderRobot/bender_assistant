@@ -1,42 +1,44 @@
-import speech_recognition as sr
-import pyttsx3
+"""Entrée micro et sortie vocale hybride. Aucun shell construit avec le texte."""
+import functools
+import subprocess
 
+
+@functools.lru_cache(maxsize=1)
 def init_tts():
-    engine = pyttsx3.init()
-    # On peut configurer la voix FR ici
-    voices = engine.getProperty('voices')
-    for voice in voices:
-        if 'fr' in voice.languages or 'French' in voice.name:
-            engine.setProperty('voice', voice.id)
-            break
-    return engine
+    from voice_api import get_voice
+    return get_voice()
 
-def speak(text, engine=None):
-    if engine is None:
-        engine = init_tts()
-    print(f"🤖 Bender: {text}")
-    engine.say(text)
-    engine.runAndWait()
+
+def speak(text, engine=None, **options):
+    from bender_voice.__main__ import play
+    service = engine or init_tts()
+    print(f'Bender: {text}')
+    try:
+        bundle = service.prepare(text, **options)
+        for warning in bundle['warnings']:
+            print(f'Voix : {warning}')
+        play(bundle, service)
+        return bundle
+    except (RuntimeError, OSError, subprocess.SubprocessError) as exc:
+        print(f'Sortie vocale indisponible : {exc}')
+        return None
+
 
 def listen():
-    r = sr.Recognizer()
+    import speech_recognition as sr
+    recognizer = sr.Recognizer()
     try:
         with sr.Microphone() as source:
-            print("🎤 J'écoute...")
-            r.adjust_for_ambient_noise(source)
-            audio = r.listen(source)
-
-        text = r.recognize_google(audio, language="fr-FR")
-        print(f"👤 Vous: {text}")
+            print("J'écoute…")
+            recognizer.adjust_for_ambient_noise(source)
+            recording = recognizer.listen(source, timeout=10, phrase_time_limit=30)
+        text = recognizer.recognize_google(recording, language='fr-FR')
+        print(f'Vous : {text}')
         return text
-    except AttributeError:
-        # Pyaudio n'est pas installé
-        print("⚠️ [Erreur Micro] PyAudio n'est pas installé.")
-        text = input("👤 Tapez votre commande au clavier : ")
-        return text
-    except sr.UnknownValueError:
-        print("Bender n'a pas compris l'audio.")
+    except (AttributeError, OSError):
+        return input('Commande au clavier : ')
+    except (sr.UnknownValueError, sr.WaitTimeoutError):
         return None
-    except sr.RequestError as e:
-        print(f"Erreur de service Speech Recognition; {e}")
+    except sr.RequestError:
+        print('Reconnaissance Google indisponible ; utiliser le clavier ou la page web')
         return None

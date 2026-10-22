@@ -1,0 +1,10 @@
+.env
+voice.json
+.venv*/
+__pycache__/
+*.py[cod]
+*.db
+data/
+models/
+.pytest_cache/
+dist/

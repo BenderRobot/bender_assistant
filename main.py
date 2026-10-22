@@ -2,7 +2,6 @@ import os
 import sys
 from dotenv import load_dotenv
 from audio import listen, speak, init_tts
-from brain import process_command
 
 def main():
     load_dotenv()
@@ -11,6 +10,7 @@ def main():
         sys.exit(1)
 
     print("🤖 Welcome to Bendervoice V2")
+    from brain import process_command
     engine = init_tts()
     speak("Je suis de retour. Tu veux quoi, l'organic ?", engine)
     
@@ -26,7 +26,8 @@ def main():
                 
                 # Envoi du texte au cerveau LLM
                 response_text = process_command(text)
-                speak(response_text, engine)
+                topic = 'news' if any(w in text.casefold() for w in ('actualité', 'actualite', 'news', 'nouvelles du jour')) else ''
+                speak(response_text, engine, context=text, topic=topic, allow_quote=True)
                 
         except KeyboardInterrupt:
             speak("Arrêt forcé.", engine)

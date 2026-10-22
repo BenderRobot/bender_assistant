@@ -1,0 +1,120 @@
+import base64
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import urllib.error
+import urllib.parse
+import urllib.request
+
+from .config import inside
+
+
+class VoiceUnavailable(RuntimeError):
+    pass
+
+
+def convert_audio(source, target):
+    try:
+        subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-i', str(source),
+                        '-ac', '1', '-ar', '24000', '-c:a', 'pcm_s16le', str(target)],
+                       check=True, capture_output=True, timeout=120)
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise VoiceUnavailable('Conversion audio impossible ; vérifier ffmpeg et le fichier source') from exc
+
+
+class SystemVoice:
+    name = 'system'
+
+    def __init__(self, config):
+        self.config = config
+
+    def identity(self, mood):
+        return {'provider': self.name, 'voice': 'espeak-ng-fr', 'version': 1}
+
+    def synthesize(self, text, mood, target):
+        binary = shutil.which('espeak-ng')
+        if not binary:
+            raise VoiceUnavailable('Installer espeak-ng ou configurer Chatterbox')
+        try:
+            subprocess.run([binary, '-v', 'fr-fr', '-s', '155', '-w', str(target), '--stdin'],
+                           input=text.encode('utf-8'), capture_output=True, check=True, timeout=120)
+        except subprocess.SubprocessError as exc:
+            raise VoiceUnavailable('La voix système a échoué') from exc
+        return None
+
+
+class ChatterboxVoice:
+    name = 'chatterbox'
+
+    def __init__(self, config):
+        self.config = config
+        self.model = None
+
+    def reference(self, mood):
+        refs = self.config.get('reference_by_mood', {})
+        return inside(self.config['data_dir'], refs.get(mood, refs.get('neutral', 'references/neutre.wav')))
+
+    def identity(self, mood):
+        reference = self.reference(mood)
+        digest = hashlib.sha256(reference.read_bytes()).hexdigest() if reference.is_file() else 'missing'
+        return {'provider': self.name, 'config': self.config.get('chatterbox', {}), 'reference_sha256': digest}
+
+    def synthesize(self, text, mood, target):
+        reference = self.reference(mood)
+        settings = self.config.get('chatterbox', {})
+        directory = inside(self.config['data_dir'], settings.get('model_dir', 'models/chatterbox'))
+        if not reference.is_file() or not directory.is_dir():
+            raise VoiceUnavailable('Chatterbox : référence vocale ou modèle local absent')
+        try:
+            from chatterbox.mtl_tts import ChatterboxMultilingualTTS
+            import torchaudio
+            if self.model is None:
+                # Aucun téléchargement implicite pendant la génération.
+                self.model = ChatterboxMultilingualTTS.from_local(directory, device=settings.get('device', 'cpu'))
+            wav = self.model.generate(text, language_id='fr', audio_prompt_path=str(reference),
+                                      exaggeration=float(settings.get('exaggeration', .5)),
+                                      cfg_weight=float(settings.get('cfg_weight', .5)))
+            torchaudio.save(str(target), wav, self.model.sr)
+        except Exception as exc:
+            raise VoiceUnavailable('Chatterbox indisponible ; vérifier ses dépendances et modèles locaux') from exc
+        return None
+
+
+class ElevenVoice:
+    name = 'elevenlabs'
+
+    def __init__(self, config):
+        self.config = config
+
+    def identity(self, mood):
+        settings = self.config.get('elevenlabs', {})
+        return {'provider': self.name, 'voice_id': settings.get('voice_id'),
+                'model_id': settings.get('model_id', 'eleven_multilingual_v2'), 'format': 'mp3_44100_128'}
+
+    def available(self):
+        return bool(self.config.get('elevenlabs', {}).get('enabled') and
+                    self.config['elevenlabs'].get('voice_id') and os.getenv('ELEVENLABS_API_KEY'))
+
+    def synthesize(self, text, mood, target):
+        if not self.available():
+            raise VoiceUnavailable('ElevenLabs désactivé ou non configuré')
+        settings = self.config['elevenlabs']
+        voice = urllib.parse.quote(settings['voice_id'], safe='')
+        url = f'https://api.elevenlabs.io/v1/text-to-speech/{voice}/with-timestamps?output_format=mp3_44100_128'
+        body = json.dumps({'text': text, 'model_id': settings.get('model_id', 'eleven_multilingual_v2')}).encode()
+        request = urllib.request.Request(url, data=body, headers={
+            'Content-Type': 'application/json', 'xi-api-key': os.environ['ELEVENLABS_API_KEY']})
+        temporary = target.with_suffix('.mp3')
+        try:
+            # Un seul essai : éviter de facturer des générations en double.
+            with urllib.request.urlopen(request, timeout=settings.get('timeout_seconds', 30)) as response:
+                payload = json.load(response)
+            temporary.write_bytes(base64.b64decode(payload['audio_base64'], validate=True))
+            convert_audio(temporary, target)
+            return payload.get('normalized_alignment') or payload.get('alignment')
+        except (OSError, ValueError, TypeError, KeyError, urllib.error.URLError) as exc:
+            raise VoiceUnavailable('La génération ElevenLabs a échoué ; aucun nouvel essai automatique') from exc
+        finally:
+            temporary.unlink(missing_ok=True)

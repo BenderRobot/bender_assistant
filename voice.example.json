@@ -1,0 +1,11 @@
+{
+  "data_dir": "data/voice",
+  "local_provider": "chatterbox",
+  "system_fallback": true,
+  "reference_by_mood": {"neutral": "references/neutre.wav"},
+  "chatterbox": {"model_dir": "models/chatterbox", "device": "cpu", "exaggeration": 0.5, "cfg_weight": 0.5},
+  "elevenlabs": {"enabled": false, "voice_id": "", "model_id": "eleven_multilingual_v2", "daily_character_limit": 2000, "monthly_character_limit": 25000, "timeout_seconds": 30},
+  "quotes": {"probability": 0.2, "global_cooldown_seconds": 120},
+  "lipsync": {"engine": "acoustic", "allosaurus_model_dir": "models/allosaurus", "language": "fra"},
+  "hardware": {"input_device": "plughw:CARD=HD3000,DEV=0", "output_device": "plughw:CARD=PCH,DEV=0", "camera_device": "/dev/video0", "vosk_model_dir": "models/vosk-fr"}
+}

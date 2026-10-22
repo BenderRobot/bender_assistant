@@ -79,7 +79,7 @@ chat = client.chats.create(
     )
 )
 
-def process_command(user_text: str) -> str:
+def process_command(user_text: str, image_bytes: bytes | None = None) -> str:
     """Envoie le texte à Gemini, gère les fonctions et sauvegarde en local."""
     print(f"🧠 [Gemini réfléchi...]")
     
@@ -97,7 +97,11 @@ def process_command(user_text: str) -> str:
     
     # Envoi au modèle avec le contexte secret
     full_prompt = secret_context + user_text
-    response = chat.send_message(full_prompt)
+    if image_bytes is not None:
+        response = chat.send_message([types.Part.from_text(text=full_prompt),
+                                      types.Part.from_bytes(data=image_bytes, mime_type='image/jpeg')])
+    else:
+        response = chat.send_message(full_prompt)
     
     # Sauvegarde la réponse de Bender
     save_message("model", response.text)
