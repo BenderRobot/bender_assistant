@@ -1,12 +1,12 @@
-import os
 import sys
 from dotenv import load_dotenv
 from audio import listen, speak, init_tts
 
 def main():
     load_dotenv()
-    if not os.environ.get("GEMINI_API_KEY"):
-        print("Erreur: GEMINI_API_KEY manquante. Veuillez copier .env.example vers .env et y mettre votre clé.")
+    from bender_brain.auth import Auth
+    if not Auth().status()['authorized']:
+        print("Connecter le compte : .venv/bin/python -m bender_brain login")
         sys.exit(1)
 
     print("🤖 Welcome to Bendervoice V2")

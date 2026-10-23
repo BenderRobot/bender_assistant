@@ -6,7 +6,8 @@ La page d'accueil propose cinq onglets accessibles directement :
 - `/#bouche` : 12 poses existantes, dents droites/arrondies et défilement de démonstration.
 - `/#voix` : extraits enregistrés, bibliothèque de répliques et synthèse à partir du texte.
 - `/#reconnaissance` : microphone du Dell, transcription locale, diagnostic et aide Vosk.
-- `/#vision` : capture LifeCam et analyse explicite avec Gemini.
+- `/#cerveau` : connexion du compte ChatGPT, choix du modèle et test texte ([guide](CERVEAU_GPT.md)).
+- `/#vision` : capture LifeCam et analyse explicite avec GPT.
 
 Les aperçus des yeux et de la bouche restent visibles. La clé et la sortie audio sont dans « Connexion au Dell », disponible depuis tous les onglets. Pour écouter sans clé matérielle, choisir « Ce navigateur ». Les écrans `/face?display=eyes` et `/face?display=mouth` restent compatibles.
 
@@ -24,7 +25,7 @@ La bibliothèque de répliques ajoutées via l'outil `bender_voice import` appar
 
 ## Reconnaissance vocale
 
-Le diagnostic distingue le périphérique audio, l'outil arecord et la présence du modèle Vosk. Un modèle absent nécessite le téléchargement indiqué dans l'aide du menu ; l'ajout des menus ne déclenche pas ce téléchargement. La transcription est locale, l'appel au cerveau Gemini est optionnel et nécessite Internet.
+Le diagnostic distingue le périphérique audio, l'outil arecord et la présence du modèle Vosk. Un modèle absent nécessite le téléchargement indiqué dans l'aide du menu ; l'ajout des menus ne déclenche pas ce téléchargement. La transcription est locale, l'appel au cerveau GPT est optionnel et nécessite Internet.
 
 ## Validation
 

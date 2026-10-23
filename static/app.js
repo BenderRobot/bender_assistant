@@ -56,7 +56,7 @@ async function perform(chat){
  const text=$('text').value,payload={mode:$('mode').value,mood:$('mood').value,allow_quote:$('quotes').checked},token=run;
  try{
   Object.assign(payload,chat?{message:text}:{text,context:$('context').value,topic:$('topic').value});
-  const res=await fetch(chat?'/api/chat':'/api/speech',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const res=await fetch(chat?'/api/chat':'/api/speech',{method:'POST',headers:{'Content-Type':'application/json',...(chat?authHeaders():{})},body:JSON.stringify(payload)});
   const data=await res.json();if(!res.ok||data.error)throw Error(data.detail||data.error||'Génération impossible');if(token!==run)return;
   $('response').textContent=chat?data.response:text;if(chat&&!data.speech)throw Error(data.speech_error||'Audio indisponible');await beginBundle(chat?data.speech:data,token);
  }catch(error){$('error').textContent=error.message;$('state').textContent='Indisponible';}finally{$('say').disabled=$('chat').disabled=false;}
@@ -80,7 +80,7 @@ $('capture').onclick=async()=>{
  }catch(error){$('error').textContent=error.message;$('state').textContent='Caméra indisponible';}finally{$('capture').disabled=false;}
 };
 $('vision').onclick=async()=>{
- if(!photo)return;await stop();const token=run;$('vision').disabled=true;$('error').textContent='';$('state').textContent='Analyse de la photo avec Gemini…';
+ if(!photo)return;await stop();const token=run;$('vision').disabled=true;$('error').textContent='';$('state').textContent='Analyse de la photo avec GPT…';
  try{const data=await (await ioFetch('/api/hardware/vision',{photo_id:photo.id,question:$('visionQuestion').value,mode:$('mode').value,mood:$('mood').value})).json();
   if(token!==run)return;$('response').textContent=data.response;if(data.speech)await beginBundle(data.speech,token);else throw Error(data.speech_error||'Audio indisponible');
  }catch(error){$('error').textContent=error.message;$('state').textContent='Vision indisponible';}finally{$('vision').disabled=false;}

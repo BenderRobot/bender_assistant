@@ -14,6 +14,7 @@
 <button id="tab-bouche" role="tab" aria-controls="panel-bouche" aria-selected="false">Bouche</button>
 <button id="tab-voix" role="tab" aria-controls="panel-voix" aria-selected="false">Voix et enregistrements</button>
 <button id="tab-reconnaissance" role="tab" aria-controls="panel-reconnaissance" aria-selected="false">Reconnaissance vocale</button>
+<button id="tab-cerveau" role="tab" aria-controls="panel-cerveau" aria-selected="false">Cerveau GPT</button>
 <button id="tab-vision" role="tab" aria-controls="panel-vision" aria-selected="false">Caméra et vision</button>
 </nav>
 <details class="connection"><summary>Connexion au Dell · clé de contrôle et sortie audio</summary>
@@ -42,31 +43,51 @@
 <label for="recordingMethod">Synchronisation de cet extrait<select id="recordingMethod"><option value="acoustic">Estimation acoustique</option></select></label>
 <div class="buttons"><button id="playRecording" disabled>Lire cet enregistrement</button><button id="refreshRecordings">Actualiser la bibliothèque</button></div>
 <p>Les calages phonétiques conservés sont expérimentaux. Le calage visuel, lorsqu’il existe, reste un repérage manuel provisoire.</p></div>
-<h3>Faire parler à partir d’un texte</h3><p>Test voix seul : aucune clé Gemini nécessaire. ElevenLabs reste désactivé tant que tu ne l’actives pas dans la configuration.</p>
+<h3>Faire parler à partir d’un texte</h3><p>Test voix seul : aucune connexion au cerveau nécessaire. ElevenLabs reste désactivé tant que tu ne l’actives pas dans la configuration.</p>
 <label for="text">Texte à faire prononcer</label><textarea id="text" rows="3" maxlength="8000">Salut l’organique. Les circuits sont prêts.</textarea>
 <div class="grid"><label for="mode">Routage<select id="mode"><option value="auto">Automatique</option><option value="local">Local uniquement</option><option value="cloud">ElevenLabs puis repli local</option><option value="cache">Enregistrements uniquement</option></select></label>
 <label for="topic">Sujet<select id="topic"><option value="">Réponse habituelle</option><option value="news">Actualités</option><option value="narration">Narration</option></select></label>
 <label for="mood">Référence de voix<select id="mood"><option value="neutral">Neutre</option><option value="sarcastic">Sarcastique</option><option value="angry">Agacé</option><option value="excited">Énergique</option><option value="sad">Triste</option></select></label></div>
 <label for="context">Contexte pour les répliques (facultatif)</label><input id="context" maxlength="8000" placeholder="Par exemple : lumière du salon">
 <label class="inline"><input type="checkbox" id="quotes"> Autoriser une réplique contextuelle en complément</label>
-<div class="buttons"><button id="say">Faire parler</button><button id="chat">Demander au cerveau Gemini</button></div>
+<div class="buttons"><button id="say">Faire parler</button><button id="chat">Demander au cerveau GPT</button></div>
 </section>
 <section id="panel-reconnaissance" role="tabpanel" aria-labelledby="tab-reconnaissance" class="workshop-panel" hidden>
 <h2>Reconnaissance vocale · micro du Dell</h2><p id="hardwareStatus">Vérification des périphériques…</p><p id="recognitionStatus" role="status"></p>
 <label for="recordSeconds">Durée d’écoute<select id="recordSeconds"><option value="6">6 secondes</option><option value="10">10 secondes</option><option value="15">15 secondes</option></select></label>
-<label class="inline"><input type="checkbox" id="askAfterListen" checked> Envoyer la transcription au cerveau Gemini et répondre</label>
+<label class="inline"><input type="checkbox" id="askAfterListen" checked> Envoyer la transcription au cerveau GPT et répondre</label>
 <div class="buttons"><button id="listen">Parler à Bender · micro Dell</button><button id="refreshHardware">Actualiser le diagnostic</button></div><p id="heard" role="status"></p>
 <details class="setup-help"><summary>Installer le modèle Vosk français manquant</summary><p>Dans le terminal SSH sur Debian, depuis le dossier de l’application :</p><pre>cd ~/applications/bender_assistant
-.venv/bin/python -m bender_voice --config voice.json download-models vosk</pre><p>Puis clique sur « Actualiser le diagnostic ». La transcription est locale ; l’envoi au cerveau Gemini demande Internet. Pour tester uniquement le micro, décoche l’envoi au cerveau.</p></details>
+.venv/bin/python -m bender_voice --config voice.json download-models vosk</pre><p>Puis clique sur « Actualiser le diagnostic ». La transcription est locale ; l’envoi au cerveau GPT demande Internet. Pour tester uniquement le micro, décoche l’envoi au cerveau.</p></details>
+</section>
+<section id="panel-cerveau" role="tabpanel" aria-labelledby="tab-cerveau" class="workshop-panel" hidden>
+<h2>Cerveau GPT · compte ChatGPT</h2>
+<p>Vosk transcrit le micro en local. GPT prépare la réponse via Internet, puis ta chaîne de voix anime la bouche. Cette connexion utilise les limites de ton forfait ChatGPT ; aucune clé API facturée séparément n’est utilisée.</p>
+<p id="brainStatus" role="status">Vérification de la connexion ChatGPT.</p>
+<div class="buttons"><button id="brainRefresh">Actualiser le statut</button><button id="brainAccounts">Afficher mes comptes</button></div>
+<details class="setup-help" open><summary>Continuer avec ChatGPT / Continue with ChatGPT</summary>
+<p>Après la mise à jour du Debian, lance ce script dans PowerShell sur ton PC. Il ouvre le tunnel SSH de connexion et affiche le lien officiel à ouvrir dans ton navigateur. Connecte-toi et autorise Bender Jarvis ; la page de retour confirmera l’enregistrement.</p>
+<pre>powershell -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\Documents\bender_main\CONNECTER_CHATGPT.ps1"</pre>
+<p>Garde le terminal ouvert pendant la connexion, puis clique sur « Actualiser le statut ». Ton mot de passe ChatGPT reste sur la page officielle d’OpenAI. Les autorisations sont stockées sur le Debian.</p>
+<p>Pour ajouter un autre compte ou espace : relance le script avec <code>-NewAccount</code>. Pour reconnecter un compte existant, choisis-le ci-dessous avant de relancer le script.</p>
+</details>
+<div class="grid"><label for="brainAccount">Compte ChatGPT<select id="brainAccount" disabled><option>Afficher les comptes avec la clé de contrôle du Dell</option></select></label>
+<label for="brainModel">Modèle<select id="brainModel" disabled><option>Charger les modèles après la connexion</option></select></label></div>
+<div class="buttons"><button id="brainLoadModels">Charger les modèles disponibles</button><button id="brainSaveModel" disabled>Utiliser ce modèle</button><button id="brainLogout">Déconnecter le compte actif</button></div>
+<p>La clé de contrôle du Dell, dans « Connexion au Dell » ci-dessus, est requise pour les comptes, les modèles et les questions envoyées au cerveau.</p>
+<label for="brainQuestion">Essai du cerveau sans synthèse vocale</label><textarea id="brainQuestion" rows="2" maxlength="8000">Présente-toi en une phrase.</textarea>
+<div class="buttons"><button id="brainTest">Tester GPT · réponse texte</button></div><p id="brainAnswer" role="status"></p><p id="brainError" role="alert"></p>
+<p>Pour une réponse avec la voix : utilise « Demander au cerveau GPT » dans « Voix et enregistrements », ou le micro dans « Reconnaissance vocale ». La caméra envoie une photo uniquement quand tu demandes son analyse.</p>
+<p>Cette première intégration répond et analyse les images ; les actions Home Assistant et la recherche d’actualités en direct ne sont pas encore branchées.</p>
 </section>
 <section id="panel-vision" role="tabpanel" aria-labelledby="tab-vision" class="workshop-panel" hidden>
-<h2>Caméra et vision</h2><p>La photo est prise par la LifeCam du Dell. Elle est envoyée à Gemini uniquement avec le bouton d’analyse.</p>
+<h2>Caméra et vision</h2><p>La photo est prise par la LifeCam du Dell. Elle est envoyée à GPT uniquement avec le bouton d’analyse.</p>
 <div class="buttons"><button id="capture">Prendre une photo · LifeCam</button></div><img id="cameraPreview" alt="Dernière photo prise par la LifeCam du Dell" hidden>
 <label for="visionQuestion">Question sur la photo</label><input id="visionQuestion" maxlength="2000" value="Décris ce que tu vois devant toi.">
-<div class="buttons"><button id="vision" disabled>Analyser la photo avec Gemini</button></div>
+<div class="buttons"><button id="vision" disabled>Analyser la photo avec GPT</button></div>
 </section>
 <section class="playback"><h2>Lecture et résultat</h2><div class="buttons"><button id="stop">Arrêter la lecture</button><button id="replay" disabled>Rejouer</button></div>
 <label for="speed">Vitesse de comparaison dans le navigateur</label><select id="speed"><option value="1">Normale</option><option value="0.5">Moitié</option><option value="0.25">Quart</option></select><audio id="player" controls></audio>
 <p id="response"></p><pre id="details"></pre><p id="error" role="alert"></p></section>
 </section>
-</main><script src="/static/shape-renderer.js"></script><script src="/static/poses.js"></script><script src="/static/app.js"></script><script src="/static/workshop.js"></script><script src="/static/pose-editor.js"></script></body></html>
+</main><script src="/static/shape-renderer.js"></script><script src="/static/poses.js"></script><script src="/static/app.js"></script><script src="/static/workshop.js"></script><script src="/static/pose-editor.js"></script><script src="/static/brain.js"></script></body></html>

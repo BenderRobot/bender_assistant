@@ -10,6 +10,7 @@ from bender_voice.config import load_config
 from bender_voice.hardware import Hardware, HardwareError, HardwareBusy
 from bender_voice.host_player import HostPlayer
 from pose_models import EyesShape
+from bender_brain import BrainError
 from voice_api import get_voice, broadcast_face, set_host_face_active
 
 
@@ -95,8 +96,10 @@ def build_hardware_router(brain_callback):
             raise HTTPException(400, 'Photo trop volumineuse')
         try:
             response = await asyncio.to_thread(brain_callback, req.question, image)
+        except BrainError as exc:
+            raise HTTPException(503, str(exc)) from exc
         except Exception as exc:
-            raise HTTPException(503, 'Vision Gemini indisponible ; vérifier GEMINI_API_KEY et Internet') from exc
+            raise HTTPException(503, 'Vision GPT indisponible ; vérifier la connexion dans l’onglet Cerveau GPT et Internet') from exc
         result = {'response': response}
         try:
             result['speech'] = await asyncio.to_thread(voice.prepare, response, req.mode, req.mood)

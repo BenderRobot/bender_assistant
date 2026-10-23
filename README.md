@@ -9,7 +9,7 @@ Version locale pour tester le texte → audio → bouche sur Debian. Quatre nive
 3. ElevenLabs, optionnel, pour le sujet `news`/`narration` ou le mode `cloud`.
 4. Bibliothèque de répliques contextuelles, jouées après la réponse avec probabilité et délais anti-répétition.
 
-Le texte généré par Gemini passe dans cette chaîne. Le test voix seul fonctionne sans Gemini. L'interface affiche les sources réellement utilisées et les replis. Les fenêtres yeux et bouche suivent le même audio via WebSocket, à 20 mises à jour par seconde.
+Le texte généré par GPT passe dans cette chaîne. Le test voix seul fonctionne sans connexion au cerveau. Voir [CERVEAU_GPT.md](CERVEAU_GPT.md) pour connecter le compte ChatGPT depuis Windows. L'interface affiche les sources réellement utilisées et les replis. Les fenêtres yeux et bouche suivent le même audio via WebSocket, à 20 mises à jour par seconde.
 
 ## Installation Debian
 
@@ -21,7 +21,7 @@ export BENDER_VOICE_CONFIG=voice.json
 .venv/bin/python server.py
 ```
 
-Ouvrir **http://127.0.0.1:8000** sur le Dell. Commencer par « Faire parler » ; le bouton Gemini nécessite une clé séparée dans `.env`. Le moteur système `espeak-ng` permet un premier essai sans modèles ni compte, avec une voix générique clairement indiquée. Pour utiliser directement les enregistrements, choisir le mode « Enregistrements uniquement » après import.
+Ouvrir **http://127.0.0.1:8000** sur le Dell. Commencer par « Faire parler » ; le bouton GPT nécessite la connexion du compte ChatGPT et la clé de contrôle du Dell. Voir [CERVEAU_GPT.md](CERVEAU_GPT.md). Le moteur système `espeak-ng` permet un premier essai sans modèles ni compte, avec une voix générique clairement indiquée. Pour utiliser directement les enregistrements, choisir le mode « Enregistrements uniquement » après import.
 
 Python 3.11/3.12 est conseillé pour les modèles. `PYTHON_BIN=python3.11 bash scripts/install-debian.sh ...` permet de choisir l'interpréteur installé. Ne pas modifier le Python système. PyAudio est facultatif pour le mode micro historique ; le banc web fonctionne sans microphone.
 
@@ -98,7 +98,7 @@ Double-cliquer sur une fenêtre d'affichage pour le plein écran. L'audio sort d
 
 **Matériel HUB75/MatrixPortal S3 :** cette version fournit les poses et leur horloge, mais pas encore le firmware ou le transport USB/série de la matrice physique. Le rendu HDMI/navigateur est testable ; le pilote du panneau devra consommer ces événements. Le mode CLI `say --play` et les minuteurs lisent l'audio sur l'hôte via ffplay ; la diffusion du visage est assurée par le lecteur web ou par le nouveau lecteur ALSA du serveur.
 
-Le cerveau Gemini et la reconnaissance micro Google historiques nécessitent Internet. Seules la synthèse locale, la bibliothèque, les timelines locales et leur lecture peuvent fonctionner hors ligne.
+Le cerveau GPT nécessite Internet et un compte ChatGPT autorisé ; le micro du banc web utilise Vosk localement. La reconnaissance micro Google du vieux mode terminal nécessite aussi Internet. Seules la synthèse locale, la bibliothèque, les timelines locales et leur lecture peuvent fonctionner hors ligne.
 
 ## Tests et API d'intégration
 
@@ -115,7 +115,7 @@ Les tests simulent les synthèses distantes : aucune dépense ni clé nécessair
 
 ## État de cette livraison
 
-Routage/API, bibliothèque, budget et diffusion des poses testés avec des moteurs simulés et un WAV réel. Génération réelle Chatterbox/ElevenLabs non validée ici : il manque la référence finale, le modèle sur Debian et les identifiants ElevenLabs. La vitesse GPU/CPU et le son du Dell demandent un test sur place. Aucun appel Gemini, ElevenLabs ou domotique n'est effectué pendant les tests.
+Routage/API, bibliothèque, budget et diffusion des poses testés avec des moteurs simulés et un WAV réel. Génération réelle Chatterbox/ElevenLabs non validée ici : il manque la référence finale, le modèle sur Debian et les identifiants ElevenLabs. La vitesse GPU/CPU et le son du Dell demandent un test sur place. Aucun appel GPT, ElevenLabs ou domotique n'est effectué pendant les tests. La connexion ChatGPT réelle doit être validée sur Debian après autorisation personnelle.
 
 L'ancien dépôt suit déjà un `.env`, un exemple contenant une clé et une base de mémoire. L'exemple a été nettoyé ; révoquer la clé déjà exposée et retirer les secrets de l'historique Git séparément. L'archive de livraison exclut `.env`, la mémoire, les médias, les modèles et les caches.
 

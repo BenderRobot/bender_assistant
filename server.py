@@ -5,11 +5,11 @@ from pathlib import Path
 from typing import Literal
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 load_dotenv()
 from voice_api import router as voice_router, get_voice
 
@@ -24,8 +24,11 @@ from memory import init_db, add_routine, get_routines, delete_routine
 app = FastAPI(title="BenderV2 Web API")
 ROOT = Path(__file__).resolve().parent
 app.include_router(voice_router)
-from hardware_api import build_hardware_router
+from hardware_api import build_hardware_router, require_control
 app.include_router(build_hardware_router(process_command))
+from brain_api import build_brain_router
+app.include_router(build_brain_router())
+from bender_brain import BrainError
 from roadmap_api import build_roadmap_router
 app.include_router(build_roadmap_router())
 from bench_api import build_bench_router
@@ -39,7 +42,7 @@ templates = Jinja2Templates(directory=str(ROOT / 'templates'))
 init_db()
 
 class ChatRequest(BaseModel):
-    message: str
+    message: str = Field(min_length=1, max_length=8000)
     mode: Literal['auto', 'local', 'cloud', 'cache'] = 'auto'
     mood: str = 'neutral'
     allow_quote: bool = False
@@ -106,7 +109,7 @@ async def fetch_timers():
     """Récupère les minuteurs actifs pour le widget web."""
     return get_active_timers()
 
-@app.post("/api/chat")
+@app.post("/api/chat", dependencies=[Depends(require_control)])
 async def chat_endpoint(req: ChatRequest):
     """Endpoint API appelé par l'interface web pour parler à Bender."""
     try:
@@ -126,8 +129,10 @@ async def chat_endpoint(req: ChatRequest):
             except Exception:
                 result['speech_error'] = 'Voix indisponible ; la réponse texte reste accessible'
         return result
-    except Exception as e:
-        return {"error": "Cerveau indisponible ; vérifier GEMINI_API_KEY et la connexion. Le test voix seul reste disponible."}
+    except BrainError as exc:
+        return {"error": str(exc)}
+    except Exception:
+        return {"error": "Cerveau GPT indisponible ; consulter son onglet et vérifier la connexion Internet. Le test voix seul reste disponible."}
 
 if __name__ == "__main__":
     uvicorn.run(app, host=os.getenv('BENDER_HOST', '127.0.0.1'), port=int(os.getenv('BENDER_PORT', '8000')))
