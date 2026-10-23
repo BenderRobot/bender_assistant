@@ -22,6 +22,12 @@
 <label for="controlKey">Clé de contrôle du Dell</label><input type="password" id="controlKey" autocomplete="off" placeholder="Commande control-token sur Debian">
 <label for="output">Sortie de la voix</label><select id="output"><option value="dell">Enceintes du Dell</option><option value="browser">Ce navigateur · banc d’essai</option></select>
 </details>
+<section class="conversation-panel" aria-labelledby="conversationTitle">
+<div class="conversation-heading"><h2 id="conversationTitle">Conversation avec Bender</h2><span>Cette session · 20 échanges maximum</span></div>
+<p id="conversationStatus" role="status">Micro en pause · prêt à discuter.</p>
+<p id="conversationEmpty">Les mots reconnus par le micro et les réponses de Bender s’afficheront ici, même si la voix rencontre une erreur.</p>
+<div id="conversationLog" role="log" aria-live="polite" aria-label="Transcriptions et réponses de Bender"></div>
+</section>
 <section id="panel-yeux" role="tabpanel" aria-labelledby="tab-yeux" class="workshop-panel">
 <h2>Animation et expressions des yeux</h2><p>Choisis une expression ou teste les références enregistrées. La bouche conserve sa pose.</p>
 <div class="grid"><label for="emotion">Expression<select id="emotion"><option value="normal">Normaux</option><option value="angry">Agacés</option><option value="happy">Contents</option><option value="surprised">Surpris</option><option value="sleepy">Endormis</option><option value="sad">Tristes</option><option value="worried">Inquiets</option><option value="crying">Sanglots</option><option value="ref1">Référence 1 · paupières basses</option><option value="ref2">Référence 2 · paupières basses</option><option value="ref3">Référence 3 · mi-ouverts</option><option value="ref4">Référence 4 · presque fermés</option><option value="ref5">Référence 5 · mal à l’aise</option></select></label>
@@ -54,9 +60,16 @@
 </section>
 <section id="panel-reconnaissance" role="tabpanel" aria-labelledby="tab-reconnaissance" class="workshop-panel" hidden>
 <h2>Reconnaissance vocale · micro du Dell</h2><p id="hardwareStatus">Vérification des périphériques…</p><p id="recognitionStatus" role="status"></p>
-<label for="recordSeconds">Durée d’écoute<select id="recordSeconds"><option value="6">6 secondes</option><option value="10">10 secondes</option><option value="15">15 secondes</option></select></label>
-<label class="inline"><input type="checkbox" id="askAfterListen" checked> Envoyer la transcription au cerveau GPT et répondre</label>
-<div class="buttons"><button id="listen">Parler à Bender · micro Dell</button><button id="refreshHardware">Actualiser le diagnostic</button></div><p id="heard" role="status"></p>
+<p id="microphoneState" role="status" data-recording="false">Micro en pause.</p>
+<p>Démarre le micro, parle, puis clique sur « Pause et transcrire » lorsque tu as fini. Le micro reste ensuite en pause pendant la réponse.</p>
+<label for="recordSeconds">Arrêt automatique au plus tard après<select id="recordSeconds"><option value="15">15 secondes</option><option value="30">30 secondes</option><option value="60" selected>60 secondes</option></select></label>
+<label class="inline"><input type="checkbox" id="askAfterListen" checked> Répondre automatiquement après la transcription</label>
+<div class="buttons"><button id="listen">Démarrer le micro du Dell</button><button id="pauseMicrophone" disabled>Pause et transcrire</button><button id="cancelMicrophone" disabled>Annuler l’écoute</button><button id="refreshHardware">Actualiser le diagnostic</button></div>
+<p id="heard" role="status"></p>
+<label for="heardText">Ce que Bender a compris · modifiable avant un envoi manuel</label><textarea id="heardText" rows="3" maxlength="8000" placeholder="Ta transcription apparaîtra ici après la pause du micro."></textarea>
+<div class="buttons"><button id="sendTranscript" disabled>Envoyer cette transcription à Bender</button></div>
+<h3>Dernière réponse de Bender</h3><p id="microphoneAnswer" class="microphone-answer" aria-live="polite">La réponse s’affichera ici et dans le journal de conversation.</p>
+<p>Pour corriger avant chaque réponse, décoche l’option automatique. « Annuler l’écoute » arrête la capture sans envoyer de texte à GPT. La limite automatique coupe aussi le micro si la page est fermée ou si la connexion est perdue.</p>
 <details class="setup-help"><summary>Installer le modèle Vosk français manquant</summary><p>Dans le terminal SSH sur Debian, depuis le dossier de l’application :</p><pre>cd ~/applications/bender_assistant
 .venv/bin/python -m bender_voice --config voice.json download-models vosk</pre><p>Puis clique sur « Actualiser le diagnostic ». La transcription est locale ; l’envoi au cerveau GPT demande Internet. Pour tester uniquement le micro, décoche l’envoi au cerveau.</p></details>
 </section>
@@ -90,4 +103,4 @@
 <label for="speed">Vitesse de comparaison dans le navigateur</label><select id="speed"><option value="1">Normale</option><option value="0.5">Moitié</option><option value="0.25">Quart</option></select><audio id="player" controls></audio>
 <p id="response"></p><pre id="details"></pre><p id="error" role="alert"></p></section>
 </section>
-</main><script src="/static/shape-renderer.js"></script><script src="/static/poses.js"></script><script src="/static/app.js"></script><script src="/static/workshop.js"></script><script src="/static/pose-editor.js"></script><script src="/static/brain.js"></script></body></html>
+</main><script src="/static/shape-renderer.js"></script><script src="/static/poses.js"></script><script src="/static/conversation.js"></script><script src="/static/app.js"></script><script src="/static/workshop.js"></script><script src="/static/pose-editor.js"></script><script src="/static/brain.js"></script><script src="/static/microphone.js"></script></body></html>

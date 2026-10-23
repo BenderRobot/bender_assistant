@@ -30,3 +30,7 @@ Le diagnostic distingue le périphérique audio, l'outil arecord et la présence
 ## Validation
 
 30 tests passent. Les tests couvrent notamment la préparation d'un extrait sans synthèse, la lecture de son audio et de son calage, ainsi que le refus d'archives de références contenant des traversées de chemins, des liens ou des fichiers de catalogue manquants. Navigation, choix de pose et lecture d'un extrait avec calage visuel ont aussi été vérifiés dans le navigateur local.
+
+## Voir et piloter la conversation
+
+Le journal commun affiche les transcriptions et les réponses de Bender. Dans Reconnaissance vocale, « Démarrer le micro du Dell » ouvre une prise ; « Pause et transcrire » la termine et déclenche la réponse si l’option automatique est cochée. Un mode manuel permet de corriger le texte avant l’envoi. Voir [MICRO_CONVERSATION.md](MICRO_CONVERSATION.md).

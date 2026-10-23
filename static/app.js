@@ -34,6 +34,7 @@ async function playSegment(token){
  await player.play();$('state').textContent='Parole dans ce navigateur';
 }
 async function beginBundle(data,token){
+ if(window.BenderMicrophone?.busy)throw Error('Mets le micro en pause avant de lire un enregistrement.');
  if(token!==run)return;bundle=data;segments=bundle.segments;index=0;$('replay').disabled=false;
  $('details').textContent=segments.map(s=>`Source : ${s.source}${s.cached?' · déjà enregistré':''}`).concat(...segments.map(s=>s.warnings||[])).join('\n');
  if($('output').value==='dell'){
@@ -51,28 +52,25 @@ setInterval(()=>{
  }
 },50);
 function render(now){if(display&&now-lastFace>1200)face={...face,pose:0,active:false};BenderFace.render(face,now);requestAnimationFrame(render);}requestAnimationFrame(render);
-async function perform(chat){
+async function perform(chat,conversationTurn=null){
+ if(window.BenderMicrophone?.busy){$('error').textContent='Mets le micro en pause avant de faire parler Bender.';return;}
  await stop();$('error').textContent='';$('say').disabled=$('chat').disabled=true;$('state').textContent='Préparation…';
  const text=$('text').value,payload={mode:$('mode').value,mood:$('mood').value,allow_quote:$('quotes').checked},token=run;
+ const turn=chat?(conversationTurn||window.BenderConversation.begin(text)):null;
+ if(turn)window.BenderConversation.pending(turn,text);
  try{
   Object.assign(payload,chat?{message:text}:{text,context:$('context').value,topic:$('topic').value});
   const res=await fetch(chat?'/api/chat':'/api/speech',{method:'POST',headers:{'Content-Type':'application/json',...(chat?authHeaders():{})},body:JSON.stringify(payload)});
-  const data=await res.json();if(!res.ok||data.error)throw Error(data.detail||data.error||'Génération impossible');if(token!==run)return;
+  const data=await res.json();if(!res.ok||data.error)throw Error(data.detail||data.error||'Génération impossible');if(token!==run){if(turn)window.BenderConversation.error(turn,'Lecture annulée ; réponse non prononcée.');return;}
+  if(turn)window.BenderConversation.reply(turn,data.response);
   $('response').textContent=chat?data.response:text;if(chat&&!data.speech)throw Error(data.speech_error||'Audio indisponible');await beginBundle(chat?data.speech:data,token);
- }catch(error){$('error').textContent=error.message;$('state').textContent='Indisponible';}finally{$('say').disabled=$('chat').disabled=false;}
+ }catch(error){$('error').textContent=error.message;$('state').textContent='Indisponible';if(turn)window.BenderConversation.error(turn,error.message);}finally{$('say').disabled=$('chat').disabled=false;}
 }
 $('say').onclick=()=>perform(false);$('chat').onclick=()=>perform(true);$('stop').onclick=stop;
 $('emotion').onchange=()=>{if(window.BenderCustomSelection)window.BenderCustomSelection.eyes=null;if(!timeline&&!hostPlaying)sendFace({...face,eyes:$('emotion').value,mode:$('eyeMode').value,blink:$('eyeBlink').checked});};
 $('speed').onchange=()=>{player.playbackRate=Number($('speed').value);};
 $('output').onchange=()=>{player.hidden=$('output').value==='dell';};$('output').onchange();
 $('replay').onclick=async()=>{if(!bundle)return;await stop();try{await beginBundle(bundle,run);}catch(e){$('error').textContent=e.message;}};
-$('listen').onclick=async()=>{
- await stop();const token=run;$('listen').disabled=true;$('error').textContent='';const seconds=Number($('recordSeconds').value);$('state').textContent=`Écoute sur le Dell (${seconds} s), puis transcription…`;
- try{const data=await (await ioFetch('/api/hardware/listen',{seconds})).json();if(token!==run)return;
-  $('text').value=data.text;$('heard').textContent=data.text?`Entendu : ${data.text}`:data.warning;
-  $('state').textContent='Transcription locale terminée';if(data.text&&$('askAfterListen').checked)await perform(true);
- }catch(error){$('error').textContent=error.message;$('state').textContent='Micro indisponible';}finally{$('listen').disabled=false;}
-};
 $('capture').onclick=async()=>{
  $('capture').disabled=true;$('error').textContent='';$('state').textContent='Capture sur la LifeCam…';
  try{photo=await (await ioFetch('/api/hardware/camera')).json();const res=await ioFetch(photo.image_url,null,'GET');

@@ -45,12 +45,14 @@
   if(!data.revoked)el('brainError').textContent='Session effacée localement. La révocation distante n’a pas pu être confirmée : vérifier les applications connectées dans ChatGPT.';
  });
  el('brainTest').onclick=()=>run(el('brainTest'),async()=>{
+  const turn=window.BenderConversation.begin(el('brainQuestion').value,'test GPT');
+  window.BenderConversation.pending(turn,el('brainQuestion').value);
   el('brainAnswer').textContent='Réflexion en cours…';
   try{
    const data=await(await ioFetch('/api/chat',{message:el('brainQuestion').value,speech:false})).json();
    if(data.error)throw Error(data.error);
-   el('brainAnswer').textContent=data.response;await status();
-  }catch(error){el('brainAnswer').textContent='';throw error;}
+   el('brainAnswer').textContent=data.response;window.BenderConversation.reply(turn,data.response);await status();
+  }catch(error){el('brainAnswer').textContent='';window.BenderConversation.error(turn,error.message);throw error;}
  });
  if(!display)status().catch(error=>{el('brainStatus').textContent=error.message;});
 })();

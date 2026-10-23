@@ -37,6 +37,15 @@ class ListenRequest(BaseModel):
     seconds: int = Field(default=6, ge=2, le=15)
 
 
+class MicrophoneStart(BaseModel):
+    max_seconds: int = Field(default=60, ge=2, le=60)
+
+
+class MicrophoneStop(BaseModel):
+    session_id: str = Field(pattern=r'^[a-f0-9]{32}$')
+    cancel: bool = False
+
+
 class PlaybackRequest(BaseModel):
     ids: list[str] = Field(min_length=1, max_length=16)
     eyes: Literal['normal', 'angry', 'happy', 'surprised', 'sleepy', 'sad', 'worried', 'crying', 'ref1', 'ref2', 'ref3', 'ref4', 'ref5'] = 'normal'
@@ -76,6 +85,30 @@ def build_hardware_router(brain_callback):
         except HardwareError as exc:
             raise device_error(exc) from exc
 
+    @router.post('/api/hardware/listen/start', dependencies=[Depends(require_control)])
+    async def start_microphone(req: MicrophoneStart, hardware=Depends(get_hardware), player=Depends(get_host_player)):
+        await player.stop()
+        try:
+            return await asyncio.to_thread(hardware.microphone_session.start, req.max_seconds)
+        except HardwareError as exc:
+            raise device_error(exc) from exc
+
+    @router.post('/api/hardware/listen/stop', dependencies=[Depends(require_control)])
+    async def stop_microphone(req: MicrophoneStop, hardware=Depends(get_hardware)):
+        try:
+            return await asyncio.to_thread(hardware.microphone_session.stop, req.session_id, req.cancel)
+        except ValueError as exc:
+            raise HTTPException(409, str(exc)) from exc
+        except HardwareError as exc:
+            raise device_error(exc) from exc
+
+    @router.get('/api/hardware/listen/status', dependencies=[Depends(require_control)])
+    def microphone_status(session_id: str | None = None, hardware=Depends(get_hardware)):
+        try:
+            return hardware.microphone_session.snapshot(session_id)
+        except ValueError as exc:
+            raise HTTPException(404, str(exc)) from exc
+
     @router.get('/api/hardware/photos/{identifier}', dependencies=[Depends(require_control)])
     def photo(identifier: str, hardware=Depends(get_hardware)):
         try:
@@ -110,6 +143,8 @@ def build_hardware_router(brain_callback):
     @router.post('/api/hardware/play', dependencies=[Depends(require_control)])
     async def play(req: PlaybackRequest, player=Depends(get_host_player)):
         try:
+            if player.hardware.microphone_session.snapshot()['status'] in ('recording', 'stopping', 'transcribing'):
+                raise HardwareBusy('Mettre le micro en pause avant de faire parler Bender')
             if req.custom_eyes is not None:
                 return await player.start(req.ids, req.eyes, custom_eyes=req.custom_eyes.model_dump())
             return await player.start(req.ids, req.eyes)
