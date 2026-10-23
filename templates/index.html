@@ -95,6 +95,14 @@
 </section>
 <section id="panel-vision" role="tabpanel" aria-labelledby="tab-vision" class="workshop-panel" hidden>
 <h2>Caméra et vision</h2><p>La photo est prise par la LifeCam du Dell. Elle est envoyée à GPT uniquement avec le bouton d’analyse.</p>
+<p>Chaque photo laisse deux secondes à l’exposition pour se stabiliser. La capture utilise le mode HD 1280 × 720 si la LifeCam le propose.</p>
+<details class="setup-help" open><summary>Qualité d’image et exposition</summary>
+<p>Si les blancs sont brûlés, clique sur « Charger les réglages », puis « Moins exposée ». Chaque modification prend une nouvelle photo sans l’envoyer à GPT. « Automatique » rétablit l’exposition et la balance des blancs automatiques, ainsi que la luminosité et le contraste d’usine disponibles.</p>
+<div class="buttons"><button id="cameraLoad">Charger les réglages</button><button id="cameraDarker" disabled>Moins exposée</button><button id="cameraBrighter" disabled>Plus exposée</button><button id="cameraAuto" disabled>Automatique</button></div>
+<p id="cameraSettingsStatus" role="status">Les réglages disponibles dépendent du pilote de la caméra.</p><div id="cameraControls" class="grid"></div>
+<div class="buttons"><button id="cameraApply" disabled>Appliquer et reprendre une photo</button></div>
+<p>Une zone entièrement blanche sur une ancienne photo ne peut pas retrouver ses détails : il faut réduire l’exposition et prendre une nouvelle image.</p>
+</details><p id="cameraInfo" role="status"></p>
 <div class="buttons"><button id="capture">Prendre une photo · LifeCam</button></div><img id="cameraPreview" alt="Dernière photo prise par la LifeCam du Dell" hidden>
 <label for="visionQuestion">Question sur la photo</label><input id="visionQuestion" maxlength="2000" value="Décris ce que tu vois devant toi.">
 <div class="buttons"><button id="vision" disabled>Analyser la photo avec GPT</button></div>
@@ -103,4 +111,4 @@
 <label for="speed">Vitesse de comparaison dans le navigateur</label><select id="speed"><option value="1">Normale</option><option value="0.5">Moitié</option><option value="0.25">Quart</option></select><audio id="player" controls></audio>
 <p id="response"></p><pre id="details"></pre><p id="error" role="alert"></p></section>
 </section>
-</main><script src="/static/shape-renderer.js"></script><script src="/static/poses.js"></script><script src="/static/conversation.js"></script><script src="/static/app.js"></script><script src="/static/workshop.js"></script><script src="/static/pose-editor.js"></script><script src="/static/brain.js"></script><script src="/static/microphone.js"></script></body></html>
+</main><script src="/static/shape-renderer.js"></script><script src="/static/poses.js"></script><script src="/static/conversation.js"></script><script src="/static/app.js"></script><script src="/static/workshop.js"></script><script src="/static/pose-editor.js"></script><script src="/static/brain.js"></script><script src="/static/microphone.js"></script><script src="/static/camera.js"></script></body></html>

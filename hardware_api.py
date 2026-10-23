@@ -59,6 +59,11 @@ class VisionRequest(BaseModel):
     mood: str = Field(default='neutral', max_length=40)
 
 
+class CameraSettingsRequest(BaseModel):
+    action: Literal['auto', 'darker', 'brighter', 'custom'] = 'custom'
+    controls: dict[str, int] = Field(default_factory=dict, max_length=12)
+
+
 def device_error(exc):
     return HTTPException(409 if isinstance(exc, HardwareBusy) else 503, str(exc))
 
@@ -82,6 +87,22 @@ def build_hardware_router(brain_callback):
     async def camera(hardware=Depends(get_hardware)):
         try:
             return await asyncio.to_thread(hardware.capture)
+        except HardwareError as exc:
+            raise device_error(exc) from exc
+
+    @router.get('/api/hardware/camera/settings', dependencies=[Depends(require_control)])
+    def camera_settings(hardware=Depends(get_hardware)):
+        try:
+            return hardware.camera.describe()
+        except HardwareError as exc:
+            raise device_error(exc) from exc
+
+    @router.post('/api/hardware/camera/settings', dependencies=[Depends(require_control)])
+    async def set_camera_settings(req: CameraSettingsRequest, hardware=Depends(get_hardware)):
+        try:
+            return await asyncio.to_thread(hardware.camera.update, req.action, req.controls)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
         except HardwareError as exc:
             raise device_error(exc) from exc
 

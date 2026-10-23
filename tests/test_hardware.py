@@ -57,7 +57,7 @@ class HardwareTests(unittest.TestCase):
         def capture(args, **kwargs):
             self.assertIn('/dev/video0', args);self.assertIn('640x480', args)
             Path(args[-1]).write_bytes(b'jpeg-test')
-        with patch('shutil.which', return_value='ffmpeg'), patch('subprocess.run', side_effect=capture):
+        with patch('shutil.which', return_value='ffmpeg'), patch.object(self.hardware.camera, 'prepare', return_value=('640x480', [])), patch('subprocess.run', side_effect=capture):
             for _ in range(5):result = self.hardware.capture()
         self.assertEqual(len(list(self.hardware.root.glob('snapshot-*.jpg'))), 3)
         self.assertTrue(self.hardware.photo_path(result['id']).exists())

@@ -34,3 +34,9 @@ Le diagnostic distingue le périphérique audio, l'outil arecord et la présence
 ## Voir et piloter la conversation
 
 Le journal commun affiche les transcriptions et les réponses de Bender. Dans Reconnaissance vocale, « Démarrer le micro du Dell » ouvre une prise ; « Pause et transcrire » la termine et déclenche la réponse si l’option automatique est cochée. Un mode manuel permet de corriger le texte avant l’envoi. Voir [MICRO_CONVERSATION.md](MICRO_CONVERSATION.md).
+
+## Qualité de la caméra
+
+Dans Caméra et vision, les captures attendent deux secondes de stabilisation et utilisent le MJPEG HD 1280 × 720 si la LifeCam le propose, avec repli VGA. Charger les réglages affiche les contrôles natifs disponibles. « Moins exposée » passe l’exposition en manuel et réduit son temps de 35 % ; « Plus exposée » l’augmente de 50 %. Chaque modification reprend une photo sans envoi à GPT. « Automatique » rétablit l’exposition et la balance des blancs automatiques disponibles, ainsi que luminosité/contraste/contre-jour d’usine. Les valeurs sont conservées dans `data/voice/hardware/camera-settings.json` (ou le data_dir configuré), hors Git.
+
+Les détails des zones déjà saturées ne peuvent pas être récupérés sur la photo précédente : régler la caméra puis reprendre la vue. Le résultat réel doit être vérifié sur la LifeCam après déploiement. Principes des contrôles natifs : [documentation V4L2 du noyau Linux](https://docs.kernel.org/userspace-api/media/v4l/ext-ctrls-camera.html). Stabilisation par sélection des images : [documentation FFmpeg](https://www.ffmpeg.org/ffmpeg-filters.html#select_002c-aselect).

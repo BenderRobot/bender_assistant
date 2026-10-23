@@ -170,6 +170,8 @@ class Hardware:
         self.lock = threading.Lock()
         self.model = None
         self.microphone_session = MicrophoneSession(self)
+        from .camera import Camera
+        self.camera = Camera(self)
 
     def control_token(self):
         supplied = os.getenv('BENDER_CONTROL_TOKEN', '')
@@ -266,11 +268,21 @@ class Hardware:
         identifier = uuid.uuid4().hex
         path = self.photo_path(identifier)
         try:
+            size, warnings = self.camera.prepare()
             try:
-                subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-f', 'v4l2',
+                command = ['ffmpeg', '-nostdin', '-v', 'error', '-y', '-f', 'v4l2',
                                 '-input_format', 'mjpeg', '-video_size', '640x480',
-                                '-i', self.status()['camera'], '-frames:v', '1', '-update', '1', str(path)],
-                               capture_output=True, check=True, timeout=12)
+                                '-i', self.status()['camera'], '-vf', 'setpts=PTS-STARTPTS,select=gte(t\\,2)',
+                                '-frames:v', '1', '-q:v', '2', '-update', '1', str(path)]
+                command[command.index('-video_size') + 1] = size
+                try:
+                    subprocess.run(command, capture_output=True, check=True, timeout=15)
+                except subprocess.SubprocessError:
+                    if size != '1280x720':
+                        raise
+                    size = '640x480'; command[command.index('-video_size') + 1] = size
+                    warnings.append('Capture HD refusée ; repli en 640 × 480.')
+                    subprocess.run(command, capture_output=True, check=True, timeout=15)
             except (OSError, subprocess.SubprocessError) as exc:
                 raise HardwareError('Caméra indisponible ; vérifier /dev/video0 et les droits vidéo') from exc
             if not path.is_file() or not 0 < path.stat().st_size <= 4_000_000:
@@ -278,7 +290,9 @@ class Hardware:
             photos = sorted(self.root.glob('snapshot-*.jpg'), key=lambda p: p.stat().st_mtime, reverse=True)
             for old in photos[3:]:
                 old.unlink(missing_ok=True)
-            return {'id': identifier, 'image_url': f'/api/hardware/photos/{identifier}', 'width': 640, 'height': 480}
+            width, height = map(int, size.split('x'))
+            return {'id': identifier, 'image_url': f'/api/hardware/photos/{identifier}', 'width': width, 'height': height,
+                    'warnings': warnings, 'warmup_seconds': 2}
         except BaseException:
             path.unlink(missing_ok=True)
             raise
