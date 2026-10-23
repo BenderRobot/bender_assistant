@@ -39,6 +39,10 @@ class Catalog:
                     analysis TEXT NOT NULL DEFAULT '{}', approved TEXT NOT NULL DEFAULT '[]');
                 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
             ''')
+            # Preserve libraries created before processing progress was introduced.
+            db.execute('BEGIN IMMEDIATE')
+            if 'progress' not in {row['name'] for row in db.execute('PRAGMA table_info(samples)')}:
+                db.execute("ALTER TABLE samples ADD COLUMN progress TEXT NOT NULL DEFAULT '{}'")
 
     @contextmanager
     def connect(self):
@@ -68,7 +72,7 @@ class Catalog:
     @staticmethod
     def decode(row):
         result=dict(row)
-        for key in ('media','analysis','approved'):result[key]=json.loads(result[key])
+        for key in ('media','analysis','approved','progress'):result[key]=json.loads(result[key])
         return result
 
     def get(self,identifier):
@@ -86,8 +90,8 @@ class Catalog:
         return [row['id'] for row in rows if (self.root/'originals'/(row['id']+row['extension'])).is_file()]
 
     def update(self, identifier, **values):
-        if set(values)-{'state','error','media','analysis','approved'}:raise ValueError('Champ invalide')
-        values={key:json.dumps(value,ensure_ascii=False) if key in ('media','analysis','approved') else value for key,value in values.items()}
+        if set(values)-{'state','error','media','analysis','approved','progress'}:raise ValueError('Champ invalide')
+        values={key:json.dumps(value,ensure_ascii=False) if key in ('media','analysis','approved','progress') else value for key,value in values.items()}
         values['updated']=time.time()
         with self.connect() as db:
             db.execute('UPDATE samples SET '+','.join(key+'=?' for key in values)+' WHERE id=?',(*values.values(),valid_id(identifier)))

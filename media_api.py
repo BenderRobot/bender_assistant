@@ -117,7 +117,7 @@ def build_media_router():
                 text=req.transcript.strip()
                 if text!=media.get('transcript',''):media['words']=[]
                 media.update(transcript=text,transcribed=bool(text))
-            catalog.update(identifier,state='pending',error='',media=media)
+            catalog.update(identifier,state='pending',error='',media=media,progress={})
             worker.start();return {'status':'pending'}
         except ValueError as exc:raise HTTPException(400,str(exc)) from exc
 

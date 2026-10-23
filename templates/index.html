@@ -67,6 +67,13 @@
 <label class="inline"><input type="checkbox" id="mediaAutomatic" checked> Analyser automatiquement les nouveaux samples après les mises à jour</label>
 <p>Décoche cette option pour mettre les analyses en pause après le fichier en cours. Les traitements utilisent le quota de ton compte ChatGPT et reprennent uniquement les nouveaux contenus ou ceux que tu relances.</p>
 <p id="mediaStatus" role="status">Renseigne la clé de contrôle du Dell, puis charge la bibliothèque.</p><p id="mediaError" role="alert"></p>
+<section class="media-dashboard" aria-label="Suivi du traitement des samples">
+<div class="media-dashboard-title"><h3>Traitement des samples</h3><span id="mediaSync">En attente de chargement</span></div>
+<div id="mediaCounts" class="media-counts"></div>
+<div id="mediaBatch" class="media-batch"></div>
+<div id="mediaActivity" class="media-activity"><p>Charge la bibliothèque pour voir la file et l'étape en cours.</p></div>
+<p class="media-dashboard-help">Actualisation toutes les 2 secondes quand cet onglet est affiché. Le pourcentage apparaît uniquement pour une opération mesurable ; GPT n'annonce pas de durée restante.</p>
+</section>
 <div class="grid"><label for="mediaSearch">Rechercher un sample<input id="mediaSearch" placeholder="Réplique, humeur, sujet, nom…"></label><label for="mediaFilter">État<select id="mediaFilter"><option value="">Tous</option><option value="pending">En attente</option><option value="processing">Analyse en cours</option><option value="review">À vérifier</option><option value="approved">Sélections validées</option><option value="error">À reprendre</option></select></label></div>
 <div class="media-workbench"><div id="mediaList" class="media-list"></div><div id="mediaDetail" class="media-detail"><p>Sélectionne un sample pour consulter sa transcription, ses images et les passages proposés.</p></div></div>
 <p>Utilise des extraits courts : WAV, MP3, MP4, M4A, FLAC, OGG, WEBM, MOV ou MKV · 180 secondes et 100 Mo maximum par fichier. Les répliques validées rejoignent la bibliothèque existante. Les références vocales sont exportées comme candidates ; elles ne remplacent pas automatiquement la voix active et n’entraînent pas Chatterbox.</p>

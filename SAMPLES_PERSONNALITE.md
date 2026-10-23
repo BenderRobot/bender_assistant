@@ -17,6 +17,14 @@ Le dossier de dépôt reste sur ton PC. Deux fichiers identiques, même renommé
 
 ## Ce qui est automatique
 
+### Voir où en est le traitement
+
+Dans l’onglet **Samples et personnalité**, le tableau de suivi se rafraîchit toutes les deux secondes après chargement de la bibliothèque. Les cinq compteurs permettent de filtrer la liste : en attente, en cours, à vérifier, sélections validées et à reprendre.
+
+La fiche du sample en cours montre la préparation FFmpeg, la transcription locale Vosk, l’analyse GPT puis la validation manuelle. Elle affiche le détail de l’opération, le temps écoulé dans l’étape et l’heure du dernier point de traitement. Les images examinées et la lecture audio par Vosk disposent d’un pourcentage mesuré ; la conversion et GPT affichent une barre indéterminée. Aucun délai de fin n’est estimé.
+
+Une erreur reste attachée à l’étape concernée. Les étapes sont enregistrées sur Bender et restent visibles après actualisation de la page ; un traitement interrompu peut reprendre en réutilisant les données locales déjà préparées. La pause prend effet après le fichier en cours. Une analyse terminée attend toujours ta vérification : elle ne valide pas automatiquement les passages. Une coupure de connexion est signalée et le dernier état reçu reste affiché.
+
 L’import calcule l’empreinte SHA-256 de chaque fichier et compare les contenus avec le catalogue du Debian. Il transfère uniquement les nouveautés, vérifie l’intégrité à l’arrivée, puis les ajoute à la file d’analyse.
 
 FFmpeg prépare une piste WAV mono, mesure son niveau et son écrêtage, et prélève au plus huit images pour une vidéo. Vosk produit une transcription française estimée et des horaires de mots. GPT reçoit le texte, ces mesures et les images horodatées pour proposer :

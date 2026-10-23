@@ -98,6 +98,10 @@ class MediaTests(unittest.TestCase):
         result=self.catalog.get(identifier)
         self.assertEqual(result['state'],'review');self.assertEqual(result['analysis']['title'],'Bonjour sarcastique')
         self.assertEqual(result['approved'],[]);self.assertEqual(self.voice.store.library(),[])
+        self.assertEqual(result['progress']['status'],'done')
+        self.assertEqual([entry['stage'] for entry in result['progress']['completed']],['preparation','transcription','analysis'])
+        self.assertTrue(result['progress']['completed'][0]['reused'])
+        self.assertGreaterEqual(result['progress']['finished'],result['progress']['started'])
         worker.run();self.assertEqual(client.http.request.call_count,1)
         payload=client.http.request.call_args.kwargs['json']
         self.assertFalse(payload['store']);self.assertTrue(payload['stream'])
@@ -109,6 +113,7 @@ class MediaTests(unittest.TestCase):
         with patch('bender_media.worker.prepare') as conversion:
             worker.run();conversion.assert_not_called()
         self.assertEqual(self.catalog.get(identifier)['state'],'pending')
+        self.assertEqual(self.catalog.get(identifier)['progress']['status'],'waiting')
         self.catalog.automatic(False);client.auth.status.return_value={'authorized':True}
         worker.run();client.http.request.assert_not_called()
 
@@ -117,6 +122,48 @@ class MediaTests(unittest.TestCase):
         worker=Worker(self.catalog,self.hardware,client_for(data));worker.run()
         self.assertEqual(self.catalog.get(identifier)['state'],'error')
         self.assertEqual(self.catalog.get(identifier)['analysis'],{})
+        progress=self.catalog.get(identifier)['progress']
+        self.assertEqual(progress['status'],'error');self.assertEqual(progress['stage'],'analysis')
+        self.assertNotIn('analysis',[entry['stage'] for entry in progress['completed']])
+
+    def test_old_catalog_migrates_without_losing_existing_samples(self):
+        identifier=self.prepared()
+        with self.catalog.connect() as db:db.execute('ALTER TABLE samples DROP COLUMN progress')
+        migrated=Catalog(self.catalog.root)
+        item=migrated.get(identifier)
+        self.assertEqual(item['media']['transcript'],'bonjour');self.assertEqual(item['progress'],{})
+        migrated.update(identifier,progress={'stage':'analysis','status':'running'})
+        self.assertEqual(Catalog(self.catalog.root).get(identifier)['progress']['stage'],'analysis')
+
+    def test_live_progress_is_persisted_and_interrupted_jobs_reuse_local_work(self):
+        identifier=self.prepared();media=self.catalog.get(identifier)['media'];media['transcribed']=False
+        self.catalog.update(identifier,state='processing',media=media,progress={'status':'running','stage':'transcription'})
+        checkpoints=[]
+        def transcription(hardware,path,notify):
+            notify('Reconnaissance locale',10,20)
+            checkpoints.append(Catalog(self.catalog.root).get(identifier)['progress'])
+            return 'bonjour',[]
+        worker=Worker(self.catalog,self.hardware,client_for())
+        with patch('bender_media.worker.prepare') as preparation,patch('bender_media.worker.transcribe',side_effect=transcription):
+            worker.run();preparation.assert_not_called()
+        self.assertEqual(checkpoints[0]['stage'],'transcription')
+        self.assertEqual((checkpoints[0]['current'],checkpoints[0]['total']),(10,20))
+        self.assertEqual(checkpoints[0]['status'],'running')
+        self.assertEqual(self.catalog.get(identifier)['state'],'review')
+
+    def test_transcription_progress_counts_actual_audio_frames(self):
+        from types import SimpleNamespace
+        from bender_media.processing import transcribe
+        identifier=self.prepared();self.hardware.model_dir.mkdir(parents=True,exist_ok=True)
+        (self.hardware.model_dir/'am').mkdir(exist_ok=True);self.hardware.model=object()
+        recognizer=Mock();recognizer.AcceptWaveform.return_value=False;recognizer.FinalResult.return_value='{"text":"bonjour"}'
+        vosk=SimpleNamespace(Model=Mock(),KaldiRecognizer=Mock(return_value=recognizer),SetLogLevel=Mock())
+        checkpoints=[]
+        with patch.dict('sys.modules',vosk=vosk):
+            text,words=transcribe(self.hardware,self.catalog.derived(identifier)/'audio.wav',lambda *args:checkpoints.append(args))
+        self.assertEqual(text,'bonjour');self.assertEqual(words,[])
+        self.assertEqual(checkpoints[1][1:],(0,64000));self.assertEqual(checkpoints[-1][1:],(64000,64000))
+        self.assertFalse(self.hardware.lock.locked())
 
     def test_visual_analysis_uses_timestamped_images_without_audio_upload(self):
         identifier=self.prepared();media=self.catalog.get(identifier)['media']
@@ -153,10 +200,12 @@ class MediaTests(unittest.TestCase):
                         '-f','lavfi','-i','testsrc2=size=320x180:rate=5:duration=2','-c:v','mpeg4','-c:a','aac','-shortest',str(video)],
                         capture_output=True,check=True,timeout=30)
         pack(self.inbox,self.root/'video.tar.gz');install(self.root/'video.tar.gz',self.catalog)
-        identifier=digest_file(video);media=prepare(self.catalog,identifier)
+        checkpoints=[]
+        identifier=digest_file(video);media=prepare(self.catalog,identifier,lambda *args:checkpoints.append(args))
         self.assertEqual(len(media['frames']),8)
         self.assertTrue(all(0<=frame['time']<media['duration'] for frame in media['frames']))
         self.assertTrue(all((self.catalog.derived(identifier)/frame['file']).is_file() for frame in media['frames']))
+        self.assertEqual([event[1] for event in checkpoints if len(event)==3],list(range(9)))
 
     def test_api_requires_key_and_transcript_can_be_corrected(self):
         identifier=self.prepared();worker=Mock();worker.status.return_value={'automatic':False,'message':'Pause','active':False}
@@ -170,9 +219,11 @@ class MediaTests(unittest.TestCase):
             self.assertEqual(client.post('/api/media/resume').status_code,403)
             self.assertEqual(client.get(f'/api/media/{identifier}/audio').status_code,403)
             self.assertEqual(client.get('/api/media',headers=headers).status_code,200)
+            self.catalog.update(identifier,progress={'status':'error','stage':'analysis'})
             response=client.post(f'/api/media/{identifier}/retry',headers=headers,json={'transcript':'texte corrigé'})
             self.assertEqual(response.status_code,200)
             self.assertEqual(self.catalog.get(identifier)['media']['transcript'],'texte corrigé')
+            self.assertEqual(self.catalog.get(identifier)['progress'],{})
             self.assertEqual(client.get(f'/api/media/{identifier}/audio',headers=headers).status_code,200)
             client.post(f'/api/media/{identifier}/retry',headers=headers,json={'transcript':''})
             self.assertFalse(self.catalog.get(identifier)['media']['transcribed'])

@@ -1,16 +1,77 @@
 'use strict';
 (() => {
  const stateNames={pending:'En attente',processing:'Analyse en cours',review:'À vérifier',approved:'Sélections validées',error:'À reprendre'};
+ const stages=[['preparation','Préparation','Audio et images'],['transcription','Transcription','Vosk · en local'],['analysis','Analyse GPT','Noms et catégories'],['validation','Validation','Par toi, après écoute']];
+ const contentVersion=item=>JSON.stringify([item.state,item.error,item.media,item.analysis,item.approved]);
  let items=[],selected=null,loaded=false,dirty=false,version=null,urls=[],loading=false;
+ let listVersion=null,countVersion=null,activityVersion=null,selectedProgressVersion=null;
  const el=id=>document.getElementById(id),make=(tag,text)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;return node;};
  function revoke(){urls.forEach(url=>URL.revokeObjectURL(url));urls=[];}
  async function execute(button,action){button.disabled=true;el('mediaError').textContent='';try{await action();}catch(error){el('mediaError').textContent=error.message;}finally{button.disabled=false;}}
+ function duration(seconds){const value=Math.max(0,Math.floor(seconds));return value<60?`${value} s`:`${Math.floor(value/60)} min ${value%60} s`;}
+ function progressView(item){
+  const root=make('div'),p=item.progress||{},done=new Set((p.completed||[]).map(entry=>entry.stage));root.className='media-progress-view';
+  // Existing catalog entries can predate checkpoints; infer only known outcomes.
+  if(item.media.audio)done.add('preparation');if(item.media.transcribed&&item.media.transcript)done.add('transcription');
+  if(['review','approved'].includes(item.state))['preparation','transcription','analysis'].forEach(stage=>done.add(stage));
+  if(item.state==='approved')done.add('validation');
+  const track=make('ol');track.className='media-stages';
+  for(const [key,label,caption] of stages){
+   const complete=done.has(key),active=!complete&&p.stage===key;
+   const status=complete?'done':active&&item.state==='error'?'error':active&&item.state==='processing'?'current':'waiting';
+   const step=make('li');step.className=`media-stage ${status}`;
+   const reused=(p.completed||[]).some(entry=>entry.stage===key&&entry.reused);
+   step.append(make('span',complete?'✓':status==='error'?'!':String(stages.findIndex(s=>s[0]===key)+1)),make('strong',label),make('small',reused?'Déjà disponible':caption));
+   if(status==='current')step.setAttribute('aria-current','step');track.append(step);
+  }
+  root.append(track);
+  const message=item.state==='error'?item.error:item.state==='approved'?'Sélections conservées pour leurs usages validés.':item.state==='review'?'Analyse terminée. Vérifie les passages proposés avant de les utiliser.':p.detail||(item.state==='pending'?'Dans la file, en attente de traitement.':'Traitement lancé ; attente du prochain point de suivi.');
+  root.append(make('p',message));
+  if(item.state==='processing'){
+   const bar=make('progress');bar.max=1;bar.setAttribute('aria-label',`Avancement : ${stages.find(s=>s[0]===p.stage)?.[1]||'traitement'}`);
+   const measured=Number.isFinite(p.current)&&Number.isFinite(p.total)&&p.total>0;
+   if(measured){bar.value=Math.min(1,Math.max(0,p.current/p.total));root.append(make('p',`${Math.round(bar.value*100)} % de cette opération`));}
+   root.append(bar);
+   if(p.stage_started){const elapsed=make('p');elapsed.className='media-timing';elapsed.dataset.since=String(p.stage_started);elapsed.textContent=`Étape commencée il y a ${duration(Date.now()/1000-p.stage_started)}`;root.append(elapsed);}
+   if(p.updated)root.append(make('small',`Dernier point de traitement : ${new Date(p.updated*1000).toLocaleTimeString('fr-FR')}.`));
+  }else if(p.started&&p.finished&&p.status==='done')root.append(make('small',`Analyse effectuée en ${duration(p.finished-p.started)} · progression conservée sur Bender.`));
+  return root;
+ }
+ function drawDashboard(worker){
+  const counts=Object.fromEntries(Object.keys(stateNames).map(state=>[state,items.filter(item=>item.state===state).length]));
+  const cards=Object.entries(stateNames).map(([state,label])=>{
+   const card=make('button');card.className=`media-count ${state}`;card.setAttribute('aria-label',`${counts[state]} sample(s) : ${label}`);
+   card.append(make('strong',String(counts[state])),make('span',label));card.onclick=()=>{el('mediaFilter').value=state;drawList();};return card;
+  });const countKey=JSON.stringify(counts);
+  if(countVersion!==countKey){el('mediaCounts').replaceChildren(...cards);countVersion=countKey;}
+  const finished=counts.review+counts.approved,batch=el('mediaBatch');batch.replaceChildren();
+  batch.append(make('p',items.length?`${finished} / ${items.length} analyses terminées · ${counts.review} à vérifier · ${counts.error} en erreur`:'Aucun sample importé pour le moment.'));
+  if(items.length){const bar=make('progress');bar.max=items.length;bar.value=finished;bar.setAttribute('aria-label','Samples dont l’analyse est terminée');batch.append(bar);}
+  el('mediaSync').textContent=`Synchronisé à ${new Date().toLocaleTimeString('fr-FR')}`;
+  const active=items.find(item=>item.state==='processing'),activityKey=JSON.stringify([active,worker.automatic,worker.message,counts,items.filter(item=>item.state==='pending').map(item=>[item.id,item.error])]);
+  if(activityVersion===activityKey)return;
+  activityVersion=activityKey;const activity=el('mediaActivity');activity.replaceChildren();
+  if(active){
+   const heading=make('div');heading.className='media-current-heading';heading.append(make('span','● En cours'),make('strong',active.original_name));
+   const view=make('button','Voir ce sample');view.onclick=()=>{selected=active.id;dirty=false;drawList();drawDetail(active);el('mediaDetail').scrollIntoView({behavior:'smooth',block:'nearest'});};heading.append(view);
+   activity.append(heading,progressView(active));
+   if(!worker.automatic)activity.append(make('p','Pause demandée : le sample en cours se termine, puis la file s’arrête.'));
+  }else{
+   const waiting=items.filter(item=>item.state==='pending').sort((a,b)=>a.created-b.created),blocked=waiting.find(item=>item.error);
+   activity.append(make('strong',!worker.automatic?'Analyses en pause':blocked?'File en attente d’une action':counts.error?'Des samples sont à reprendre':counts.pending?'File prête à reprendre':items.length?'Traitement terminé':'Prêt à recevoir tes samples'));
+   activity.append(make('p',blocked?.error||worker.message));
+   if(waiting.length)activity.append(make('p',`Prochain dans la file : ${waiting[0].original_name} · ${waiting.length} en attente.`));
+  }
+ }
  function drawList(){
   const query=el('mediaSearch').value.toLocaleLowerCase('fr'),filter=el('mediaFilter').value;
   const filtered=items.filter(item=>(!filter||item.state===filter)&&JSON.stringify([item.original_name,item.analysis,item.media.transcript]).toLocaleLowerCase('fr').includes(query));
+  const key=JSON.stringify([query,filter,loaded,selected,filtered.map(item=>[item.id,item.state,item.analysis.title,item.media.duration,item.progress?.stage])]);
+  if(listVersion===key)return;listVersion=key;
   el('mediaList').replaceChildren(...filtered.map(item=>{
    const button=make('button');button.className='media-tile';button.setAttribute('aria-pressed',String(selected===item.id));
    button.append(make('strong',item.analysis.title||item.original_name),make('span',`${stateNames[item.state]} · ${item.media.duration?item.media.duration.toFixed(1)+' s':'à préparer'}`));
+   if(item.state==='processing')button.append(make('small',stages.find(s=>s[0]===item.progress?.stage)?.[1]||'Démarrage…'));
    button.onclick=()=>{selected=item.id;dirty=false;version=null;drawList();drawDetail(item);};return button;
   }));
   if(!filtered.length)el('mediaList').append(make('p',loaded?'Aucun sample correspondant.':'Charge la bibliothèque pour commencer.'));
@@ -22,8 +83,12 @@
    el('mediaAutomatic').checked=data.worker.automatic;
    const pending=items.filter(item=>['pending','processing'].includes(item.state)).length;
    el('mediaStatus').textContent=`${items.length} sample(s) · ${pending} en attente ou en cours. ${data.worker.message}`;
-   drawList();const current=items.find(item=>item.id===selected);
-   if(current&&!dirty&&version!==current.updated)drawDetail(current);
+   drawDashboard(data.worker);drawList();const current=items.find(item=>item.id===selected);
+   if(current&&!dirty&&version!==contentVersion(current))drawDetail(current);
+   else if(current&&el('mediaSelectedProgress')&&selectedProgressVersion!==JSON.stringify(current.progress)){
+    el('mediaSelectedProgress').replaceChildren(progressView(current));selectedProgressVersion=JSON.stringify(current.progress);
+   }
+  }catch(error){el('mediaSync').textContent='Actualisation impossible · dernier état conservé';throw error;
   }finally{loading=false;}
  }
  function input(parent,label,type,value,options){
@@ -33,9 +98,9 @@
   node.value=value;wrapper.append(node);parent.append(wrapper);node.oninput=()=>{dirty=true;};return node;
  }
  function drawDetail(item){
-  revoke();version=item.updated;const root=el('mediaDetail');root.replaceChildren();
+  revoke();version=contentVersion(item);const root=el('mediaDetail');root.replaceChildren();
   root.append(make('h3',item.analysis.title||item.original_name),make('p',`${item.original_name} · ${stateNames[item.state]}`));
-  if(item.error)root.append(make('p',item.error));
+  const progress=make('div');progress.id='mediaSelectedProgress';progress.append(progressView(item));root.append(progress);selectedProgressVersion=JSON.stringify(item.progress);
   if(item.analysis.summary)root.append(make('p',item.analysis.summary));
   if(item.analysis.categories)root.append(make('p',item.analysis.categories.join(' · ')));
   if(item.analysis.basis)root.append(make('p',item.analysis.basis));
@@ -90,5 +155,9 @@
  el('mediaResume').onclick=()=>execute(el('mediaResume'),async()=>{await ioFetch('/api/media/resume');await refresh();});
  el('mediaAutomatic').onchange=()=>execute(el('mediaAutomatic'),async()=>{await ioFetch('/api/media/options',{automatic:el('mediaAutomatic').checked});await refresh();});
  el('mediaSearch').oninput=el('mediaFilter').onchange=drawList;
- setInterval(()=>{if(loaded&&!el('panel-samples').hidden)refresh().catch(error=>{el('mediaError').textContent=error.message;});},5000);
+ setInterval(()=>{
+  if(el('panel-samples').hidden)return;
+  document.querySelectorAll('.media-timing[data-since]').forEach(node=>{node.textContent=`Étape commencée il y a ${duration(Date.now()/1000-Number(node.dataset.since))}`;});
+  if(loaded)refresh().catch(error=>{el('mediaError').textContent=error.message;});
+ },2000);
 })();
