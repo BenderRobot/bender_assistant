@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Bender · Roadmap du projet</title>
+  <link rel="stylesheet" href="/static/roadmap.css">
+  <script src="/static/roadmap.js" defer></script>
+</head>
+<body>
+<header class="topbar"><a class="brand" href="/roadmap"><span class="brand-mark" aria-hidden="true">B</span> BENDER <span class="brand-sub">/ PROJET JARVIS</span></a><a class="back" href="/">← Banc d’essai</a></header>
+<main>
+  <section class="hero">
+    <div><p class="eyebrow">DE L’IDÉE AU ROBOT</p><h1>Une étape à la fois.</h1><p class="intro">Écouter, comprendre, parler… puis prendre vie.<br>Voici le chemin pour construire ton Bender.</p><p class="milestone"><span class="dot"></span>Premier jalon : une conversation complète sur table.</p></div>
+    <div class="overall"><div class="ring" id="ring"><span id="percent">—</span></div><div><strong id="totalLabel">Chargement du projet…</strong><p id="phaseLabel">9 étapes · 6 domaines</p><span class="save" id="saveStatus" role="status" aria-live="polite">Connexion au serveur…</span></div></div>
+  </section>
+  <p id="error" class="error" role="alert" hidden></p>
+  <div id="loadFailure" hidden><button id="retry">Réessayer le chargement</button></div>
+  <div class="workspace" id="workspace" hidden>
+    <aside><div class="section-label">LE PARCOURS <span>00 — 08</span></div><nav id="steps" aria-label="Étapes du projet"></nav><div class="aside-note"><strong>Ton rythme, tes validations.</strong><p>Coche une action après l’avoir vérifiée. Tu peux avancer dans plusieurs domaines et revenir sur une validation.</p><button class="export" id="export">↓ Exporter ma progression</button></div></aside>
+    <section class="step-panel" aria-label="Détail de l’étape">
+      <div class="step-heading"><div><p class="eyebrow" id="stepNumber"></p><h2 id="stepTitle"></h2></div><span id="stepBadge" class="badge"></span></div>
+      <p class="description" id="stepDescription"></p><div class="tags" id="tags"></div>
+      <div class="step-progress"><div class="track"><div id="stepFill"></div></div><span id="stepCount"></span></div>
+      <div class="next"><span>PROCHAINE ACTION</span><strong id="nextTask"></strong></div>
+      <div class="list-heading"><h3>Les actions à accomplir</h3><label class="toggle"><input type="checkbox" id="remainingOnly"> Masquer les actions terminées</label></div>
+      <div id="tasks"></div><p id="empty" class="empty" hidden>Toutes les actions de cette étape sont terminées. Tu peux les réafficher avec le filtre.</p>
+      <div class="gate"><span aria-hidden="true">✓</span><div><h3>Pour valider cette étape</h3><p id="stepGate"></p></div></div>
+      <div class="step-footer"><button id="previous">← Étape précédente</button><button id="next">Étape suivante →</button></div>
+    </section>
+  </div>
+  <footer>Progression partagée et sauvegardée sur Bender · Les cases suivent le travail accompli, elles ne déclenchent aucune action sur le robot.</footer>
+</main>
+</body></html>

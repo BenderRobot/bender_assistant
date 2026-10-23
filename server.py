@@ -26,6 +26,8 @@ ROOT = Path(__file__).resolve().parent
 app.include_router(voice_router)
 from hardware_api import build_hardware_router
 app.include_router(build_hardware_router(process_command))
+from roadmap_api import build_roadmap_router
+app.include_router(build_roadmap_router())
 app.mount('/static', StaticFiles(directory=ROOT / 'static'), name='static')
 templates = Jinja2Templates(directory=str(ROOT / 'templates'))
 
@@ -51,6 +53,10 @@ async def serve_ui(request: Request):
 @app.get('/face', response_class=HTMLResponse)
 async def serve_face(request: Request):
     return templates.TemplateResponse(request=request, name='index.html')
+
+@app.get('/roadmap', response_class=HTMLResponse)
+async def serve_roadmap(request: Request):
+    return templates.TemplateResponse(request=request, name='roadmap.html')
 
 @app.get("/api/routines")
 async def fetch_routines():

@@ -1,0 +1,445 @@
+{
+  "title": "Bender Jarvis",
+  "version": "2026-10-23",
+  "steps": [
+    {
+      "id": "step-0",
+      "number": 0,
+      "title": "Centraliser le projet",
+      "domains": [
+        "Pilotage"
+      ],
+      "description": "Un endroit pour travailler et une version de référence pour chaque domaine.",
+      "gate": "Savoir où travailler, où retrouver les références et quelle version utiliser.",
+      "tasks": [
+        {
+          "id": "s0-t1",
+          "title": "Retrouver tous les fichiers",
+          "detail": "Code, samples, modèles validés, anciennes études et livraisons sont regroupés dans bender_main.",
+          "initial_done": true
+        },
+        {
+          "id": "s0-t2",
+          "title": "Conserver le dépôt Git",
+          "detail": "Vérifier que le dépôt centralisé garde son historique et ses modifications locales.",
+          "initial_done": true
+        },
+        {
+          "id": "s0-t3",
+          "title": "Écrire la roadmap et le suivi",
+          "detail": "Le parcours, les critères de passage et les prochaines actions sont documentés.",
+          "initial_done": true
+        },
+        {
+          "id": "s0-t4",
+          "title": "Choisir les références de travail",
+          "detail": "Confirmer le modèle CAO validé et nommer les versions de poses à conserver.",
+          "initial_done": false
+        }
+      ]
+    },
+    {
+      "id": "step-1",
+      "number": 1,
+      "title": "Stabiliser le banc",
+      "domains": [
+        "Logiciel",
+        "Électronique"
+      ],
+      "description": "Rendre le banc fiable avant chaque nouvelle fonction. Tester le système après un vrai redémarrage.",
+      "gate": "Après redémarrage du Debian, le banc est accessible depuis ton PC et les périphériques répondent.",
+      "tasks": [
+        {
+          "id": "s1-t1",
+          "title": "Démarrage automatique installé",
+          "detail": "Le service bender.service est installé et activé au démarrage.",
+          "initial_done": true
+        },
+        {
+          "id": "s1-t2",
+          "title": "Connexion SSH par clé",
+          "detail": "La connexion sans saisie a été validée avec ssh-agent sur le PC Windows.",
+          "initial_done": true
+        },
+        {
+          "id": "s1-t3",
+          "title": "Tester après redémarrage",
+          "detail": "Redémarrer Debian, ouvrir la page web depuis le PC et vérifier le service.",
+          "initial_done": false
+        },
+        {
+          "id": "s1-t4",
+          "title": "Valider le microphone dans la page",
+          "detail": "Renseigner la clé de contrôle puis enregistrer une phrase avec le micro du Dell.",
+          "initial_done": false
+        },
+        {
+          "id": "s1-t5",
+          "title": "Tester la photo",
+          "detail": "Prendre une image avec le bouton caméra et vérifier le cadrage.",
+          "initial_done": false
+        },
+        {
+          "id": "s1-t6",
+          "title": "Tester les enceintes du Dell",
+          "detail": "Faire jouer une réponse sur le Dell, puis vérifier son arrêt.",
+          "initial_done": false
+        },
+        {
+          "id": "s1-t7",
+          "title": "Vérifier une mise à jour complète",
+          "detail": "Lancer MAJ_BENDER.ps1 et contrôler le réseau, les configurations et les samples après redémarrage du service.",
+          "initial_done": false
+        },
+        {
+          "id": "s1-t8",
+          "title": "Vérifier la confidentialité et le dépannage",
+          "detail": "Confirmer que les secrets restent hors de Git et noter comment consulter les journaux et récupérer une panne.",
+          "initial_done": false
+        }
+      ]
+    },
+    {
+      "id": "step-2",
+      "number": 2,
+      "title": "Conversation complète",
+      "domains": [
+        "Logiciel",
+        "Voix"
+      ],
+      "description": "Écouter → afficher le texte compris → préparer la réponse → parler et animer la bouche → revenir au repos.",
+      "gate": "Dix échanges courts consécutifs fonctionnent ; les erreurs sont compréhensibles et la parole peut être arrêtée.",
+      "tasks": [
+        {
+          "id": "s2-t1",
+          "title": "Afficher le texte compris",
+          "detail": "Comparer la transcription avec ce que tu as réellement dit avant de juger la réponse.",
+          "initial_done": false
+        },
+        {
+          "id": "s2-t2",
+          "title": "Répondre avec le son et la bouche",
+          "detail": "Lire l’audio et sa chronologie de poses sur la même horloge, puis revenir au repos.",
+          "initial_done": false
+        },
+        {
+          "id": "s2-t3",
+          "title": "Réussir dix échanges courts",
+          "detail": "Noter les questions, les transcriptions, les réponses et les délais observés.",
+          "initial_done": false
+        },
+        {
+          "id": "s2-t4",
+          "title": "Arrêter proprement la parole",
+          "detail": "Vérifier qu’Arrêter coupe le son et libère la bouche pour la prochaine réponse.",
+          "initial_done": false
+        },
+        {
+          "id": "s2-t5",
+          "title": "Tester les erreurs",
+          "detail": "Essayer un silence, une phrase mal reconnue et un service indisponible.",
+          "initial_done": false
+        },
+        {
+          "id": "s2-t6",
+          "title": "Tester la vision sur demande",
+          "detail": "Prendre une photo puis demander explicitement une description. Le mot de réveil viendra après cette boucle.",
+          "initial_done": false
+        }
+      ]
+    },
+    {
+      "id": "step-3",
+      "number": 3,
+      "title": "Voix et personnalité",
+      "domains": [
+        "Voix",
+        "Animation"
+      ],
+      "description": "Conserver les poses validées et construire une voix cohérente pour les futures répliques. Les yeux restent indépendants.",
+      "gate": "Des phrases nouvelles, courtes, longues et expressives gardent une voix et une animation cohérentes.",
+      "tasks": [
+        {
+          "id": "s3-t1",
+          "title": "Nommer les poses validées",
+          "detail": "Conserver les formes déjà approuvées avec leur nom et leur référence visuelle.",
+          "initial_done": false
+        },
+        {
+          "id": "s3-t2",
+          "title": "Cataloguer quelques répliques propres",
+          "detail": "Associer à chaque audio son texte exact, son thème, son humeur et sa durée.",
+          "initial_done": false
+        },
+        {
+          "id": "s3-t3",
+          "title": "Unifier les quatre sources de parole",
+          "detail": "Cache, synthèse locale, API vocale et réplique sélectionnée fournissent tous audio + chronologie de bouche.",
+          "initial_done": false
+        },
+        {
+          "id": "s3-t4",
+          "title": "Comparer sur la même horloge",
+          "detail": "Revoir ensemble le son, l’image de la vidéo et la pose simulée.",
+          "initial_done": false
+        },
+        {
+          "id": "s3-t5",
+          "title": "Tester sur des audios nouveaux",
+          "detail": "Valider les associations sons/poses au-delà des extraits déjà calés. Distinguer estimation acoustique et phonèmes reconnus.",
+          "initial_done": false
+        },
+        {
+          "id": "s3-t6",
+          "title": "Régler l’intensité et les transitions",
+          "detail": "Choisir petite ou grande ouverture selon la diction sans perdre la forme validée.",
+          "initial_done": false
+        },
+        {
+          "id": "s3-t7",
+          "title": "Évaluer la voix locale sur le Dell",
+          "detail": "Mesurer la qualité et le temps de génération avant de figer le moteur et la voix.",
+          "initial_done": false
+        }
+      ]
+    },
+    {
+      "id": "step-4",
+      "number": 4,
+      "title": "Électronique sur table",
+      "domains": [
+        "Électronique"
+      ],
+      "description": "Faire fonctionner ensemble le matériel réel avant de l’intégrer dans la tête.",
+      "gate": "Un échange complet fonctionne avec les afficheurs et les périphériques destinés à Bender.",
+      "tasks": [
+        {
+          "id": "s4-t1",
+          "title": "Inventorier le matériel réel",
+          "detail": "Distinguer les composants disponibles de ceux qui sont encore prévus ou à commander.",
+          "initial_done": false
+        },
+        {
+          "id": "s4-t2",
+          "title": "Mesurer les composants",
+          "detail": "Relever cartes, afficheurs, connecteurs, fixations et alimentations.",
+          "initial_done": false
+        },
+        {
+          "id": "s4-t3",
+          "title": "Faire fonctionner les afficheurs ensemble",
+          "detail": "Afficher les yeux et la bouche sur le matériel prévu pendant une réponse.",
+          "initial_done": false
+        },
+        {
+          "id": "s4-t4",
+          "title": "Relier tous les périphériques",
+          "detail": "Tester caméra, micro, son et affichage simultanément sur table.",
+          "initial_done": false
+        },
+        {
+          "id": "s4-t5",
+          "title": "Documenter l’alimentation",
+          "detail": "Noter tensions, polarités, protections, consommation et branchements.",
+          "initial_done": false
+        },
+        {
+          "id": "s4-t6",
+          "title": "Prévoir arrêt et refroidissement",
+          "detail": "Vérifier l’accès à l’arrêt, le passage des câbles et la circulation de l’air.",
+          "initial_done": false
+        }
+      ]
+    },
+    {
+      "id": "step-5",
+      "number": 5,
+      "title": "Valider la mécanique",
+      "domains": [
+        "Modélisation 3D",
+        "Impression"
+      ],
+      "description": "Partir du projet BENDER_PROJET_VALIDE_20261022 et vérifier les dimensions du matériel réellement retenu.",
+      "gate": "Les composants se montent et se démontent ; les zones critiques ont été essayées avant l’impression complète.",
+      "tasks": [
+        {
+          "id": "s5-t1",
+          "title": "Retrouver la base validée",
+          "detail": "Assemblage, fichier de travail et STL sont présents dans le dossier du projet validé.",
+          "initial_done": true
+        },
+        {
+          "id": "s5-t2",
+          "title": "Contrôler les cotes estimées",
+          "detail": "Lire le LISEZMOI du modèle et vérifier les dimensions encore incertaines.",
+          "initial_done": false
+        },
+        {
+          "id": "s5-t3",
+          "title": "Comparer modèle et matériel",
+          "detail": "Confirmer que les périphériques retenus correspondent aux pièces représentées en CAO.",
+          "initial_done": false
+        },
+        {
+          "id": "s5-t4",
+          "title": "Imprimer les supports critiques",
+          "detail": "Tester fixations, tolérances et connecteurs avec des éprouvettes ou de petites pièces.",
+          "initial_done": false
+        },
+        {
+          "id": "s5-t5",
+          "title": "Tester une portion de façade",
+          "detail": "Vérifier l’intégration des yeux et de la bouche avant une impression complète.",
+          "initial_done": false
+        },
+        {
+          "id": "s5-t6",
+          "title": "Préparer le montage et la maintenance",
+          "detail": "Prévoir accès, trappe, ventilation, câbles et composants démontables.",
+          "initial_done": false
+        },
+        {
+          "id": "s5-t7",
+          "title": "Valider les impressions définitives",
+          "detail": "Vérifier orientation, supports et volume d’impression après l’assemblage provisoire.",
+          "initial_done": false
+        }
+      ]
+    },
+    {
+      "id": "step-6",
+      "number": 6,
+      "title": "Assembler la tête",
+      "domains": [
+        "Impression",
+        "Électronique"
+      ],
+      "description": "Transformer le banc en une tête qui parle, tout en gardant un accès pratique aux composants.",
+      "gate": "Bender tient plusieurs conversations depuis sa tête assemblée avec un fonctionnement stable.",
+      "tasks": [
+        {
+          "id": "s6-t1",
+          "title": "Imprimer et ajuster les pièces",
+          "detail": "Corriger les assemblages avant peinture et finition.",
+          "initial_done": false
+        },
+        {
+          "id": "s6-t2",
+          "title": "Monter et repérer les câbles",
+          "detail": "Installer les composants et conserver des connexions accessibles.",
+          "initial_done": false
+        },
+        {
+          "id": "s6-t3",
+          "title": "Régler la lisibilité",
+          "detail": "Observer les yeux et la bouche depuis plusieurs angles et distances.",
+          "initial_done": false
+        },
+        {
+          "id": "s6-t4",
+          "title": "Tester l’acoustique dans la tête",
+          "detail": "Vérifier volume, intelligibilité et écoute pendant puis après une réponse audio.",
+          "initial_done": false
+        },
+        {
+          "id": "s6-t5",
+          "title": "Faire des conversations prolongées",
+          "detail": "Surveiller stabilité et température dans l’enveloppe assemblée.",
+          "initial_done": false
+        }
+      ]
+    },
+    {
+      "id": "step-7",
+      "number": 7,
+      "title": "Capacités Jarvis",
+      "domains": [
+        "IA",
+        "Domotique"
+      ],
+      "description": "Ajouter une fonction utile à la fois, avec un résultat réellement vérifié. Corps et mouvements restent des extensions.",
+      "gate": "Chaque fonction passe son scénario : demande, exécution et résultat réel confirmés.",
+      "tasks": [
+        {
+          "id": "s7-t1",
+          "title": "Commander une vraie lumière",
+          "detail": "Relier la commande à Home Assistant et vérifier l’état de l’équipement.",
+          "initial_done": false
+        },
+        {
+          "id": "s7-t2",
+          "title": "Valider les minuteurs",
+          "detail": "Créer un minuteur, vérifier son échéance et tester son arrêt.",
+          "initial_done": false
+        },
+        {
+          "id": "s7-t3",
+          "title": "Lire une information demandée",
+          "detail": "Tester une réponse longue et le choix de sa source vocale.",
+          "initial_done": false
+        },
+        {
+          "id": "s7-t4",
+          "title": "Décrire une image utile",
+          "detail": "Vérifier une demande de vision explicite avec une photo pertinente.",
+          "initial_done": false
+        },
+        {
+          "id": "s7-t5",
+          "title": "Mémoriser une préférence choisie",
+          "detail": "Enregistrer, retrouver et modifier une préférence explicitement demandée.",
+          "initial_done": false
+        },
+        {
+          "id": "s7-t6",
+          "title": "Distinguer succès et échec",
+          "detail": "L’interface montre une commande demandée, exécutée ou échouée ; un texte de succès ne suffit pas.",
+          "initial_done": false
+        }
+      ]
+    },
+    {
+      "id": "step-8",
+      "number": 8,
+      "title": "Usage quotidien",
+      "domains": [
+        "Finition",
+        "Maintenance"
+      ],
+      "description": "Finaliser le robot après les validations mécaniques, acoustiques et logicielles.",
+      "gate": "Tu peux l’utiliser au quotidien et le remettre en service simplement après une panne.",
+      "tasks": [
+        {
+          "id": "s8-t1",
+          "title": "Terminer l’extérieur",
+          "detail": "Faire la finition après validation des ajustements et de l’acoustique.",
+          "initial_done": false
+        },
+        {
+          "id": "s8-t2",
+          "title": "Finaliser le câblage",
+          "detail": "Fixer et repérer les connexions tout en conservant la maintenance possible.",
+          "initial_done": false
+        },
+        {
+          "id": "s8-t3",
+          "title": "Documenter les sauvegardes",
+          "detail": "Sauvegarder les données utiles et vérifier une procédure de restauration.",
+          "initial_done": false
+        },
+        {
+          "id": "s8-t4",
+          "title": "Tester les pannes courantes",
+          "detail": "Redémarrage, perte réseau et indisponibilité des services externes.",
+          "initial_done": false
+        },
+        {
+          "id": "s8-t5",
+          "title": "Valider une utilisation prolongée",
+          "detail": "Tester plusieurs séances et documenter l’accès aux journaux et le remplacement d’un composant.",
+          "initial_done": false
+        }
+      ]
+    }
+  ]
+}

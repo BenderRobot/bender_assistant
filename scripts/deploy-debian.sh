@@ -58,10 +58,8 @@ Type=simple
 User=$(id -un)
 WorkingDirectory=$target
 EnvironmentFile=-$target/.env
-Environment=BENDER_HOST=0.0.0.0
-Environment=BENDER_PORT=8000
-Environment="BENDER_VOICE_CONFIG=$target/voice.json"
-ExecStart="$target/.venv/bin/python" "$target/server.py"
+# EnvironmentFile overrides Environment=; set deployment values on the process.
+ExecStart=/usr/bin/env BENDER_HOST=0.0.0.0 BENDER_PORT=8000 "BENDER_VOICE_CONFIG=$target/voice.json" "$target/.venv/bin/python" "$target/server.py"
 Restart=on-failure
 RestartSec=5
 UMask=0077
