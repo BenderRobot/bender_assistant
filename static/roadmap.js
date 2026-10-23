@@ -80,14 +80,45 @@
       const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = domain; return tag;
     }));
     $('tasks').replaceChildren(...step.tasks.map(task => {
-      const row = document.createElement('label'); row.className = 'task';
+      const row = document.createElement('div'); row.className = 'task';
+      const label = document.createElement('label'); label.className = 'task-check';
       const checkbox = document.createElement('input'); checkbox.type = 'checkbox';
       checkbox.checked = model.progress[task.id].done; checkbox.disabled = saving.has(task.id);
       checkbox.addEventListener('change', () => saveTask(task, checkbox));
       const copy = document.createElement('span');
       const title = document.createElement('strong'); title.textContent = task.title;
       const detail = document.createElement('small'); detail.textContent = task.detail;
-      copy.append(title, detail); row.append(checkbox, copy);
+      copy.append(title, detail); label.append(checkbox, copy); row.append(label);
+      if (task.guide) {
+        const dropdown = document.createElement('details'); dropdown.className = 'task-guide';
+        const summary = document.createElement('summary'); summary.textContent = 'Comment accomplir cette tâche';
+        const content = document.createElement('div'); content.className = 'guide-content';
+        const where = document.createElement('p');
+        const whereLabel = document.createElement('strong'); whereLabel.textContent = 'Où agir';
+        const whereText = document.createElement('span'); whereText.textContent = task.guide.where;
+        where.append(whereLabel, whereText);
+        const instructions = document.createElement('ol');
+        task.guide.steps.forEach(instruction => {
+          const item = document.createElement('li'); item.textContent = instruction; instructions.append(item);
+        });
+        const expected = document.createElement('div'); expected.className = 'guide-expected';
+        const expectedLabel = document.createElement('strong'); expectedLabel.textContent = 'Tu peux cocher quand…';
+        const expectedText = document.createElement('p'); expectedText.textContent = task.guide.expected;
+        expected.append(expectedLabel, expectedText);
+        content.append(where, instructions, expected);
+        if (task.guide.commands?.length) {
+          const commandsLabel = document.createElement('p'); commandsLabel.className = 'commands-label';
+          commandsLabel.textContent = 'Commandes à lancer manuellement — ' + task.guide.command_context;
+          content.append(commandsLabel);
+          task.guide.commands.forEach(command => {
+            const pre = document.createElement('pre'); const code = document.createElement('code'); code.textContent = command;
+            pre.append(code); content.append(pre);
+          });
+        }
+        const record = document.createElement('p'); record.className = 'guide-record';
+        record.textContent = 'À noter : ' + task.guide.record;
+        content.append(record); dropdown.append(summary, content); row.append(dropdown);
+      }
       controls.set(task.id, {row, checkbox}); return row;
     }));
     $('previous').disabled = index === 0;

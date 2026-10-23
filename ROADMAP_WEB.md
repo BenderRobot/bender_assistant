@@ -4,6 +4,8 @@ Ouvrir `/roadmap` sur le serveur Bender. Un lien est également présent en haut
 
 La page présente neuf étapes et 54 actions avec leur détail, les domaines concernés et le critère de passage. Les cases sont réversibles. Elle affiche la progression globale, celle de l'étape, la prochaine action et un filtre pour masquer les actions terminées. Le bouton d'export télécharge un état JSON du plan et de la progression.
 
+Chaque action propose un volet « Comment accomplir cette tâche » : endroit où agir, procédure pas à pas, résultat permettant de cocher la tâche et éléments à noter dans le suivi. Les commandes utiles précisent leur environnement Windows ou Debian et restent à exécuter manuellement. Ouvrir ou fermer un volet ne modifie pas la case ni la progression.
+
 Les acquis confirmés sont précochés dans le plan initial. Les cases ne déclenchent aucune commande matérielle et ne constituent pas une validation automatique.
 
 ## Conservation

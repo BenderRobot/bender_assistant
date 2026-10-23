@@ -16,25 +16,71 @@
           "id": "s0-t1",
           "title": "Retrouver tous les fichiers",
           "detail": "Code, samples, modèles validés, anciennes études et livraisons sont regroupés dans bender_main.",
-          "initial_done": true
+          "initial_done": true,
+          "guide": {
+            "where": "Explorateur Windows → Documents/bender_main",
+            "steps": [
+              "Ouvrir LISEZ_MOI.md pour repérer le code, les samples, le projet 3D validé et les livraisons.",
+              "Ouvrir un fichier représentatif de chaque domaine : un modèle CAO, un sample et la roadmap.",
+              "Comparer avec l’inventaire d’import dans 01_PILOTAGE et noter les fichiers encore manquants."
+            ],
+            "expected": "Les fichiers nécessaires sont retrouvables depuis bender_main et les éventuelles omissions sont identifiées.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s0-t2",
           "title": "Conserver le dépôt Git",
           "detail": "Vérifier que le dépôt centralisé garde son historique et ses modifications locales.",
-          "initial_done": true
+          "initial_done": true,
+          "guide": {
+            "where": "PowerShell Windows → bender_main/bender_assistant",
+            "steps": [
+              "Vérifier que le dépôt contient le dossier caché .git et que l’origine pointe vers BenderRobot/bender_assistant.",
+              "Consulter l’historique puis les modifications locales ; conserver les changements non publiés.",
+              "Utiliser désormais ce dépôt pour les nouvelles modifications, afin de ne pas mélanger les deux copies."
+            ],
+            "expected": "L’historique est consultable, l’origine est correcte et les modifications locales attendues sont présentes.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet.",
+            "command_context": "PowerShell, depuis le dossier bender_assistant",
+            "commands": [
+              "git remote get-url origin",
+              "git log -5 --oneline",
+              "git status --short"
+            ]
+          }
         },
         {
           "id": "s0-t3",
           "title": "Écrire la roadmap et le suivi",
           "detail": "Le parcours, les critères de passage et les prochaines actions sont documentés.",
-          "initial_done": true
+          "initial_done": true,
+          "guide": {
+            "where": "bender_main → ROADMAP_BENDER_JARVIS.md et 01_PILOTAGE",
+            "steps": [
+              "Lire l’objectif du premier prototype et les critères de passage des étapes.",
+              "Choisir une seule prochaine action concrète pour la prochaine séance.",
+              "Après chaque séance, noter le résultat et actualiser les cases réellement validées."
+            ],
+            "expected": "Le parcours est accessible et la prochaine séance possède un objectif et un test précis.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s0-t4",
           "title": "Choisir les références de travail",
           "detail": "Confirmer le modèle CAO validé et nommer les versions de poses à conserver.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "BENDER_PROJET_VALIDE_20261022 et banc_essai",
+            "steps": [
+              "Ouvrir le LISEZMOI du projet CAO validé et identifier le fichier de travail ainsi que l’assemblage.",
+              "Comparer les autres versions importées avant de décider laquelle utiliser pour une modification.",
+              "Lister les poses de bouche/yeux validées avec leur nom et leur référence vidéo ou capture."
+            ],
+            "expected": "Une référence CAO et une liste de poses validées sont clairement identifiées, sans ambiguïté entre versions.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         }
       ]
     },
@@ -53,49 +99,152 @@
           "id": "s1-t1",
           "title": "Démarrage automatique installé",
           "detail": "Le service bender.service est installé et activé au démarrage.",
-          "initial_done": true
+          "initial_done": true,
+          "guide": {
+            "where": "Terminal SSH sur Debian → service bender.service",
+            "steps": [
+              "Consulter le statut du service et confirmer qu’il utilise le dossier applications/bender_assistant.",
+              "Vérifier que le service est activé au démarrage.",
+              "Lire les dernières lignes du journal : le serveur doit démarrer sans erreur fatale."
+            ],
+            "expected": "Le service est actif, activé au démarrage et lance la bonne application.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet.",
+            "command_context": "terminal SSH sur Debian",
+            "commands": [
+              "systemctl is-enabled bender.service",
+              "systemctl status bender.service --no-pager",
+              "sudo journalctl -u bender.service -n 30 --no-pager"
+            ]
+          }
         },
         {
           "id": "s1-t2",
           "title": "Connexion SSH par clé",
           "detail": "La connexion sans saisie a été validée avec ssh-agent sur le PC Windows.",
-          "initial_done": true
+          "initial_done": true,
+          "guide": {
+            "where": "PowerShell Windows → clé SSH dédiée et ssh-agent",
+            "steps": [
+              "Charger la clé bender_deploy_ed25519 dans ssh-agent si elle utilise une phrase secrète.",
+              "Tester la connexion avec cette clé et BatchMode=yes pour vérifier qu’aucun mot de passe SSH n’est nécessaire.",
+              "Confirmer le message Connexion_OK. Le mot de passe sudo est une demande distincte."
+            ],
+            "expected": "Le test affiche Connexion_OK sans demander le mot de passe SSH.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet.",
+            "command_context": "PowerShell Windows",
+            "commands": [
+              "ssh-add \"$env:USERPROFILE\\.ssh\\bender_deploy_ed25519\"",
+              "ssh -F NUL -i \"$env:USERPROFILE\\.ssh\\bender_deploy_ed25519\" -o BatchMode=yes bender@192.168.1.41 \"echo Connexion_OK\""
+            ]
+          }
         },
         {
           "id": "s1-t3",
           "title": "Tester après redémarrage",
           "detail": "Redémarrer Debian, ouvrir la page web depuis le PC et vérifier le service.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Debian puis navigateur du PC Windows",
+            "steps": [
+              "Enregistrer le travail en cours puis redémarrer Debian depuis une session où tu es autorisé à le faire.",
+              "Attendre son retour sur le réseau et ouvrir http://192.168.1.41:8000 depuis le PC.",
+              "Vérifier le statut du service et refaire un test simple de la page sans lancer manuellement server.py."
+            ],
+            "expected": "La page répond après redémarrage complet et Bender n’a nécessité aucun lancement manuel.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s1-t4",
           "title": "Valider le microphone dans la page",
           "detail": "Renseigner la clé de contrôle puis enregistrer une phrase avec le micro du Dell.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Banc d’essai web → Périphériques du Dell",
+            "steps": [
+              "Obtenir la clé de contrôle avec control-token sur Debian et la coller dans Clé de contrôle du Dell. Garder cette clé privée.",
+              "Pour isoler le test, désactiver temporairement l’envoi de la transcription au cerveau puis cliquer sur Parler à Bender.",
+              "Dire une phrase courte et comparer le texte entendu avec la phrase prononcée. Si le modèle Vosk manque, l’installer avant de recommencer."
+            ],
+            "expected": "La page reçoit une transcription cohérente capturée avec le micro du Dell.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet.",
+            "command_context": "terminal SSH, depuis ~/applications/bender_assistant",
+            "commands": [
+              ".venv/bin/python -m bender_voice --config voice.json control-token"
+            ]
+          }
         },
         {
           "id": "s1-t5",
           "title": "Tester la photo",
           "detail": "Prendre une image avec le bouton caméra et vérifier le cadrage.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Banc d’essai web → bouton Prendre une photo",
+            "steps": [
+              "Vérifier que la clé de contrôle est renseignée et que la LifeCam est branchée au Dell.",
+              "Placer un objet reconnaissable devant la caméra puis prendre une photo.",
+              "Contrôler que l’image est récente et que le cadrage couvre la zone utile. La description Gemini se teste séparément."
+            ],
+            "expected": "Une image récente, nette et correctement cadrée s’affiche dans la page.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s1-t6",
           "title": "Tester les enceintes du Dell",
           "detail": "Faire jouer une réponse sur le Dell, puis vérifier son arrêt.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Banc d’essai web → Sortie de la voix : Enceintes du Dell",
+            "steps": [
+              "Choisir la sortie Dell et saisir une courte phrase dans le test voix.",
+              "Lancer la parole et confirmer que le son provient bien du Dell, à un volume raisonnable.",
+              "Utiliser l’arrêt pendant une seconde lecture et vérifier que le son s’arrête proprement."
+            ],
+            "expected": "La phrase est audible sur le Dell et la commande d’arrêt interrompt la lecture.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s1-t7",
           "title": "Vérifier une mise à jour complète",
           "detail": "Lancer MAJ_BENDER.ps1 et contrôler le réseau, les configurations et les samples après redémarrage du service.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "PowerShell Windows → bender_main/MAJ_BENDER.ps1",
+            "steps": [
+              "Consulter les modifications locales avant publication et lancer le script de mise à jour centralisé.",
+              "Attendre la fin du transfert, des tests et du redémarrage du service ; noter la révision déployée.",
+              "Rouvrir la page réseau et vérifier que les samples, la configuration et la progression de cette roadmap ont été conservés."
+            ],
+            "expected": "La nouvelle révision fonctionne sur Debian et les données personnelles sont toujours présentes.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet.",
+            "command_context": "PowerShell Windows",
+            "commands": [
+              "powershell -NoProfile -ExecutionPolicy Bypass -File \"C:\\Users\\benjamin.laurens\\Documents\\bender_main\\MAJ_BENDER.ps1\" -Message \"Mise à jour Bender\""
+            ]
+          }
         },
         {
           "id": "s1-t8",
           "title": "Vérifier la confidentialité et le dépannage",
           "detail": "Confirmer que les secrets restent hors de Git et noter comment consulter les journaux et récupérer une panne.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Dépôt Git et journaux Debian",
+            "steps": [
+              "Contrôler les noms des fichiers suivis : .env, voice.json, bases mémoire, clés et samples privés doivent rester hors Git.",
+              "Conserver une procédure pour consulter systemctl status et journalctl, puis retrouver une sauvegarde de déploiement.",
+              "Pour une clé déjà exposée dans l’historique, la révoquer auprès du fournisseur ; la retirer du dernier commit ne suffit pas."
+            ],
+            "expected": "Les secrets actuels sont hors du suivi Git et la procédure de diagnostic est retrouvable.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet.",
+            "command_context": "PowerShell, depuis le dossier bender_assistant",
+            "commands": [
+              "git ls-files .env voice.json bender_memory.db"
+            ]
+          }
         }
       ]
     },
@@ -114,37 +263,97 @@
           "id": "s2-t1",
           "title": "Afficher le texte compris",
           "detail": "Comparer la transcription avec ce que tu as réellement dit avant de juger la réponse.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Banc d’essai → capture micro et affichage de transcription",
+            "steps": [
+              "Dire une phrase courte dans une pièce calme, avec un nom ou un nombre facile à vérifier.",
+              "Comparer le texte affiché avant d’évaluer la réponse de Bender.",
+              "Noter les erreurs récurrentes de reconnaissance et refaire l’essai à une distance normale d’utilisation."
+            ],
+            "expected": "Le texte compris est visible et assez fidèle pour permettre une réponse pertinente.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s2-t2",
           "title": "Répondre avec le son et la bouche",
           "detail": "Lire l’audio et sa chronologie de poses sur la même horloge, puis revenir au repos.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Banc d’essai → conversation, son et affichages",
+            "steps": [
+              "Activer l’envoi de la transcription au cerveau et demander une réponse courte.",
+              "Observer le début du son, les changements de bouche puis la fin de lecture.",
+              "Vérifier que la bouche suit le temps réel de lecture, y compris sur une seconde phrase, puis revient au repos."
+            ],
+            "expected": "Un échange complet enchaîne écoute, réponse, audio, bouche et repos sans intervention de réparation.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s2-t3",
           "title": "Réussir dix échanges courts",
           "detail": "Noter les questions, les transcriptions, les réponses et les délais observés.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Session de test → 01_PILOTAGE/SUIVI_PROJET.md",
+            "steps": [
+              "Préparer dix questions courtes avec des formulations différentes.",
+              "Pour chaque échange, noter la phrase dite, la transcription, la réponse, le délai ressenti et les défauts de bouche.",
+              "Rejouer les cas échoués après correction et conserver les résultats de la série complète."
+            ],
+            "expected": "Dix échanges consécutifs sont réussis dans les conditions normales d’utilisation.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s2-t4",
           "title": "Arrêter proprement la parole",
           "detail": "Vérifier qu’Arrêter coupe le son et libère la bouche pour la prochaine réponse.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Interface web et gestion de lecture côté serveur",
+            "steps": [
+              "Démarrer une réponse suffisamment longue pour pouvoir l’interrompre.",
+              "Cliquer sur Arrêter pendant la parole et contrôler le son ainsi que le visage.",
+              "Demander immédiatement une nouvelle réponse pour vérifier que le lecteur et l’animation ont bien été libérés."
+            ],
+            "expected": "L’arrêt est effectif et une nouvelle réponse démarre normalement après l’interruption.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s2-t5",
           "title": "Tester les erreurs",
           "detail": "Essayer un silence, une phrase mal reconnue et un service indisponible.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Banc d’essai → scénarios d’erreur contrôlés",
+            "steps": [
+              "Lancer une écoute sans parler puis une phrase volontairement difficile à reconnaître.",
+              "Tester de façon contrôlée l’absence d’un service externe, en gardant un moyen de restaurer la configuration.",
+              "Vérifier que l’interface explique l’erreur et permet une nouvelle tentative sans redémarrer tout Bender."
+            ],
+            "expected": "Silence, mauvaise reconnaissance et service indisponible ont chacun un comportement compréhensible et récupérable.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s2-t6",
           "title": "Tester la vision sur demande",
           "detail": "Prendre une photo puis demander explicitement une description. Le mot de réveil viendra après cette boucle.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Banc d’essai → photo puis analyse de la photo",
+            "steps": [
+              "Prendre une photo récente avec un objet simple dans le champ.",
+              "Poser une question précise sur cet objet puis déclencher explicitement l’analyse.",
+              "Comparer la réponse à l’image et vérifier qu’aucune nouvelle analyse ne se lance toute seule."
+            ],
+            "expected": "La description répond à la question sur la bonne photo et son déclenchement reste explicite.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         }
       ]
     },
@@ -163,43 +372,113 @@
           "id": "s3-t1",
           "title": "Nommer les poses validées",
           "detail": "Conserver les formes déjà approuvées avec leur nom et leur référence visuelle.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "banc_essai → poses-nommees.json et références visuelles",
+            "steps": [
+              "Parcourir les poses existantes et rapprocher chacune de sa capture ou de son passage vidéo.",
+              "Conserver les noms utilisés et préciser petite/grande ouverture, coins et forme des dents.",
+              "Identifier séparément les yeux ; ne pas imposer une expression des yeux à une bouche."
+            ],
+            "expected": "Chaque pose retenue possède un nom stable et une référence montrant sa forme validée.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s3-t2",
           "title": "Cataloguer quelques répliques propres",
           "detail": "Associer à chaque audio son texte exact, son thème, son humeur et sa durée.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "bender voice sample → catalogue de répliques",
+            "steps": [
+              "Choisir quelques extraits courts avec une voix claire et une fin propre.",
+              "Pour chacun, écrire le texte exact, le thème, l’humeur et le nom du fichier source.",
+              "Préparer une copie de travail homogène sans modifier les originaux, puis vérifier l’écoute de chaque extrait."
+            ],
+            "expected": "Une petite collection exploitable est décrite et chaque entrée retrouve le bon audio.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s3-t3",
           "title": "Unifier les quatre sources de parole",
           "detail": "Cache, synthèse locale, API vocale et réplique sélectionnée fournissent tous audio + chronologie de bouche.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Code → bender_voice/service.py et lecteurs audio",
+            "steps": [
+              "Identifier les sorties actuelles du cache, de la synthèse locale, de l’API et des répliques.",
+              "Vérifier que chacune fournit un audio lisible et une chronologie de poses compatible avec le lecteur.",
+              "Lire un exemple de chaque source disponible ; garder les appels API désactivés tant que leur activation n’est pas choisie."
+            ],
+            "expected": "Chaque source activée utilise le même lecteur et la même interface de synchronisation.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s3-t4",
           "title": "Comparer sur la même horloge",
           "detail": "Revoir ensemble le son, l’image de la vidéo et la pose simulée.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "banc_essai → vidéo, audio et pose simulée",
+            "steps": [
+              "Choisir un passage court où la bouche de Bender est bien visible.",
+              "Aligner l’image vidéo, le son et la pose simulée sur le même instant de lecture.",
+              "Examiner début, voyelle tenue et fin au ralenti ; noter les écarts de forme et de timing séparément."
+            ],
+            "expected": "La comparaison montre sans ambiguïté quelle pose correspond à quel instant du son.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s3-t5",
           "title": "Tester sur des audios nouveaux",
           "detail": "Valider les associations sons/poses au-delà des extraits déjà calés. Distinguer estimation acoustique et phonèmes reconnus.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Banc d’essai → extraits nouveaux",
+            "steps": [
+              "Choisir des phrases absentes des calages déjà préparés, avec des consonnes et voyelles variées.",
+              "Lancer la synchronisation automatique et vérifier quel moteur est réellement actif.",
+              "Noter les sons mal associés et les poses excessivement tenues ; ajuster puis refaire une série nouvelle."
+            ],
+            "expected": "Le système fonctionne au-delà des extraits appris et les limites restantes sont clairement identifiées.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s3-t6",
           "title": "Régler l’intensité et les transitions",
           "detail": "Choisir petite ou grande ouverture selon la diction sans perdre la forme validée.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Animation → choix des poses et transitions",
+            "steps": [
+              "Comparer une phrase dite normalement et une exclamation plus forte.",
+              "Régler l’amplitude d’ouverture et la durée des transitions sans déformer les poses validées.",
+              "Observer aussi les silences et les fins de mots pour éviter les tremblements ou une grande bouche permanente."
+            ],
+            "expected": "La bouche exprime l’intensité tout en restant cohérente avec les sons et stable pendant les pauses.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s3-t7",
           "title": "Évaluer la voix locale sur le Dell",
           "detail": "Mesurer la qualité et le temps de génération avant de figer le moteur et la voix.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Dell → moteur de synthèse local et référence de voix",
+            "steps": [
+              "Choisir une référence vocale propre et préparer plusieurs phrases françaises de longueurs différentes.",
+              "Tester la génération locale sur le Dell avec son matériel réel et relever le temps d’attente.",
+              "Écouter prononciation, régularité et expressivité, puis consigner si la qualité et le délai conviennent à la conversation."
+            ],
+            "expected": "Le choix de voix locale est fondé sur des essais mesurés sur le Dell, avec ses limites connues.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         }
       ]
     },
@@ -217,37 +496,97 @@
           "id": "s4-t1",
           "title": "Inventorier le matériel réel",
           "detail": "Distinguer les composants disponibles de ceux qui sont encore prévus ou à commander.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Tableau matériel → 04_ELECTRONIQUE et composants sur table",
+            "steps": [
+              "Lister les composants présents et leur référence exacte.",
+              "Ajouter les éléments prévus mais non reçus avec leur rôle et les dimensions à confirmer.",
+              "Croiser ce relevé avec le tableau matériel existant pour éviter les achats en double."
+            ],
+            "expected": "Le statut disponible, à tester ou à commander est clair pour chaque composant.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s4-t2",
           "title": "Mesurer les composants",
           "detail": "Relever cartes, afficheurs, connecteurs, fixations et alimentations.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Établi → composants réels et modèle CAO",
+            "steps": [
+              "Mesurer l’encombrement, les fixations et la position des connecteurs.",
+              "Prévoir aussi la place des fiches branchées et le rayon de courbure des câbles.",
+              "Reporter les mesures et l’incertitude éventuelle dans le tableau de matériel avant de modifier la CAO."
+            ],
+            "expected": "Les dimensions nécessaires au montage sont documentées à partir du matériel réel.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s4-t3",
           "title": "Faire fonctionner les afficheurs ensemble",
           "detail": "Afficher les yeux et la bouche sur le matériel prévu pendant une réponse.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Établi → afficheurs définitifs",
+            "steps": [
+              "Brancher les afficheurs avec les contrôleurs et les connexions prévus.",
+              "Ouvrir les vues yeux et bouche sur les bonnes sorties et vérifier orientation et proportions.",
+              "Lancer une réponse audio puis contrôler les deux affichages simultanément."
+            ],
+            "expected": "Les yeux et la bouche s’affichent correctement ensemble pendant la parole.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s4-t4",
           "title": "Relier tous les périphériques",
           "detail": "Tester caméra, micro, son et affichage simultanément sur table.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Établi → montage complet hors enveloppe",
+            "steps": [
+              "Connecter caméra, micro, sortie audio et afficheurs à leur emplacement prévu sur le système.",
+              "Faire une conversation complète puis prendre une photo sans débrancher les autres périphériques.",
+              "Surveiller les déconnexions, parasites audio et erreurs pendant plusieurs échanges."
+            ],
+            "expected": "Tous les périphériques fonctionnent ensemble, de façon répétable, sur table.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s4-t5",
           "title": "Documenter l’alimentation",
           "detail": "Noter tensions, polarités, protections, consommation et branchements.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Schéma électrique et documentation des composants",
+            "steps": [
+              "Pour chaque appareil, relever tension, polarité et puissance nécessaires dans sa documentation.",
+              "Tracer la distribution d’alimentation, les masses, connecteurs et protections prévues ; faire vérifier les points incertains avant mise sous tension.",
+              "Après vérification du câblage, mesurer la consommation en fonctionnement et consigner les résultats."
+            ],
+            "expected": "Le schéma est compréhensible, les caractéristiques sont vérifiées et l’alimentation convient à l’ensemble.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s4-t6",
           "title": "Prévoir arrêt et refroidissement",
           "detail": "Vérifier l’accès à l’arrêt, le passage des câbles et la circulation de l’air.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Établi et implantation dans la tête",
+            "steps": [
+              "Prévoir une commande d’arrêt accessible et vérifier comment couper proprement le système.",
+              "Positionner les câbles pour éviter pincements, traction et gêne au démontage.",
+              "Identifier les zones chaudes et vérifier le passage d’air avec tous les composants prévus."
+            ],
+            "expected": "L’arrêt est accessible et câbles, démontage et refroidissement sont compatibles avec l’implantation.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         }
       ]
     },
@@ -266,43 +605,113 @@
           "id": "s5-t1",
           "title": "Retrouver la base validée",
           "detail": "Assemblage, fichier de travail et STL sont présents dans le dossier du projet validé.",
-          "initial_done": true
+          "initial_done": true,
+          "guide": {
+            "where": "BENDER_PROJET_VALIDE_20261022",
+            "steps": [
+              "Ouvrir le LISEZMOI puis le fichier d’assemblage pour voir la disposition générale.",
+              "Identifier le fichier de travail et les dossiers de STL de test et d’impression réelle.",
+              "Conserver cette version de référence avant toute nouvelle modification."
+            ],
+            "expected": "Assemblage, source modifiable et STL de référence sont identifiés et ouvrables.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s5-t2",
           "title": "Contrôler les cotes estimées",
           "detail": "Lire le LISEZMOI du modèle et vérifier les dimensions encore incertaines.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "CAO validée → liste des cotes à vérifier",
+            "steps": [
+              "Relever dans le LISEZMOI les dimensions et références signalées comme estimées.",
+              "Comparer chaque point au composant reçu ou à une mesure vérifiée.",
+              "Corriger la copie de travail et noter les différences avant de réexporter des pièces."
+            ],
+            "expected": "Aucune cote critique du montage retenu ne dépend d’une estimation non signalée.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s5-t3",
           "title": "Comparer modèle et matériel",
           "detail": "Confirmer que les périphériques retenus correspondent aux pièces représentées en CAO.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "CAO → assemblage avec le matériel réel",
+            "steps": [
+              "Vérifier référence, dimensions et connectique de chaque périphérique retenu.",
+              "Comparer ces caractéristiques aux volumes représentés dans l’assemblage.",
+              "Examiner les interférences en incluant les câbles branchés et l’ordre de montage."
+            ],
+            "expected": "Le matériel choisi correspond au modèle ou les adaptations nécessaires sont documentées.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s5-t4",
           "title": "Imprimer les supports critiques",
           "detail": "Tester fixations, tolérances et connecteurs avec des éprouvettes ou de petites pièces.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Logiciel de tranchage et imprimante → petites éprouvettes",
+            "steps": [
+              "Choisir les points risqués : vis, clips, logements de prises et supports d’écran.",
+              "Imprimer une petite zone ou un support pour vérifier le jeu avec le matériau prévu.",
+              "Essayer le composant réel, corriger les tolérances et conserver la cote qui fonctionne."
+            ],
+            "expected": "Les fixations et logements critiques ont été essayés physiquement et s’assemblent correctement.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s5-t5",
           "title": "Tester une portion de façade",
           "detail": "Vérifier l’intégration des yeux et de la bouche avant une impression complète.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "CAO et impression → portion de façade",
+            "steps": [
+              "Extraire une section représentative des ouvertures et fixations des yeux ou de la bouche.",
+              "Imprimer cette portion puis présenter le véritable afficheur et sa connectique.",
+              "Contrôler maintien, cadrage de l’image et absence de gêne visuelle ou mécanique."
+            ],
+            "expected": "La portion de façade confirme l’intégration et le cadrage de l’affichage.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s5-t6",
           "title": "Préparer le montage et la maintenance",
           "detail": "Prévoir accès, trappe, ventilation, câbles et composants démontables.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "CAO → assemblage provisoire et accès",
+            "steps": [
+              "Simuler l’ordre de montage en vérifiant l’accès aux vis et connecteurs à chaque étape.",
+              "Prévoir comment remplacer micro, caméra, écran ou carte sans casser les pièces.",
+              "Confirmer la trappe, le passage d’air et les zones où les câbles seront retenus."
+            ],
+            "expected": "Un ordre de montage et une méthode d’accès aux composants sont réalisables.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s5-t7",
           "title": "Valider les impressions définitives",
           "detail": "Vérifier orientation, supports et volume d’impression après l’assemblage provisoire.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Logiciel de tranchage → pièces définitives",
+            "steps": [
+              "Utiliser les exports approuvés après les essais de supports et de façade.",
+              "Contrôler taille, orientation, supports, volume disponible et estimation de matière pour chaque pièce.",
+              "Vérifier l’assemblage provisoire puis lancer les impressions dans un ordre qui permet les essais intermédiaires."
+            ],
+            "expected": "Les pièces définitives reposent sur des essais réussis et des paramètres d’impression vérifiés.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         }
       ]
     },
@@ -321,31 +730,81 @@
           "id": "s6-t1",
           "title": "Imprimer et ajuster les pièces",
           "detail": "Corriger les assemblages avant peinture et finition.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Imprimante et établi → pièces de la tête",
+            "steps": [
+              "Identifier chaque pièce et sa version après impression.",
+              "Faire un montage à blanc, essayer les fixations et repérer les zones de frottement.",
+              "Corriger ou réimprimer les pièces problématiques avant toute finition extérieure."
+            ],
+            "expected": "La tête s’assemble sans contrainte excessive et les composants gardent leur place.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s6-t2",
           "title": "Monter et repérer les câbles",
           "detail": "Installer les composants et conserver des connexions accessibles.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Tête ouverte → câblage et fixations",
+            "steps": [
+              "Installer les composants selon l’ordre de montage validé.",
+              "Repérer les deux extrémités des câbles et les fixer sans tension ni pincement.",
+              "Photographier le montage avant fermeture et vérifier l’accès aux connexions utiles."
+            ],
+            "expected": "Le câblage est identifiable, maintenu et démontable pour la maintenance.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s6-t3",
           "title": "Régler la lisibilité",
           "detail": "Observer les yeux et la bouche depuis plusieurs angles et distances.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Tête assemblée → affichages",
+            "steps": [
+              "Afficher plusieurs poses avec l’éclairage habituel de la pièce.",
+              "Regarder le robot de face, de côté et à la distance normale de conversation.",
+              "Corriger cadrage, luminosité ou masquage mécanique puis refaire les mêmes observations."
+            ],
+            "expected": "Les yeux et la bouche restent lisibles dans les positions prévues d’utilisation.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s6-t4",
           "title": "Tester l’acoustique dans la tête",
           "detail": "Vérifier volume, intelligibilité et écoute pendant puis après une réponse audio.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Tête assemblée → micro et haut-parleurs",
+            "steps": [
+              "Faire parler Bender puis écouter la clarté et les résonances de l’enveloppe.",
+              "Tester une écoute avant et immédiatement après sa réponse, à plusieurs distances.",
+              "Noter bruit de fond, saturation ou reprise de sa propre voix et ajuster placement ou niveaux."
+            ],
+            "expected": "La parole est intelligible et le micro permet une nouvelle demande sans gêne majeure.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s6-t5",
           "title": "Faire des conversations prolongées",
           "detail": "Surveiller stabilité et température dans l’enveloppe assemblée.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Tête assemblée → séance prolongée",
+            "steps": [
+              "Enchaîner plusieurs conversations avec les afficheurs et périphériques actifs.",
+              "Surveiller température, ventilation, stabilité audio et éventuelles erreurs du service.",
+              "Consigner durée, conditions d’essai et incidents ; corriger puis rejouer la séance."
+            ],
+            "expected": "La tête fonctionne de façon stable sur une séance représentative de l’usage prévu.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         }
       ]
     },
@@ -364,37 +823,97 @@
           "id": "s7-t1",
           "title": "Commander une vraie lumière",
           "detail": "Relier la commande à Home Assistant et vérifier l’état de l’équipement.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Code de commande et Home Assistant → équipement de test",
+            "steps": [
+              "Choisir une lumière identifiée dans Home Assistant et confirmer son contrôle manuel.",
+              "Relier la commande de Bender à cette entité et récupérer son état réel après exécution.",
+              "Tester allumage, extinction et équipement indisponible ; ne confirmer une action qu’après vérification."
+            ],
+            "expected": "Bender agit sur la bonne lumière et distingue réussite réelle et échec.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s7-t2",
           "title": "Valider les minuteurs",
           "detail": "Créer un minuteur, vérifier son échéance et tester son arrêt.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Bender → minuteurs",
+            "steps": [
+              "Créer un minuteur court et vérifier la durée comprise.",
+              "Attendre son échéance et confirmer le signal prévu sans double déclenchement.",
+              "Créer un second minuteur puis tester son annulation avant la fin."
+            ],
+            "expected": "Échéance et annulation fonctionnent avec un résultat clair pour l’utilisateur.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s7-t3",
           "title": "Lire une information demandée",
           "detail": "Tester une réponse longue et le choix de sa source vocale.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Conversation → information et voix longue",
+            "steps": [
+              "Demander une information précise avec une réponse de plusieurs phrases.",
+              "Vérifier la source et l’actualité de l’information quand c’est nécessaire.",
+              "Contrôler le choix de voix, la fluidité de lecture et l’arrêt possible pendant la réponse."
+            ],
+            "expected": "Une réponse longue est utile, lisible à voix haute et utilise la source vocale prévue.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s7-t4",
           "title": "Décrire une image utile",
           "detail": "Vérifier une demande de vision explicite avec une photo pertinente.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Bender → vision sur demande",
+            "steps": [
+              "Choisir un cas concret : identifier un objet visible ou décrire ce qui est devant le robot.",
+              "Prendre une photo récente puis formuler une question liée à l’image.",
+              "Comparer la réponse à la scène et relever ce que le système ne peut pas conclure."
+            ],
+            "expected": "La vision répond utilement au cas choisi et signale les incertitudes importantes.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s7-t5",
           "title": "Mémoriser une préférence choisie",
           "detail": "Enregistrer, retrouver et modifier une préférence explicitement demandée.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Conversation et mémoire → préférence de test",
+            "steps": [
+              "Demander explicitement de retenir une préférence simple et non sensible.",
+              "Ouvrir une nouvelle conversation et vérifier qu’elle est retrouvée au bon moment.",
+              "Demander sa modification puis son retrait et contrôler le résultat."
+            ],
+            "expected": "La préférence peut être mémorisée, retrouvée, corrigée et retirée de façon maîtrisée.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s7-t6",
           "title": "Distinguer succès et échec",
           "detail": "L’interface montre une commande demandée, exécutée ou échouée ; un texte de succès ne suffit pas.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Code et interface → états des commandes",
+            "steps": [
+              "Pour chaque fonction, définir les états demandée, en cours, réussie et échouée.",
+              "Afficher le résultat réel ou l’erreur remontée par l’équipement ou le service.",
+              "Tester volontairement un échec pour vérifier qu’un texte enthousiaste ne masque pas l’absence d’action."
+            ],
+            "expected": "Le résultat affiché correspond à ce qui a réellement été exécuté.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         }
       ]
     },
@@ -413,31 +932,81 @@
           "id": "s8-t1",
           "title": "Terminer l’extérieur",
           "detail": "Faire la finition après validation des ajustements et de l’acoustique.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Atelier → enveloppe validée",
+            "steps": [
+              "Démonter ou protéger les composants avant la finition.",
+              "Préparer et finir les surfaces sans obstruer ventilation, interfaces ni zones de fixation.",
+              "Remonter puis vérifier de nouveau les ajustements et la visibilité des affichages."
+            ],
+            "expected": "La finition est réalisée et le fonctionnement mécanique et visuel est conservé.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s8-t2",
           "title": "Finaliser le câblage",
           "detail": "Fixer et repérer les connexions tout en conservant la maintenance possible.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Bender assemblé → câblage final",
+            "steps": [
+              "Reprendre les fixations de câbles après les essais prolongés.",
+              "Contrôler repérage, tenue des connecteurs, protection contre les arêtes et accès de maintenance.",
+              "Verifier qu’une ouverture de la tête ne tire pas sur un câble ou une carte."
+            ],
+            "expected": "Le câblage reste stable en usage normal et les éléments remplaçables sont accessibles.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s8-t3",
           "title": "Documenter les sauvegardes",
           "detail": "Sauvegarder les données utiles et vérifier une procédure de restauration.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Stockage de sauvegarde et documentation de restauration",
+            "steps": [
+              "Identifier code, configuration privée, mémoire, bibliothèque audio et progression de la roadmap à sauvegarder.",
+              "Créer une sauvegarde protégée puis vérifier sa lecture et la présence des fichiers utiles.",
+              "Essayer une restauration dans un dossier de test et documenter l’ordre des opérations sans écraser le système courant."
+            ],
+            "expected": "Une sauvegarde vérifiée et une procédure de restauration testée sont disponibles.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s8-t4",
           "title": "Tester les pannes courantes",
           "detail": "Redémarrage, perte réseau et indisponibilité des services externes.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Bender → scénarios de récupération",
+            "steps": [
+              "Tester un redémarrage normal puis contrôler retour du service, réseau et périphériques.",
+              "Tester une perte réseau maîtrisée et l’indisponibilité d’un service externe, puis restaurer la situation.",
+              "Vérifier que les fonctions locales restent disponibles lorsqu’elles le permettent et que les erreurs sont expliquées."
+            ],
+            "expected": "Les pannes courantes ont une récupération connue et ne perdent pas les données utiles.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         },
         {
           "id": "s8-t5",
           "title": "Valider une utilisation prolongée",
           "detail": "Tester plusieurs séances et documenter l’accès aux journaux et le remplacement d’un composant.",
-          "initial_done": false
+          "initial_done": false,
+          "guide": {
+            "where": "Usage quotidien et carnet de maintenance",
+            "steps": [
+              "Utiliser Bender sur plusieurs séances dans ses conditions habituelles.",
+              "Noter défauts, redémarrages nécessaires et interventions matérielles.",
+              "Finaliser une fiche courte : accès aux journaux, arrêt, mise à jour, sauvegarde et remplacement des principaux composants."
+            ],
+            "expected": "Bender est utilisable au quotidien et une intervention de maintenance est guidée par une procédure claire.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
         }
       ]
     }
