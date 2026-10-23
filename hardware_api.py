@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from bender_voice.config import load_config
 from bender_voice.hardware import Hardware, HardwareError, HardwareBusy
 from bender_voice.host_player import HostPlayer
+from pose_models import EyesShape
 from voice_api import get_voice, broadcast_face, set_host_face_active
 
 
@@ -38,6 +39,7 @@ class ListenRequest(BaseModel):
 class PlaybackRequest(BaseModel):
     ids: list[str] = Field(min_length=1, max_length=16)
     eyes: Literal['normal', 'angry', 'happy', 'surprised', 'sleepy', 'sad', 'worried', 'crying', 'ref1', 'ref2', 'ref3', 'ref4', 'ref5'] = 'normal'
+    custom_eyes: EyesShape | None = None
 
 
 class VisionRequest(BaseModel):
@@ -105,6 +107,8 @@ def build_hardware_router(brain_callback):
     @router.post('/api/hardware/play', dependencies=[Depends(require_control)])
     async def play(req: PlaybackRequest, player=Depends(get_host_player)):
         try:
+            if req.custom_eyes is not None:
+                return await player.start(req.ids, req.eyes, custom_eyes=req.custom_eyes.model_dump())
             return await player.start(req.ids, req.eyes)
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc

@@ -94,6 +94,8 @@ class HardwareTests(unittest.TestCase):
             self.assertEqual(calls, [('Que vois-tu ?', b'photo-data')])
 
     def test_host_player_broadcasts_and_returns_to_rest(self):
+        from pose_models import EyesShape
+        custom = EyesShape(kind='eyes', eyes=[{'cx': x, 'cy': 240, 'rx': 137, 'ry': 130, 'top': [0, 0, 0], 'bottom': [1, 1, 1]} for x in (244, 556)]).model_dump()
         bundle = self.voice.prepare('Bonjour')
         events, ownership = [], []
         class Process:
@@ -106,12 +108,13 @@ class HardwareTests(unittest.TestCase):
         async def scenario():
             player = HostPlayer(self.voice, self.hardware, broadcast, ownership.append)
             with patch('shutil.which', return_value='aplay'), patch('subprocess.Popen', return_value=Process()) as command:
-                await player.start([bundle['segments'][0]['id']]);await player.task
+                await player.start([bundle['segments'][0]['id']], custom_eyes=custom);await player.task
                 self.assertIn('plughw:CARD=PCH,DEV=0', command.call_args.args[0])
             self.assertEqual(player.state['status'], 'finished')
         asyncio.run(scenario())
         self.assertTrue(any(event['active'] for event in events));self.assertEqual(events[-1]['pose'], 0)
         self.assertEqual(ownership, [True, False])
+        self.assertTrue(all(event['custom_eyes'] == custom for event in events))
 
     def test_stop_before_task_starts_releases_ownership(self):
         bundle = self.voice.prepare('Bonjour');ownership = []

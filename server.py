@@ -30,6 +30,8 @@ from roadmap_api import build_roadmap_router
 app.include_router(build_roadmap_router())
 from bench_api import build_bench_router
 app.include_router(build_bench_router())
+from pose_api import build_pose_router
+app.include_router(build_pose_router())
 app.mount('/static', StaticFiles(directory=ROOT / 'static'), name='static')
 templates = Jinja2Templates(directory=str(ROOT / 'templates'))
 

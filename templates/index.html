@@ -26,14 +26,14 @@
 <div class="grid"><label for="emotion">Expression<select id="emotion"><option value="normal">Normaux</option><option value="angry">Agacés</option><option value="happy">Contents</option><option value="surprised">Surpris</option><option value="sleepy">Endormis</option><option value="sad">Tristes</option><option value="worried">Inquiets</option><option value="crying">Sanglots</option><option value="ref1">Référence 1 · paupières basses</option><option value="ref2">Référence 2 · paupières basses</option><option value="ref3">Référence 3 · mi-ouverts</option><option value="ref4">Référence 4 · presque fermés</option><option value="ref5">Référence 5 · mal à l’aise</option></select></label>
 <label for="eyeMode">Comportement<select id="eyeMode"><option value="idle">Au repos</option><option value="listening">À l’écoute</option><option value="thinking">Réflexion · regard mobile</option><option value="alert">Alerte</option></select></label></div>
 <label class="inline"><input id="eyeBlink" type="checkbox"> Clignement automatique de démonstration</label>
-<div class="buttons"><button id="demoEyes">Parcourir les expressions</button><button id="stopEyes">Arrêter la démo</button></div><p id="eyePreviewStatus" role="status">Expression normale.</p>
+<div class="buttons"><button id="demoEyes">Parcourir les expressions</button><button id="stopEyes">Arrêter la démo</button></div><p id="eyePreviewStatus" role="status">Expression normale.</p><div id="library-eyes"></div><details class="graphic-editor"><summary>Créer ou modifier des yeux · éditeur graphique</summary><div id="editor-eyes"></div></details>
 </section>
 <section id="panel-bouche" role="tabpanel" aria-labelledby="tab-bouche" class="workshop-panel" hidden>
 <h2>Positions de bouche</h2><p>Les 12 formes existantes sont disponibles ici. La lecture d’un audio reprend automatiquement la synchronisation.</p>
 <div class="grid"><label for="mouthPose">Pose à afficher<select id="mouthPose"><option value="0">Pose 1 · lèvres espacées</option><option value="1">Pose 2 · coins serrés, centre ouvert</option><option value="2">Pose 3 · ouais normal, petite ouverture</option><option value="3">Pose 4 · feu, serrées partout</option><option value="4">Pose 5 · droites, écart moyen</option><option value="5">Pose 6 · droites, petit écart</option><option value="6">Pose 7 · référence 1</option><option value="7">Contact dents 2 et 5 · référence 2</option><option value="8">Pose 9 · référence 3</option><option value="9">Ouvre la bouche · dents du bas hors cadre</option><option value="10">Pose 11 · référence 5</option><option value="11">Pose 3 · ouaiiii crié, grande ouverture</option></select></label>
 <label for="teeth">Forme des dents<select id="teeth"><option value="straight">Droites</option><option value="rounded">Arrondies</option></select></label></div>
 <div class="buttons"><button id="previewMouth">Afficher cette pose</button><button id="demoMouth">Parcourir les 12 poses</button><button id="stopMouth">Arrêter la démo</button></div>
-<p>Pour retrouver les essais avec la voix : ouvre « Voix et enregistrements » puis sélectionne un extrait et son calage.</p>
+<div id="library-mouth"></div><details class="graphic-editor"><summary>Créer ou modifier une bouche · éditeur graphique</summary><div id="editor-mouth"></div></details><p>Pour retrouver les essais avec la voix : ouvre « Voix et enregistrements » puis sélectionne un extrait et son calage.</p>
 </section>
 <section id="panel-voix" role="tabpanel" aria-labelledby="tab-voix" class="workshop-panel" hidden>
 <h2>Voix et enregistrements</h2>
@@ -69,4 +69,4 @@
 <label for="speed">Vitesse de comparaison dans le navigateur</label><select id="speed"><option value="1">Normale</option><option value="0.5">Moitié</option><option value="0.25">Quart</option></select><audio id="player" controls></audio>
 <p id="response"></p><pre id="details"></pre><p id="error" role="alert"></p></section>
 </section>
-</main><script src="/static/poses.js"></script><script src="/static/app.js"></script><script src="/static/workshop.js"></script></body></html>
+</main><script src="/static/shape-renderer.js"></script><script src="/static/poses.js"></script><script src="/static/app.js"></script><script src="/static/workshop.js"></script><script src="/static/pose-editor.js"></script></body></html>

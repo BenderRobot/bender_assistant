@@ -10,6 +10,8 @@ La page d'accueil propose cinq onglets accessibles directement :
 
 Les aperçus des yeux et de la bouche restent visibles. La clé et la sortie audio sont dans « Connexion au Dell », disponible depuis tous les onglets. Pour écouter sans clé matérielle, choisir « Ce navigateur ». Les écrans `/face?display=eyes` et `/face?display=mouth` restent compatibles.
 
+Les menus Yeux et Bouche incluent maintenant leurs éditeurs graphiques et leurs bibliothèques de créations personnelles. Voir [EDITEURS_GRAPHIQUES.md](EDITEURS_GRAPHIQUES.md) pour le dessin à la souris, les copies de poses, les réglages et la sauvegarde.
+
 ## Enregistrements retrouvés
 
 Les cinq extraits du banc d'essai et la réplique « Un déguisement ringard… » sont préparés depuis le dossier centralisé `banc_essai`. Les autres fichiers bruts restent dans `bender voice sample` ; cette page affiche les six références préparées et les entrées activées du catalogue de bibliothèque du serveur.

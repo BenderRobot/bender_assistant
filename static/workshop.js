@@ -22,7 +22,7 @@
  let eyeTimer, mouthTimer;
  window.stopWorkshopDemos = () => { clearInterval(eyeTimer); clearInterval(mouthTimer); eyeTimer=mouthTimer=null; };
  function updateEyes() {
-  el('emotion').onchange();
+  if(!timeline&&!hostPlaying)sendFace({...face,eyes:el('emotion').value,mode:el('eyeMode').value,blink:el('eyeBlink').checked});
   el('eyePreviewStatus').textContent=el('emotion').selectedOptions[0].textContent+' · '+el('eyeMode').selectedOptions[0].textContent;
  }
  el('emotion').addEventListener('change',updateEyes);
@@ -30,11 +30,12 @@
  el('eyeBlink').addEventListener('change',updateEyes);
  el('demoEyes').onclick=async()=>{
   await stop(); let i=0;
-  const advance=()=>{el('emotion').selectedIndex=i++%el('emotion').options.length;updateEyes();};
+  const advance=()=>{el('emotion').selectedIndex=i++%el('emotion').options.length;if(window.BenderCustomSelection)window.BenderCustomSelection.eyes=null;updateEyes();};
   advance(); eyeTimer=setInterval(advance,1500);
  };
  el('stopEyes').onclick=()=>{clearInterval(eyeTimer);eyeTimer=null;};
  function mouthFrame() {
+  if(window.BenderCustomSelection)window.BenderCustomSelection.mouth=null;
   const pose=Number(el('mouthPose').value);
   sendFace({pose,eyes:el('emotion').value,active:false,rounded:el('teeth').value==='rounded',mode:el('eyeMode').value,blink:el('eyeBlink').checked});
   el('poseState').textContent=el('mouthPose').selectedOptions[0].textContent;

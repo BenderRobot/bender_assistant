@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from bender_voice.config import load_config
 from bender_voice.providers import VoiceUnavailable
 from bender_voice.service import VoiceService
+from pose_models import MouthShape, EyesShape
 
 router = APIRouter()
 
@@ -65,6 +66,8 @@ class FaceState(BaseModel):
     rounded: bool = False
     mode: Literal['idle', 'listening', 'thinking', 'alert'] = 'idle'
     blink: bool = False
+    custom_mouth: MouthShape | None = None
+    custom_eyes: EyesShape | None = None
 
 
 viewers = set()

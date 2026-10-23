@@ -16,7 +16,7 @@ class HostPlayer:
         self.process = None
         self.state = {'active': False, 'status': 'idle'}
 
-    async def start(self, identifiers, eyes='normal'):
+    async def start(self, identifiers, eyes='normal', custom_eyes=None):
         if self.task and not self.task.done():
             raise HardwareBusy('Lecture déjà en cours ; arrêter avant de relancer')
         if not shutil.which('aplay'):
@@ -32,7 +32,7 @@ class HostPlayer:
         job = uuid.uuid4().hex
         self.state = {'active': True, 'status': 'starting', 'job': job}
         self.ownership(True)
-        self.task = asyncio.create_task(self._run(segments, eyes, job))
+        self.task = asyncio.create_task(self._run(segments, eyes, job, custom_eyes))
         return dict(self.state)
 
     async def _cleanup_process(self):
@@ -45,7 +45,7 @@ class HostPlayer:
                 process.kill()
                 await asyncio.to_thread(process.wait, 2)
 
-    async def _run(self, segments, eyes, job):
+    async def _run(self, segments, eyes, job, custom_eyes=None):
         error = ''
         try:
             for number, (audio, timeline) in enumerate(segments):
@@ -65,7 +65,7 @@ class HostPlayer:
                     self.state = {'active': True, 'status': 'playing', 'job': job,
                                   'segment': number, 'elapsed': round(elapsed, 2), 'duration': timeline['duration']}
                     await self.broadcast({'pose': cue['pose'], 'eyes': selected_eyes, 'rounded': bool(cue.get('rounded')),
-                                          'active': True, 'playback': self.state})
+                                          'active': True, 'custom_eyes': custom_eyes, 'playback': self.state})
                     await asyncio.sleep(.04)
                 if self.process.returncode != 0:
                     raise HardwareError('Lecture ALSA impossible ; vérifier les enceintes et la sortie PCH')
@@ -80,7 +80,7 @@ class HostPlayer:
             if self.state.get('status') != 'stopped':
                 self.state = {'active': False, 'status': 'error' if error else 'finished', 'job': job, 'error': error}
             self.ownership(False)
-            await self.broadcast({'pose': 0, 'eyes': eyes, 'active': False, 'playback': self.state})
+            await self.broadcast({'pose': 0, 'eyes': eyes, 'custom_eyes': custom_eyes, 'active': False, 'playback': self.state})
 
     async def stop(self):
         if self.task and not self.task.done():

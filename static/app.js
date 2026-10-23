@@ -17,7 +17,7 @@ function hostState(state){
 }
 function connect(){socket=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/api/face');socket.onmessage=e=>{face=JSON.parse(e.data);lastFace=performance.now();if(face.playback)hostState(face.playback);};socket.onclose=()=>setTimeout(connect,1500);}
 connect();
-function sendFace(state){face=state;lastFace=performance.now();if(socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify(state));}
+function sendFace(state){const custom=window.BenderCustomSelection||{};state={...state,custom_eyes:custom.eyes||null,custom_mouth:state.active?null:custom.mouth||null};face=state;lastFace=performance.now();if(socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify(state));}
 async function stop(){
  window.stopWorkshopDemos?.();
  run++;segments=[];player.pause();player.currentTime=0;timeline=null;
@@ -37,7 +37,7 @@ async function beginBundle(data,token){
  if(token!==run)return;bundle=data;segments=bundle.segments;index=0;$('replay').disabled=false;
  $('details').textContent=segments.map(s=>`Source : ${s.source}${s.cached?' · déjà enregistré':''}`).concat(...segments.map(s=>s.warnings||[])).join('\n');
  if($('output').value==='dell'){
-  timeline=null;player.pause();const res=await ioFetch('/api/hardware/play',{ids:segments.map(s=>s.id),eyes:$('emotion').value});
+  timeline=null;player.pause();const res=await ioFetch('/api/hardware/play',{ids:segments.map(s=>s.id),eyes:$('emotion').value,custom_eyes:window.BenderCustomSelection?.eyes||null});
   const state=await res.json();if(token!==run){await ioFetch('/api/hardware/stop');return;}hostState(state);
   hostState(await (await ioFetch('/api/hardware/playback',null,'GET')).json());
  }else await playSegment(token);
@@ -62,7 +62,7 @@ async function perform(chat){
  }catch(error){$('error').textContent=error.message;$('state').textContent='Indisponible';}finally{$('say').disabled=$('chat').disabled=false;}
 }
 $('say').onclick=()=>perform(false);$('chat').onclick=()=>perform(true);$('stop').onclick=stop;
-$('emotion').onchange=()=>{if(!timeline&&!hostPlaying)sendFace({...face,eyes:$('emotion').value,mode:$('eyeMode').value,blink:$('eyeBlink').checked});};
+$('emotion').onchange=()=>{if(window.BenderCustomSelection)window.BenderCustomSelection.eyes=null;if(!timeline&&!hostPlaying)sendFace({...face,eyes:$('emotion').value,mode:$('eyeMode').value,blink:$('eyeBlink').checked});};
 $('speed').onchange=()=>{player.playbackRate=Number($('speed').value);};
 $('output').onchange=()=>{player.hidden=$('output').value==='dell';};$('output').onchange();
 $('replay').onclick=async()=>{if(!bundle)return;await stop();try{await beginBundle(bundle,run);}catch(e){$('error').textContent=e.message;}};
