@@ -8,6 +8,16 @@ Chaque action propose un volet « Comment accomplir cette tâche » : endroit o�
 
 Les acquis confirmés sont précochés dans le plan initial. Les cases ne déclenchent aucune commande matérielle et ne constituent pas une validation automatique.
 
+## Notes et Kanban
+
+Chaque étape propose une note libre (8 000 caractères maximum) et un statut indépendant des cases. Écrire puis cliquer sur « Enregistrer la note » ; un message confirme la sauvegarde. Les brouillons sont gardés lorsqu'on change d'étape dans la page, et une alerte prévient avant de quitter avec des notes non enregistrées.
+
+La page `/kanban` classe les neuf étapes dans « À faire », « En progrès », « À tester » et « Validé ». Déplacer une tuile par la poignée ou le menu « Déplacer vers ». Le menu permet aussi l'utilisation au clavier et sur mobile. Le numéro et la couleur d'une tuile restent liés à son étape. Le titre ouvre le détail de la roadmap ; la note peut être modifiée depuis les deux vues.
+
+Le statut Kanban est déclaré manuellement : déplacer vers Validé ne coche pas les actions, et cocher toutes les actions ne déplace pas automatiquement la tuile. Le compteur de validation des étapes suit ces statuts ; le pourcentage général continue de compter les actions cochées.
+
+Pour l'étape mécanique, une note initiale consigne la tête validée en CAO et l'attente des composants. Elle ne remplace pas une note que l'utilisateur a déjà enregistrée. Les notes, statuts et cases partagent la base `data/roadmap.sqlite3`. L'évolution de la base préserve les cases existantes ; l'export de la roadmap inclut aussi les notes et statuts.
+
 ## Conservation
 
 Le contenu éditorial est dans `roadmap-plan.json`. Garder les identifiants des actions stables pour préserver le sens des cases déjà cochées. La progression vit par défaut dans `data/roadmap.sqlite3`, hors Git et des archives de code. Elle est conservée lors des mises à jour par le déploiement actuel et partagée entre les navigateurs après rechargement.
@@ -26,4 +36,4 @@ Après succès, ouvrir http://192.168.1.41:8000/roadmap et actualiser si nécess
 
 ## Validation
 
-25 tests logiciels passent, dont trois tests de roadmap : persistance après recréation de l'application, indépendance des changements et refus des identifiants/valeurs invalides ou écritures d'une autre origine. L'aperçu local utilise une base distincte ; les coches de test ne sont pas déployées.
+27 tests logiciels passent, dont cinq tests de roadmap : persistance après recréation de l'application, migration des anciennes cases, notes/statuts indépendants des actions et refus des identifiants/valeurs invalides ou écritures d'une autre origine. L'aperçu local utilise une base distincte ; ses données de test ne sont pas déployées.

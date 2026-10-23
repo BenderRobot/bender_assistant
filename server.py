@@ -58,6 +58,10 @@ async def serve_face(request: Request):
 async def serve_roadmap(request: Request):
     return templates.TemplateResponse(request=request, name='roadmap.html')
 
+@app.get('/kanban', response_class=HTMLResponse)
+async def serve_kanban(request: Request):
+    return templates.TemplateResponse(request=request, name='kanban.html')
+
 @app.get("/api/routines")
 async def fetch_routines():
     """Récupère la liste des routines."""

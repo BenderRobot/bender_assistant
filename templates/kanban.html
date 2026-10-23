@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Bender · Kanban du projet</title>
+  <link rel="stylesheet" href="/static/roadmap.css">
+  <script src="/static/roadmap-stages.js" defer></script>
+  <script src="/static/kanban.js" defer></script>
+</head>
+<body>
+<header class="topbar"><a class="brand" href="/roadmap"><span class="brand-mark" aria-hidden="true">B</span> BENDER <span class="brand-sub">/ PROJET JARVIS</span></a><nav class="view-nav" aria-label="Vues du projet"><a href="/roadmap">Roadmap</a><a href="/kanban" aria-current="page">Kanban</a><a href="/">Banc d’essai</a></nav></header>
+<main class="kanban-main">
+  <section class="kanban-hero"><div><p class="eyebrow">LE PROJET EN UN COUP D’ŒIL</p><h1>Chaque étape à sa place.</h1><p class="intro">Déplace les tuiles selon l’avancement réel et garde une trace de ce qui attend.</p></div><span class="badge" id="boardCount">9 étapes</span></section>
+  <p class="board-hint">Glisse une tuile par sa poignée ⠿, ou utilise son menu « Déplacer vers ». Les statuts sont indépendants des cases : tu peux noter « CAO validée, composants en attente » sans déclarer le montage terminé.</p>
+  <p id="boardStatus" class="board-status" role="status" aria-live="polite">Chargement…</p>
+  <p id="boardError" class="error" role="alert" hidden></p><button id="boardRetry" hidden>Réessayer</button>
+  <div id="board" class="kanban-board" aria-label="Tableau Kanban des étapes"></div>
+  <footer>Notes et statuts partagés avec la roadmap · Sauvegardés sur Bender après chaque déplacement ou enregistrement de note.</footer>
+</main>
+</body></html>

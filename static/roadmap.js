@@ -16,10 +16,10 @@
     $('percent').textContent = `${percent} %`;
     $('ring').style.setProperty('--progress', `${percent}%`);
     $('totalLabel').textContent = `${done} actions accomplies sur ${total}`;
-    $('phaseLabel').textContent = `${steps.filter(s => count(s) === s.tasks.length).length} étapes terminées sur ${steps.length}`;
+    $('phaseLabel').textContent = `${steps.filter(s => model.steps[s.id].status === 'validated').length} étapes validées sur ${steps.length}`;
     steps.forEach((step, index) => {
       const button = $(`nav-${index}`);
-      button.classList.toggle('finished', count(step) === step.tasks.length);
+      button.classList.toggle('finished', model.steps[step.id].status === 'validated');
       button.querySelector('.nav-fraction').textContent = `${count(step)}/${step.tasks.length}`;
       if (index === selected) button.setAttribute('aria-current', 'step');
       else button.removeAttribute('aria-current');
@@ -27,8 +27,8 @@
     const step = steps[selected], doneHere = count(step);
     $('stepFill').style.width = `${100 * doneHere / step.tasks.length}%`;
     $('stepCount').textContent = `${doneHere} / ${step.tasks.length}`;
-    $('stepBadge').textContent = doneHere === step.tasks.length ? 'Terminée' : doneHere ? 'En cours' : 'À commencer';
-    $('nextTask').textContent = step.tasks.find(t => !model.progress[t.id].done)?.title || 'Étape terminée. Tu peux passer à la suivante.';
+    $('stepBadge').textContent = BenderStages.labels[model.steps[step.id].status];
+    $('nextTask').textContent = step.tasks.find(t => !model.progress[t.id].done)?.title || 'Toutes les actions sont cochées. Vérifie le critère de validation de l’étape.';
     filterTasks();
   }
   function filterTasks() {
@@ -76,6 +76,7 @@
     $('stepTitle').textContent = step.title;
     $('stepDescription').textContent = step.description;
     $('stepGate').textContent = step.gate;
+    $('stageEditor').replaceChildren(BenderStages.editor(model, step, {onChange: stats}));
     $('tags').replaceChildren(...step.domains.map(domain => {
       const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = domain; return tag;
     }));

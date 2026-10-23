@@ -713,7 +713,9 @@
             "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
           }
         }
-      ]
+      ],
+      "initial_status": "in_progress",
+      "initial_notes": "23/10/2026 — Toute la tête est validée en CAO. En attente de réception des composants pour vérifier les dimensions réelles, les connecteurs et le montage. Les cases liées aux essais matériels restent ouvertes pour cette raison."
     },
     {
       "id": "step-6",

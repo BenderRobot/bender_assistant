@@ -4,10 +4,11 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Bender · Roadmap du projet</title>
   <link rel="stylesheet" href="/static/roadmap.css">
+  <script src="/static/roadmap-stages.js" defer></script>
   <script src="/static/roadmap.js" defer></script>
 </head>
 <body>
-<header class="topbar"><a class="brand" href="/roadmap"><span class="brand-mark" aria-hidden="true">B</span> BENDER <span class="brand-sub">/ PROJET JARVIS</span></a><a class="back" href="/">← Banc d’essai</a></header>
+<header class="topbar"><a class="brand" href="/roadmap"><span class="brand-mark" aria-hidden="true">B</span> BENDER <span class="brand-sub">/ PROJET JARVIS</span></a><nav class="view-nav" aria-label="Vues du projet"><a href="/roadmap" aria-current="page">Roadmap</a><a href="/kanban">Kanban</a><a href="/">Banc d’essai</a></nav></header>
 <main>
   <section class="hero">
     <div><p class="eyebrow">DE L’IDÉE AU ROBOT</p><h1>Une étape à la fois.</h1><p class="intro">Écouter, comprendre, parler… puis prendre vie.<br>Voici le chemin pour construire ton Bender.</p><p class="milestone"><span class="dot"></span>Premier jalon : une conversation complète sur table.</p></div>
@@ -21,6 +22,7 @@
       <div class="step-heading"><div><p class="eyebrow" id="stepNumber"></p><h2 id="stepTitle"></h2></div><span id="stepBadge" class="badge"></span></div>
       <p class="description" id="stepDescription"></p><div class="tags" id="tags"></div>
       <div class="step-progress"><div class="track"><div id="stepFill"></div></div><span id="stepCount"></span></div>
+      <div id="stageEditor"></div>
       <div class="next"><span>PROCHAINE ACTION</span><strong id="nextTask"></strong></div>
       <div class="list-heading"><h3>Les actions à accomplir</h3><label class="toggle"><input type="checkbox" id="remainingOnly"> Masquer les actions terminées</label></div>
       <div id="tasks"></div><p id="empty" class="empty" hidden>Toutes les actions de cette étape sont terminées. Tu peux les réafficher avec le filtre.</p>
