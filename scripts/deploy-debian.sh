@@ -19,6 +19,7 @@ with tarfile.open(sys.argv[1]) as archive:
             raise SystemExit('Archive contenant des donnees privees')
 PY
 sudo -v
+if systemctl cat bender-media.service >/dev/null 2>&1; then sudo systemctl stop bender-media.service; fi
 backup="$HOME/.local/state/bender-backups/$(date +%Y%m%d-%H%M%S)-$$.tar.gz"
 tar -czf "$backup" --exclude='./.venv*' --exclude='./data' --exclude='./models' --exclude='./.git' -C "$target" .
 chmod 600 "$backup"
@@ -52,6 +53,9 @@ print('Références installées :', install_reference_archive(sys.argv[1], sys.a
 PY
 fi
 bash scripts/install-debian.sh --system-deps --micro
+if [[ -f "$stage/media-inbox.tar.gz" ]]; then
+  BENDER_VOICE_CONFIG=voice.json .venv/bin/python -m bender_media import-archive "$stage/media-inbox.tar.gz"
+fi
 .venv/bin/python -m pip install -r requirements-dev.txt
 .venv/bin/python -m unittest discover -s tests -v
 # WorkingDirectory and EnvironmentFile take literal paths, not shell quotes.
@@ -76,8 +80,29 @@ EOF
 systemd-analyze verify "$unit"
 sudo install -m 644 "$unit" /etc/systemd/system/bender.service
 rm -f "$unit"
+media_unit=$(mktemp --suffix=.service)
+cat > "$media_unit" <<EOF
+[Unit]
+Description=Bender analyse des nouveaux samples
+After=network.target bender.service
+[Service]
+Type=oneshot
+User=$(id -un)
+WorkingDirectory=$target
+EnvironmentFile=-$target/.env
+ExecStart=/usr/bin/env "BENDER_VOICE_CONFIG=$target/voice.json" "$target/.venv/bin/python" -m bender_media process-pending
+UMask=0077
+Nice=10
+TimeoutStartSec=infinity
+[Install]
+WantedBy=multi-user.target
+EOF
+systemd-analyze verify "$media_unit"
+sudo install -m 644 "$media_unit" /etc/systemd/system/bender-media.service
+rm -f "$media_unit"
 sudo systemctl daemon-reload
 sudo systemctl enable --now bender.service
+sudo systemctl enable bender-media.service
 healthy=false
 for attempt in {1..30}; do
     if .venv/bin/python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/voice/status',timeout=2).read()" 2>/dev/null; then healthy=true; break; fi
@@ -85,4 +110,5 @@ for attempt in {1..30}; do
 done
 if ! "$healthy"; then sudo journalctl -u bender.service -n 30 --no-pager; false; fi
 printf '%s\n' "$revision" > DEPLOYED_COMMIT
+sudo systemctl start --no-block bender-media.service
 echo "Version $revision active. Sauvegarde : $backup"

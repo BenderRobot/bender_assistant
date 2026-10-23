@@ -48,3 +48,7 @@ Chaque capture reçoit une correction locale modérée, adaptée à son histogra
 Même une demande directe à `/api/hardware/vision` repasse par cette préparation. Chaque correction repart de l’original ; elle n’est pas réappliquée sur une version déjà corrigée. Les originaux et leurs copies corrigées sont privés, accessibles avec la clé de contrôle, et supprimés par paires pour conserver les trois dernières captures. Les zones déjà uniformément blanches ou noires ne retrouvent pas leurs détails. Pillow est installé par la mise à jour habituelle.
 
 Référence technique : [histogrammes et transformations de pixels Pillow](https://pillow.readthedocs.io/en/stable/reference/Image.html).
+
+## Samples et personnalité
+
+Le menu `/#samples` affiche les nouveaux sons et vidéos importés lors des mises à jour, leurs transcriptions, le classement GPT et les images de référence. Les passages se valident comme réplique, candidat vocal ou repère bouche/yeux. Voir [SAMPLES_PERSONNALITE.md](SAMPLES_PERSONNALITE.md).

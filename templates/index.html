@@ -13,6 +13,7 @@
 <button id="tab-yeux" role="tab" aria-controls="panel-yeux" aria-selected="true">Yeux</button>
 <button id="tab-bouche" role="tab" aria-controls="panel-bouche" aria-selected="false">Bouche</button>
 <button id="tab-voix" role="tab" aria-controls="panel-voix" aria-selected="false">Voix et enregistrements</button>
+<button id="tab-samples" role="tab" aria-controls="panel-samples" aria-selected="false">Samples et personnalité</button>
 <button id="tab-reconnaissance" role="tab" aria-controls="panel-reconnaissance" aria-selected="false">Reconnaissance vocale</button>
 <button id="tab-cerveau" role="tab" aria-controls="panel-cerveau" aria-selected="false">Cerveau GPT</button>
 <button id="tab-vision" role="tab" aria-controls="panel-vision" aria-selected="false">Caméra et vision</button>
@@ -57,6 +58,18 @@
 <label for="context">Contexte pour les répliques (facultatif)</label><input id="context" maxlength="8000" placeholder="Par exemple : lumière du salon">
 <label class="inline"><input type="checkbox" id="quotes"> Autoriser une réplique contextuelle en complément</label>
 <div class="buttons"><button id="say">Faire parler</button><button id="chat">Demander au cerveau GPT</button></div>
+</section>
+<section id="panel-samples" role="tabpanel" aria-labelledby="tab-samples" class="workshop-panel" hidden>
+<h2>Étape 03 · Samples et personnalité</h2>
+<p>Dépose tes sons et vidéos dans <strong>Documents / bender_main / 02_VOIX_ET_ANIMATIONS / a_importer</strong> sur ton PC. La mise à jour habituelle transfère les nouveaux fichiers vers Bender. Chaque contenu identique n’est importé qu’une fois.</p>
+<p>Vosk transcrit localement les paroles ; GPT propose des noms, thèmes, humeurs et passages utiles à partir du texte et d’images horodatées. GPT n’écoute pas le timbre sonore avec cette connexion. Les propositions restent à vérifier avant leur utilisation.</p>
+<div class="buttons"><button id="mediaRefresh">Charger / actualiser mes samples</button><button id="mediaResume">Reprendre les analyses en attente</button></div>
+<label class="inline"><input type="checkbox" id="mediaAutomatic" checked> Analyser automatiquement les nouveaux samples après les mises à jour</label>
+<p>Décoche cette option pour mettre les analyses en pause après le fichier en cours. Les traitements utilisent le quota de ton compte ChatGPT et reprennent uniquement les nouveaux contenus ou ceux que tu relances.</p>
+<p id="mediaStatus" role="status">Renseigne la clé de contrôle du Dell, puis charge la bibliothèque.</p><p id="mediaError" role="alert"></p>
+<div class="grid"><label for="mediaSearch">Rechercher un sample<input id="mediaSearch" placeholder="Réplique, humeur, sujet, nom…"></label><label for="mediaFilter">État<select id="mediaFilter"><option value="">Tous</option><option value="pending">En attente</option><option value="processing">Analyse en cours</option><option value="review">À vérifier</option><option value="approved">Sélections validées</option><option value="error">À reprendre</option></select></label></div>
+<div class="media-workbench"><div id="mediaList" class="media-list"></div><div id="mediaDetail" class="media-detail"><p>Sélectionne un sample pour consulter sa transcription, ses images et les passages proposés.</p></div></div>
+<p>Utilise des extraits courts : WAV, MP3, MP4, M4A, FLAC, OGG, WEBM, MOV ou MKV · 180 secondes et 100 Mo maximum par fichier. Les répliques validées rejoignent la bibliothèque existante. Les références vocales sont exportées comme candidates ; elles ne remplacent pas automatiquement la voix active et n’entraînent pas Chatterbox.</p>
 </section>
 <section id="panel-reconnaissance" role="tabpanel" aria-labelledby="tab-reconnaissance" class="workshop-panel" hidden>
 <h2>Reconnaissance vocale · micro du Dell</h2><p id="hardwareStatus">Vérification des périphériques…</p><p id="recognitionStatus" role="status"></p>
@@ -113,4 +126,4 @@
 <label for="speed">Vitesse de comparaison dans le navigateur</label><select id="speed"><option value="1">Normale</option><option value="0.5">Moitié</option><option value="0.25">Quart</option></select><audio id="player" controls></audio>
 <p id="response"></p><pre id="details"></pre><p id="error" role="alert"></p></section>
 </section>
-</main><script src="/static/shape-renderer.js"></script><script src="/static/poses.js"></script><script src="/static/conversation.js"></script><script src="/static/app.js"></script><script src="/static/workshop.js"></script><script src="/static/pose-editor.js"></script><script src="/static/brain.js"></script><script src="/static/microphone.js"></script><script src="/static/camera.js"></script></body></html>
+</main><script src="/static/shape-renderer.js"></script><script src="/static/poses.js"></script><script src="/static/conversation.js"></script><script src="/static/app.js"></script><script src="/static/workshop.js"></script><script src="/static/pose-editor.js"></script><script src="/static/brain.js"></script><script src="/static/microphone.js"></script><script src="/static/camera.js"></script><script src="/static/media.js"></script></body></html>

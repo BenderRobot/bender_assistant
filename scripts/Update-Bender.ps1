@@ -7,6 +7,7 @@ param(
     [string]$Message = ('Mise a jour Bender ' + (Get-Date -Format 'yyyy-MM-dd HH:mm')),
     [switch]$PublishOnly,
     [switch]$SetupSsh,
+    [string]$MediaSource = '',
     [string]$IdentityFile = "$env:USERPROFILE\.ssh\bender_deploy_ed25519"
 )
 $ErrorActionPreference = 'Stop'
@@ -78,7 +79,7 @@ try {
     Run git @('add','--all','--','.')
     $files = @(& git ls-files)
     foreach ($file in $files) {
-        if ($file -match '(^|/)(data|models|\.venv[^/]*|\.ssh)(/|$)|(^|/)(\.env|voice\.json|id_rsa|id_ed25519)$|\.(db|sqlite3?|wav|mp3|mp4|pem|key)$') {
+        if ($file -match '(^|/)(data|models|\.venv[^/]*|\.ssh)(/|$)|(^|/)(\.env|voice\.json|id_rsa|id_ed25519)$|\.(db|sqlite3?|wav|mp3|mp4|m4a|flac|ogg|webm|mov|mkv|pem|key)$') {
             throw "Fichier prive interdit dans Git : $file. Retirer ce fichier du suivi avant de relancer."
         }
         if ($file -eq '.env.example' -and (Select-String -Path $file -Pattern '^\s*\w*(KEY|TOKEN|PASSWORD|SECRET)\w*\s*=\s*\S+' -Quiet)) {
@@ -100,12 +101,29 @@ try {
         Run git @('archive','--format=tar.gz',"--output=$archive",$revision)
         $samplesArchive = Join-Path $temp 'reference-samples.tar.gz'
         Run $python @('scripts/prepare-reference-samples.py','--archive',$samplesArchive)
+        if (-not $MediaSource) { $MediaSource = Join-Path (Split-Path $RepoPath -Parent) '02_VOIX_ET_ANIMATIONS\a_importer' }
+        New-Item -ItemType Directory -Force -Path $MediaSource | Out-Null
+        $knownMedia = Join-Path $temp 'known-media.json'
+        $inventoryCommand = "if test -f ~/$RemoteDirectory/bender_media/__main__.py; then cd ~/$RemoteDirectory && BENDER_VOICE_CONFIG=voice.json .venv/bin/python -m bender_media inventory; else printf '[]'; fi"
+        $previousPreference = $ErrorActionPreference
+        try {
+            $ErrorActionPreference = 'Continue'
+            $knownOutput = & ssh @sshOptions $target $inventoryCommand
+            $inventoryExit = $LASTEXITCODE
+        } finally { $ErrorActionPreference = $previousPreference }
+        if ($inventoryExit -ne 0) { throw 'Impossible de lire la liste des medias deja presents sur Bender.' }
+        $knownOutput | Set-Content -LiteralPath $knownMedia -Encoding UTF8
+        $mediaArchive = Join-Path $temp 'media-inbox.tar.gz'
+        Run $python @('-m','bender_media','pack','--source',$MediaSource,'--archive',$mediaArchive,'--known',$knownMedia)
         $remoteStage = ".bender-update-$revision"
         Run scp ($sshOptions + @($archive,"${target}:$remoteStage.tar.gz"))
         if (Test-Path -LiteralPath $samplesArchive) {
             Run scp ($sshOptions + @($samplesArchive,"${target}:$remoteStage.samples.tar.gz"))
         }
-        $deployCommand = "mkdir -p ~/$remoteStage && mv ~/$remoteStage.tar.gz ~/$remoteStage/release.tar.gz && { if test -f ~/$remoteStage.samples.tar.gz; then mv ~/$remoteStage.samples.tar.gz ~/$remoteStage/reference-samples.tar.gz; fi; } && tar -xOf ~/$remoteStage/release.tar.gz scripts/deploy-debian.sh > ~/$remoteStage/deploy.sh && bash ~/$remoteStage/deploy.sh $RemoteDirectory $revision"
+        if (Test-Path -LiteralPath $mediaArchive) {
+            Run scp ($sshOptions + @($mediaArchive,"${target}:$remoteStage.media.tar.gz"))
+        }
+        $deployCommand = "mkdir -p ~/$remoteStage && mv ~/$remoteStage.tar.gz ~/$remoteStage/release.tar.gz && { if test -f ~/$remoteStage.samples.tar.gz; then mv ~/$remoteStage.samples.tar.gz ~/$remoteStage/reference-samples.tar.gz; fi; } && { if test -f ~/$remoteStage.media.tar.gz; then mv ~/$remoteStage.media.tar.gz ~/$remoteStage/media-inbox.tar.gz; fi; } && tar -xOf ~/$remoteStage/release.tar.gz scripts/deploy-debian.sh > ~/$remoteStage/deploy.sh && bash ~/$remoteStage/deploy.sh $RemoteDirectory $revision"
         Run ssh ($sshOptions + @('-t',$target,$deployCommand))
         Write-Host "Bender mis a jour : http://${RemoteHost}:8000 - revision $revision"
     } finally { Remove-Item -LiteralPath $temp -Recurse -Force }

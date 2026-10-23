@@ -35,6 +35,8 @@ from bench_api import build_bench_router
 app.include_router(build_bench_router())
 from pose_api import build_pose_router
 app.include_router(build_pose_router())
+from media_api import build_media_router
+app.include_router(build_media_router())
 app.mount('/static', StaticFiles(directory=ROOT / 'static'), name='static')
 templates = Jinja2Templates(directory=str(ROOT / 'templates'))
 

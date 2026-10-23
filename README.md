@@ -120,3 +120,7 @@ Routage/API, bibliothèque, budget et diffusion des poses testés avec des moteu
 L'ancien dépôt suit déjà un `.env`, un exemple contenant une clé et une base de mémoire. L'exemple a été nettoyé ; révoquer la clé déjà exposée et retirer les secrets de l'historique Git séparément. L'archive de livraison exclut `.env`, la mémoire, les médias, les modèles et les caches.
 
 Références : [Chatterbox](https://github.com/resemble-ai/chatterbox), [ElevenLabs audio avec horaires](https://elevenlabs.io/docs/api-reference/text-to-speech/convert-with-timestamps), [Allosaurus](https://github.com/xinjli/allosaurus).
+
+## Étape 03 : samples et personnalité
+
+Déposer les nouveautés dans `../02_VOIX_ET_ANIMATIONS/a_importer`, puis lancer la mise à jour habituelle. Le menu **Samples et personnalité** permet de consulter et valider le classement GPT. Guide : [SAMPLES_PERSONNALITE.md](SAMPLES_PERSONNALITE.md).
