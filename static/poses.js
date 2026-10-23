@@ -75,4 +75,4 @@ function renderMouth(pose,rounded){
  c.fillRect(x,Math.round(Math.max(11,Math.min(53,y))),1,1);}
  c.restore();
 }
-window.BenderFace={render(state,t){emotion=state.eyes||'normal';mode=state.active?'speaking':'idle';drawEyes(t,0);renderMouth(Number.isInteger(state.pose)&&state.pose>=0&&state.pose<12?state.pose:0,state.rounded);}};
+window.BenderFace={render(state,t){emotion=state.eyes||'normal';mode=state.active?'speaking':state.mode||'idle';const blink=state.blink?Math.max(0,1-Math.abs((t%4700)-4500)/100):0;drawEyes(t,blink);renderMouth(Number.isInteger(state.pose)&&state.pose>=0&&state.pose<12?state.pose:0,state.rounded);}};

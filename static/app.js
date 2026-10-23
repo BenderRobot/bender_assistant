@@ -19,6 +19,7 @@ function connect(){socket=new WebSocket((location.protocol==='https:'?'wss://':'
 connect();
 function sendFace(state){face=state;lastFace=performance.now();if(socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify(state));}
 async function stop(){
+ window.stopWorkshopDemos?.();
  run++;segments=[];player.pause();player.currentTime=0;timeline=null;
  if(hostPlaying||($('output').value==='dell'&&$('controlKey').value.trim())){try{await ioFetch('/api/hardware/stop');}catch(error){if(hostPlaying)$('error').textContent=error.message;}}
  hostPlaying=false;sendFace({pose:0,eyes:$('emotion').value,active:false});$('state').textContent='Arrêté';$('poseState').textContent='Repos';
@@ -45,7 +46,7 @@ player.addEventListener('ended',()=>{index++;playSegment(run).catch(error=>{$('e
 setInterval(()=>{
  if(display||hostPlaying)return;
  if(timeline){const cue=cueAt(player.currentTime),eyes=segments[index]?.eyes;
- sendFace({pose:player.ended?0:cue.pose,eyes:eyes&&eyes!=='normal'?eyes:$('emotion').value,active:!player.paused,rounded:!!cue.rounded});
+ sendFace({pose:player.ended?0:cue.pose,eyes:eyes&&eyes!=='normal'?eyes:$('emotion').value,active:!player.paused,rounded:!!cue.rounded||$('teeth').value==='rounded',mode:$('eyeMode').value,blink:$('eyeBlink').checked});
  $('poseState').textContent=(cue.phone?`Son estimé : ${cue.phone}`:cue.family==='ACOUSTIC_FALLBACK'?'Estimation acoustique':cue.family||'Repère manuel')+` · pose ${cue.pose+1}`;
  }
 },50);
@@ -61,7 +62,7 @@ async function perform(chat){
  }catch(error){$('error').textContent=error.message;$('state').textContent='Indisponible';}finally{$('say').disabled=$('chat').disabled=false;}
 }
 $('say').onclick=()=>perform(false);$('chat').onclick=()=>perform(true);$('stop').onclick=stop;
-$('emotion').onchange=()=>{if(!timeline&&!hostPlaying)sendFace({pose:0,eyes:$('emotion').value,active:false});};
+$('emotion').onchange=()=>{if(!timeline&&!hostPlaying)sendFace({...face,eyes:$('emotion').value,mode:$('eyeMode').value,blink:$('eyeBlink').checked});};
 $('speed').onchange=()=>{player.playbackRate=Number($('speed').value);};
 $('output').onchange=()=>{player.hidden=$('output').value==='dell';};$('output').onchange();
 $('replay').onclick=async()=>{if(!bundle)return;await stop();try{await beginBundle(bundle,run);}catch(e){$('error').textContent=e.message;}};
@@ -84,4 +85,3 @@ $('vision').onclick=async()=>{
   if(token!==run)return;$('response').textContent=data.response;if(data.speech)await beginBundle(data.speech,token);else throw Error(data.speech_error||'Audio indisponible');
  }catch(error){$('error').textContent=error.message;$('state').textContent='Vision indisponible';}finally{$('vision').disabled=false;}
 };
-if(!display)fetch('/api/hardware/status').then(r=>r.json()).then(s=>{$('hardwareStatus').textContent=`Micro : ${s.microphone} · Sortie : ${s.speaker} · Caméra : ${s.camera} · Modèle français : ${s.vosk_model_ready?'prêt':'à télécharger'}`;}).catch(()=>{$('hardwareStatus').textContent='État des périphériques indisponible';});

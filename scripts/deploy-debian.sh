@@ -44,6 +44,13 @@ fi
 trap 'echo "Echec de mise a jour. Sauvegarde : $backup" >&2; if "$had_service"; then sudo systemctl start bender.service || true; fi' ERR
 tar -xzf "$stage/release.tar.gz" -C "$target"
 cd "$target"
+if [[ -f "$stage/reference-samples.tar.gz" ]]; then
+  python3 - "$stage/reference-samples.tar.gz" "$target/data/reference_samples" <<'PY'
+import sys
+from reference_media import install_reference_archive
+print('Références installées :', install_reference_archive(sys.argv[1], sys.argv[2]))
+PY
+fi
 bash scripts/install-debian.sh --system-deps --micro
 .venv/bin/python -m pip install -r requirements-dev.txt
 .venv/bin/python -m unittest discover -s tests -v

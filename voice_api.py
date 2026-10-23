@@ -63,6 +63,8 @@ class FaceState(BaseModel):
     eyes: Literal['normal', 'angry', 'happy', 'surprised', 'sleepy', 'sad', 'worried', 'crying', 'ref1', 'ref2', 'ref3', 'ref4', 'ref5'] = 'normal'
     active: bool = False
     rounded: bool = False
+    mode: Literal['idle', 'listening', 'thinking', 'alert'] = 'idle'
+    blink: bool = False
 
 
 viewers = set()

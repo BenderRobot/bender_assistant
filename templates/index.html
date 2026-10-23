@@ -1,46 +1,72 @@
 <!doctype html>
-<html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bender · voix et visage</title>
-<link rel="stylesheet" href="/static/app.css">
-<main>
-  <nav aria-label="Navigation"><a href="/roadmap">Roadmap du projet →</a> · <a href="/kanban">Kanban →</a></nav>
-  <header><h1>Bender · voix et visage</h1><span id="state">Prêt</span></header>
-  <section class="screens">
-    <div id="eyesPanel"><h2>Yeux · 800 × 480</h2><canvas id="eyes" width="800" height="480"></canvas></div>
-    <div id="mouthPanel"><h2>Bouche · 128 × 64</h2><canvas id="mouth" width="128" height="64"></canvas><p id="poseState">Repos</p></div>
-  </section>
-  <section id="controls">
-    <h2>Périphériques du Dell</h2>
-    <p id="hardwareStatus">Vérification des périphériques…</p>
-    <label for="controlKey">Clé de contrôle du Dell</label><input type="password" id="controlKey" autocomplete="off" placeholder="Obtenir la clé avec la commande control-token sur Debian">
-    <div class="grid">
-      <label for="output">Sortie de la voix<select id="output"><option value="dell">Enceintes du Dell</option><option value="browser">Ce navigateur · banc d’essai</option></select></label>
-      <label for="recordSeconds">Durée d’écoute<select id="recordSeconds"><option value="6">6 secondes</option><option value="10">10 secondes</option><option value="15">15 secondes</option></select></label>
-    </div>
-    <label class="inline"><input type="checkbox" id="askAfterListen" checked> Envoyer la transcription au cerveau Gemini et répondre</label>
-    <div class="buttons"><button id="listen">Parler à Bender · micro Dell</button><button id="capture">Prendre une photo · LifeCam</button></div>
-    <p id="heard"></p><img id="cameraPreview" alt="Dernière photo prise par la LifeCam du Dell" hidden>
-    <label for="visionQuestion">Question sur la photo</label><input id="visionQuestion" maxlength="2000" value="Décris ce que tu vois devant toi.">
-    <div class="buttons"><button id="vision" disabled>Analyser la photo avec Gemini</button></div>
-    <p>Le micro et la caméra sont ceux du Dell. Écoute sur demande, reconnaissance locale Vosk. La photo est envoyée à Gemini uniquement avec le bouton d’analyse ; cette analyse et le cerveau nécessitent Internet.</p>
-    <p>Test voix seul : aucune clé Gemini nécessaire. Les appels ElevenLabs sont désactivés tant que tu ne les actives pas dans la configuration.</p>
-    <label for="text">Texte à faire prononcer</label>
-    <textarea id="text" rows="3" maxlength="8000">Salut l’organique. Les circuits sont prêts.</textarea>
-    <div class="grid">
-      <label>Routage<select id="mode"><option value="auto">Automatique</option><option value="local">Local uniquement</option><option value="cloud">ElevenLabs puis repli local</option><option value="cache">Enregistrements uniquement</option></select></label>
-      <label>Sujet<select id="topic"><option value="">Réponse habituelle</option><option value="news">Actualités</option><option value="narration">Narration</option></select></label>
-      <label>Référence de voix<select id="mood"><option value="neutral">Neutre</option><option value="sarcastic">Sarcastique</option><option value="angry">Agacé</option><option value="excited">Énergique</option><option value="sad">Triste</option></select></label>
-      <label>Yeux indépendants<select id="emotion"><option value="normal">Normaux</option><option value="angry">Agacés</option><option value="happy">Contents</option><option value="sad">Tristes</option><option value="crying">Sanglots</option><option value="ref1">Référence 1</option><option value="ref2">Référence 2</option><option value="ref3">Référence 3</option><option value="ref4">Référence 4</option><option value="ref5">Référence 5</option></select></label>
-    </div>
-    <label for="context">Contexte pour les répliques (facultatif)</label><input id="context" maxlength="8000" placeholder="Par exemple : lumière du salon">
-    <label class="inline"><input type="checkbox" id="quotes"> Autoriser une réplique contextuelle en complément</label>
-    <div class="buttons"><button id="say">Faire parler</button><button id="chat">Demander au cerveau Gemini</button><button id="stop">Arrêter la lecture</button><button id="replay" disabled>Rejouer</button></div>
-    <label for="speed">Vitesse de comparaison</label><select id="speed"><option value="1">Normale</option><option value="0.5">Moitié</option><option value="0.25">Quart</option></select>
-    <audio id="player" controls></audio>
-    <p id="response"></p><pre id="details"></pre><p id="error" role="alert"></p>
-    <p><a href="/face?display=eyes" target="_blank">Fenêtre yeux</a> · <a href="/face?display=mouth" target="_blank">Fenêtre bouche</a>. Ces fenêtres suivent la lecture du Dell ou du navigateur ; double-clique pour le plein écran.</p>
-    <p>Les poses et leurs références sont conservées. La synchronisation acoustique est une estimation ; activer Allosaurus pour des sons estimés, avec repli acoustique explicite.</p>
-  </section>
-</main>
-<script src="/static/poses.js"></script><script src="/static/app.js"></script>
-</html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bender · Atelier voix et visage</title><link rel="stylesheet" href="/static/app.css"></head>
+<body><main>
+<nav class="top-links" aria-label="Projet"><a href="/">Atelier Bender</a><a href="/roadmap">Roadmap</a><a href="/kanban">Kanban</a></nav>
+<header><div><p class="eyebrow">LE BANC D’ESSAI</p><h1>Bender · voix et visage</h1></div><span id="state" role="status">Prêt</span></header>
+<section class="screens">
+<div id="eyesPanel"><div class="screen-title"><h2>Yeux · 800 × 480</h2><a href="/face?display=eyes" target="_blank">Ouvrir l’écran ↗</a></div><canvas id="eyes" width="800" height="480" aria-label="Aperçu des yeux"></canvas></div>
+<div id="mouthPanel"><div class="screen-title"><h2>Bouche · 128 × 64</h2><a href="/face?display=mouth" target="_blank">Ouvrir l’écran ↗</a></div><canvas id="mouth" width="128" height="64" aria-label="Aperçu de la bouche"></canvas><p id="poseState">Repos</p></div>
+</section>
+<section id="controls">
+<nav class="workshop-tabs" role="tablist" aria-label="Menus de l’atelier">
+<button id="tab-yeux" role="tab" aria-controls="panel-yeux" aria-selected="true">Yeux</button>
+<button id="tab-bouche" role="tab" aria-controls="panel-bouche" aria-selected="false">Bouche</button>
+<button id="tab-voix" role="tab" aria-controls="panel-voix" aria-selected="false">Voix et enregistrements</button>
+<button id="tab-reconnaissance" role="tab" aria-controls="panel-reconnaissance" aria-selected="false">Reconnaissance vocale</button>
+<button id="tab-vision" role="tab" aria-controls="panel-vision" aria-selected="false">Caméra et vision</button>
+</nav>
+<details class="connection"><summary>Connexion au Dell · clé de contrôle et sortie audio</summary>
+<p>La clé est requise pour utiliser le micro, la caméra et les enceintes du Dell. Les aperçus des poses et la lecture dans ce navigateur fonctionnent sans elle.</p>
+<label for="controlKey">Clé de contrôle du Dell</label><input type="password" id="controlKey" autocomplete="off" placeholder="Commande control-token sur Debian">
+<label for="output">Sortie de la voix</label><select id="output"><option value="dell">Enceintes du Dell</option><option value="browser">Ce navigateur · banc d’essai</option></select>
+</details>
+<section id="panel-yeux" role="tabpanel" aria-labelledby="tab-yeux" class="workshop-panel">
+<h2>Animation et expressions des yeux</h2><p>Choisis une expression ou teste les références enregistrées. La bouche conserve sa pose.</p>
+<div class="grid"><label for="emotion">Expression<select id="emotion"><option value="normal">Normaux</option><option value="angry">Agacés</option><option value="happy">Contents</option><option value="surprised">Surpris</option><option value="sleepy">Endormis</option><option value="sad">Tristes</option><option value="worried">Inquiets</option><option value="crying">Sanglots</option><option value="ref1">Référence 1 · paupières basses</option><option value="ref2">Référence 2 · paupières basses</option><option value="ref3">Référence 3 · mi-ouverts</option><option value="ref4">Référence 4 · presque fermés</option><option value="ref5">Référence 5 · mal à l’aise</option></select></label>
+<label for="eyeMode">Comportement<select id="eyeMode"><option value="idle">Au repos</option><option value="listening">À l’écoute</option><option value="thinking">Réflexion · regard mobile</option><option value="alert">Alerte</option></select></label></div>
+<label class="inline"><input id="eyeBlink" type="checkbox"> Clignement automatique de démonstration</label>
+<div class="buttons"><button id="demoEyes">Parcourir les expressions</button><button id="stopEyes">Arrêter la démo</button></div><p id="eyePreviewStatus" role="status">Expression normale.</p>
+</section>
+<section id="panel-bouche" role="tabpanel" aria-labelledby="tab-bouche" class="workshop-panel" hidden>
+<h2>Positions de bouche</h2><p>Les 12 formes existantes sont disponibles ici. La lecture d’un audio reprend automatiquement la synchronisation.</p>
+<div class="grid"><label for="mouthPose">Pose à afficher<select id="mouthPose"><option value="0">Pose 1 · lèvres espacées</option><option value="1">Pose 2 · coins serrés, centre ouvert</option><option value="2">Pose 3 · ouais normal, petite ouverture</option><option value="3">Pose 4 · feu, serrées partout</option><option value="4">Pose 5 · droites, écart moyen</option><option value="5">Pose 6 · droites, petit écart</option><option value="6">Pose 7 · référence 1</option><option value="7">Contact dents 2 et 5 · référence 2</option><option value="8">Pose 9 · référence 3</option><option value="9">Ouvre la bouche · dents du bas hors cadre</option><option value="10">Pose 11 · référence 5</option><option value="11">Pose 3 · ouaiiii crié, grande ouverture</option></select></label>
+<label for="teeth">Forme des dents<select id="teeth"><option value="straight">Droites</option><option value="rounded">Arrondies</option></select></label></div>
+<div class="buttons"><button id="previewMouth">Afficher cette pose</button><button id="demoMouth">Parcourir les 12 poses</button><button id="stopMouth">Arrêter la démo</button></div>
+<p>Pour retrouver les essais avec la voix : ouvre « Voix et enregistrements » puis sélectionne un extrait et son calage.</p>
+</section>
+<section id="panel-voix" role="tabpanel" aria-labelledby="tab-voix" class="workshop-panel" hidden>
+<h2>Voix et enregistrements</h2>
+<div class="subpanel"><h3>Extraits et répliques enregistrés</h3><p id="recordingsStatus" role="status">Chargement de la bibliothèque…</p>
+<label for="recording">Enregistrement<select id="recording" disabled><option>Chargement…</option></select></label>
+<label for="recordingMethod">Synchronisation de cet extrait<select id="recordingMethod"><option value="acoustic">Estimation acoustique</option></select></label>
+<div class="buttons"><button id="playRecording" disabled>Lire cet enregistrement</button><button id="refreshRecordings">Actualiser la bibliothèque</button></div>
+<p>Les calages phonétiques conservés sont expérimentaux. Le calage visuel, lorsqu’il existe, reste un repérage manuel provisoire.</p></div>
+<h3>Faire parler à partir d’un texte</h3><p>Test voix seul : aucune clé Gemini nécessaire. ElevenLabs reste désactivé tant que tu ne l’actives pas dans la configuration.</p>
+<label for="text">Texte à faire prononcer</label><textarea id="text" rows="3" maxlength="8000">Salut l’organique. Les circuits sont prêts.</textarea>
+<div class="grid"><label for="mode">Routage<select id="mode"><option value="auto">Automatique</option><option value="local">Local uniquement</option><option value="cloud">ElevenLabs puis repli local</option><option value="cache">Enregistrements uniquement</option></select></label>
+<label for="topic">Sujet<select id="topic"><option value="">Réponse habituelle</option><option value="news">Actualités</option><option value="narration">Narration</option></select></label>
+<label for="mood">Référence de voix<select id="mood"><option value="neutral">Neutre</option><option value="sarcastic">Sarcastique</option><option value="angry">Agacé</option><option value="excited">Énergique</option><option value="sad">Triste</option></select></label></div>
+<label for="context">Contexte pour les répliques (facultatif)</label><input id="context" maxlength="8000" placeholder="Par exemple : lumière du salon">
+<label class="inline"><input type="checkbox" id="quotes"> Autoriser une réplique contextuelle en complément</label>
+<div class="buttons"><button id="say">Faire parler</button><button id="chat">Demander au cerveau Gemini</button></div>
+</section>
+<section id="panel-reconnaissance" role="tabpanel" aria-labelledby="tab-reconnaissance" class="workshop-panel" hidden>
+<h2>Reconnaissance vocale · micro du Dell</h2><p id="hardwareStatus">Vérification des périphériques…</p><p id="recognitionStatus" role="status"></p>
+<label for="recordSeconds">Durée d’écoute<select id="recordSeconds"><option value="6">6 secondes</option><option value="10">10 secondes</option><option value="15">15 secondes</option></select></label>
+<label class="inline"><input type="checkbox" id="askAfterListen" checked> Envoyer la transcription au cerveau Gemini et répondre</label>
+<div class="buttons"><button id="listen">Parler à Bender · micro Dell</button><button id="refreshHardware">Actualiser le diagnostic</button></div><p id="heard" role="status"></p>
+<details class="setup-help"><summary>Installer le modèle Vosk français manquant</summary><p>Dans le terminal SSH sur Debian, depuis le dossier de l’application :</p><pre>cd ~/applications/bender_assistant
+.venv/bin/python -m bender_voice --config voice.json download-models vosk</pre><p>Puis clique sur « Actualiser le diagnostic ». La transcription est locale ; l’envoi au cerveau Gemini demande Internet. Pour tester uniquement le micro, décoche l’envoi au cerveau.</p></details>
+</section>
+<section id="panel-vision" role="tabpanel" aria-labelledby="tab-vision" class="workshop-panel" hidden>
+<h2>Caméra et vision</h2><p>La photo est prise par la LifeCam du Dell. Elle est envoyée à Gemini uniquement avec le bouton d’analyse.</p>
+<div class="buttons"><button id="capture">Prendre une photo · LifeCam</button></div><img id="cameraPreview" alt="Dernière photo prise par la LifeCam du Dell" hidden>
+<label for="visionQuestion">Question sur la photo</label><input id="visionQuestion" maxlength="2000" value="Décris ce que tu vois devant toi.">
+<div class="buttons"><button id="vision" disabled>Analyser la photo avec Gemini</button></div>
+</section>
+<section class="playback"><h2>Lecture et résultat</h2><div class="buttons"><button id="stop">Arrêter la lecture</button><button id="replay" disabled>Rejouer</button></div>
+<label for="speed">Vitesse de comparaison dans le navigateur</label><select id="speed"><option value="1">Normale</option><option value="0.5">Moitié</option><option value="0.25">Quart</option></select><audio id="player" controls></audio>
+<p id="response"></p><pre id="details"></pre><p id="error" role="alert"></p></section>
+</section>
+</main><script src="/static/poses.js"></script><script src="/static/app.js"></script><script src="/static/workshop.js"></script></body></html>

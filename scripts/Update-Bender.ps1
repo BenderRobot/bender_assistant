@@ -98,9 +98,14 @@ try {
     try {
         $archive = Join-Path $temp 'release.tar.gz'
         Run git @('archive','--format=tar.gz',"--output=$archive",$revision)
+        $samplesArchive = Join-Path $temp 'reference-samples.tar.gz'
+        Run $python @('scripts/prepare-reference-samples.py','--archive',$samplesArchive)
         $remoteStage = ".bender-update-$revision"
         Run scp ($sshOptions + @($archive,"${target}:$remoteStage.tar.gz"))
-        $deployCommand = "mkdir -p ~/$remoteStage && mv ~/$remoteStage.tar.gz ~/$remoteStage/release.tar.gz && tar -xOf ~/$remoteStage/release.tar.gz scripts/deploy-debian.sh > ~/$remoteStage/deploy.sh && bash ~/$remoteStage/deploy.sh $RemoteDirectory $revision"
+        if (Test-Path -LiteralPath $samplesArchive) {
+            Run scp ($sshOptions + @($samplesArchive,"${target}:$remoteStage.samples.tar.gz"))
+        }
+        $deployCommand = "mkdir -p ~/$remoteStage && mv ~/$remoteStage.tar.gz ~/$remoteStage/release.tar.gz && { if test -f ~/$remoteStage.samples.tar.gz; then mv ~/$remoteStage.samples.tar.gz ~/$remoteStage/reference-samples.tar.gz; fi; } && tar -xOf ~/$remoteStage/release.tar.gz scripts/deploy-debian.sh > ~/$remoteStage/deploy.sh && bash ~/$remoteStage/deploy.sh $RemoteDirectory $revision"
         Run ssh ($sshOptions + @('-t',$target,$deployCommand))
         Write-Host "Bender mis a jour : http://${RemoteHost}:8000 - revision $revision"
     } finally { Remove-Item -LiteralPath $temp -Recurse -Force }
