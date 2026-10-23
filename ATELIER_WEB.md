@@ -40,3 +40,11 @@ Le journal commun affiche les transcriptions et les réponses de Bender. Dans Re
 Dans Caméra et vision, les captures attendent deux secondes de stabilisation et utilisent le MJPEG HD 1280 × 720 si la LifeCam le propose, avec repli VGA. Charger les réglages affiche les contrôles natifs disponibles. « Moins exposée » passe l’exposition en manuel et réduit son temps de 35 % ; « Plus exposée » l’augmente de 50 %. Chaque modification reprend une photo sans envoi à GPT. « Automatique » rétablit l’exposition et la balance des blancs automatiques disponibles, ainsi que luminosité/contraste/contre-jour d’usine. Les valeurs sont conservées dans `data/voice/hardware/camera-settings.json` (ou le data_dir configuré), hors Git.
 
 Les détails des zones déjà saturées ne peuvent pas être récupérés sur la photo précédente : régler la caméra puis reprendre la vue. Le résultat réel doit être vérifié sur la LifeCam après déploiement. Principes des contrôles natifs : [documentation V4L2 du noyau Linux](https://docs.kernel.org/userspace-api/media/v4l/ext-ctrls-camera.html). Stabilisation par sélection des images : [documentation FFmpeg](https://www.ffmpeg.org/ffmpeg-filters.html#select_002c-aselect).
+
+## Correction automatique avant GPT
+
+Chaque capture reçoit une correction locale modérée, adaptée à son histogramme de luminance : contraste, luminosité et netteté légère. Le traitement Pillow est déterministe et ne génère aucun objet ou détail. La photo corrigée est affichée par défaut et envoyée à GPT ; le sélecteur « Image affichée » permet de comparer avec l’original. Le choix d’affichage ne change pas la version envoyée au cerveau. Aucun appel GPT supplémentaire n’est déclenché par la correction.
+
+Même une demande directe à `/api/hardware/vision` repasse par cette préparation. Chaque correction repart de l’original ; elle n’est pas réappliquée sur une version déjà corrigée. Les originaux et leurs copies corrigées sont privés, accessibles avec la clé de contrôle, et supprimés par paires pour conserver les trois dernières captures. Les zones déjà uniformément blanches ou noires ne retrouvent pas leurs détails. Pillow est installé par la mise à jour habituelle.
+
+Référence technique : [histogrammes et transformations de pixels Pillow](https://pillow.readthedocs.io/en/stable/reference/Image.html).

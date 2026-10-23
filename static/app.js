@@ -71,11 +71,20 @@ $('emotion').onchange=()=>{if(window.BenderCustomSelection)window.BenderCustomSe
 $('speed').onchange=()=>{player.playbackRate=Number($('speed').value);};
 $('output').onchange=()=>{player.hidden=$('output').value==='dell';};$('output').onchange();
 $('replay').onclick=async()=>{if(!bundle)return;await stop();try{await beginBundle(bundle,run);}catch(e){$('error').textContent=e.message;}};
+async function showCameraImage(){
+ if(!photo)return;
+ const current=photo.id,url=$('cameraView').value==='original'?photo.original_image_url:photo.image_url;
+ const res=await ioFetch(url,null,'GET'),blob=await res.blob();if(photo?.id!==current)return;
+ if(photoBlob)URL.revokeObjectURL(photoBlob);photoBlob=URL.createObjectURL(blob);$('cameraPreview').src=photoBlob;$('cameraPreview').hidden=false;
+}
+$('cameraView').onchange=()=>showCameraImage().catch(error=>{$('error').textContent=error.message;});
 $('capture').onclick=async()=>{
  $('capture').disabled=true;$('error').textContent='';$('state').textContent='Capture sur la LifeCam · stabilisation de l’exposition…';photo=null;$('vision').disabled=true;
- try{photo=await (await ioFetch('/api/hardware/camera')).json();const res=await ioFetch(photo.image_url,null,'GET');
-  if(photoBlob)URL.revokeObjectURL(photoBlob);photoBlob=URL.createObjectURL(await res.blob());$('cameraPreview').src=photoBlob;$('cameraPreview').hidden=false;$('vision').disabled=false;$('state').textContent='Photo reçue du Dell';
-  $('cameraInfo').textContent=`Photo ${photo.width} × ${photo.height} · stabilisation ${photo.warmup_seconds||0} s. ${(photo.warnings||[]).join(' ')}`;
+ $('cameraView').disabled=true;
+ try{photo=await (await ioFetch('/api/hardware/camera')).json();$('cameraView').value='enhanced';await showCameraImage();
+  $('cameraView').disabled=false;$('vision').disabled=false;$('state').textContent='Photo corrigée reçue du Dell';
+  const enhancement=photo.enhancement||{};
+  $('cameraInfo').textContent=`Photo ${photo.width} × ${photo.height} · correction automatique avant GPT. ${(enhancement.operations||[]).join(' · ')}. ${[...(photo.warnings||[]),...(enhancement.warnings||[])].join(' ')}`;
  }catch(error){$('error').textContent=error.message;$('state').textContent='Caméra indisponible';}finally{$('capture').disabled=false;}
 };
 $('vision').onclick=async()=>{

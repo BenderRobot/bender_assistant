@@ -86,7 +86,11 @@ def build_hardware_router(brain_callback):
     @router.post('/api/hardware/camera', dependencies=[Depends(require_control)])
     async def camera(hardware=Depends(get_hardware)):
         try:
-            return await asyncio.to_thread(hardware.capture)
+            capture = await asyncio.to_thread(hardware.capture)
+            prepared = await asyncio.to_thread(hardware.prepare_photo, capture['id'])
+            return {**capture, 'original_image_url': capture['image_url'], 'image_url': prepared['image_url'],
+                    'enhancement': prepared['enhancement'],
+                    'width': prepared['enhancement']['width'], 'height': prepared['enhancement']['height']}
         except HardwareError as exc:
             raise device_error(exc) from exc
 
@@ -145,21 +149,39 @@ def build_hardware_router(brain_callback):
         path = hardware.photo_path(req.photo_id)
         if not path.is_file():
             raise HTTPException(404, 'Photo expirée ; reprendre une capture')
-        image = path.read_bytes()
-        if len(image) > 4_000_000:
-            raise HTTPException(400, 'Photo trop volumineuse')
+        try:
+            prepared = await asyncio.to_thread(hardware.prepare_photo, req.photo_id)
+        except HardwareError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        image = prepared['image']
         try:
             response = await asyncio.to_thread(brain_callback, req.question, image)
         except BrainError as exc:
             raise HTTPException(503, str(exc)) from exc
         except Exception as exc:
             raise HTTPException(503, 'Vision GPT indisponible ; vérifier la connexion dans l’onglet Cerveau GPT et Internet') from exc
-        result = {'response': response}
+        result = {'response': response, 'image_url': prepared['image_url'], 'enhancement': prepared['enhancement']}
         try:
             result['speech'] = await asyncio.to_thread(voice.prepare, response, req.mode, req.mood)
         except Exception:
             result['speech_error'] = 'Réponse reçue, mais synthèse vocale indisponible'
         return result
+
+    @router.get('/api/hardware/photos/{identifier}/enhanced', dependencies=[Depends(require_control)])
+    async def enhanced_photo(identifier: str, hardware=Depends(get_hardware)):
+        try:
+            original = hardware.photo_path(identifier)
+            path = hardware.enhanced_photo_path(identifier)
+        except ValueError as exc:
+            raise HTTPException(404, 'Photo introuvable') from exc
+        if not original.is_file():
+            raise HTTPException(404, 'Photo expirée ; reprendre une capture')
+        if not path.is_file():
+            try:
+                await asyncio.to_thread(hardware.prepare_photo, identifier)
+            except HardwareError as exc:
+                raise HTTPException(400, str(exc)) from exc
+        return FileResponse(path, media_type='image/jpeg', headers={'Cache-Control': 'no-store'})
 
     @router.post('/api/hardware/play', dependencies=[Depends(require_control)])
     async def play(req: PlaybackRequest, player=Depends(get_host_player)):

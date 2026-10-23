@@ -1,4 +1,5 @@
 import asyncio
+from io import BytesIO
 import json
 import subprocess
 import tempfile
@@ -81,17 +82,24 @@ class HardwareTests(unittest.TestCase):
         app.dependency_overrides[get_hardware] = lambda: self.hardware
         app.dependency_overrides[get_voice] = lambda: self.voice
         headers = {'X-Bender-Control-Token': self.hardware.control_token()}
-        identifier = 'a' * 32;self.hardware.photo_path(identifier).write_bytes(b'photo-data')
+        from PIL import Image
+        original = BytesIO();Image.new('RGB',(64,48),(160,150,140)).save(original,format='JPEG')
+        photo_data=original.getvalue()
+        identifier = 'a' * 32;self.hardware.photo_path(identifier).write_bytes(photo_data)
         with TestClient(app) as client:
             for route in ('camera', 'listen', 'play', 'vision', 'stop'):
                 self.assertEqual(client.post('/api/hardware/' + route, json={}).status_code, 403)
             self.assertEqual(client.get(f'/api/hardware/photos/{identifier}').status_code, 403)
             photo = client.get(f'/api/hardware/photos/{identifier}', headers=headers)
-            self.assertEqual(photo.content, b'photo-data');self.assertEqual(photo.headers['cache-control'], 'no-store')
+            self.assertEqual(photo.content, photo_data);self.assertEqual(photo.headers['cache-control'], 'no-store')
             result = client.post('/api/hardware/vision', headers=headers, json={'photo_id': identifier, 'question': 'Que vois-tu ?'})
             self.assertEqual(result.status_code, 200)
             self.assertEqual(result.json()['response'], 'Je vois un objet.')
-            self.assertEqual(calls, [('Que vois-tu ?', b'photo-data')])
+            self.assertEqual(calls[0][0], 'Que vois-tu ?')
+            self.assertNotEqual(calls[0][1], photo_data)
+            enhanced=client.get(result.json()['image_url'],headers=headers)
+            self.assertEqual(enhanced.content,calls[0][1])
+            self.assertEqual(self.hardware.photo_path(identifier).read_bytes(),photo_data)
 
     def test_host_player_broadcasts_and_returns_to_rest(self):
         from pose_models import EyesShape

@@ -168,6 +168,7 @@ class Hardware:
         self.root = Path(config['data_dir']) / 'hardware'
         self.root.mkdir(parents=True, exist_ok=True)
         self.lock = threading.Lock()
+        self.photo_lock = threading.Lock()
         self.model = None
         self.microphone_session = MicrophoneSession(self)
         from .camera import Camera
@@ -260,6 +261,31 @@ class Hardware:
             raise ValueError('Identifiant photo invalide')
         return self.root / f'snapshot-{identifier}.jpg'
 
+    def enhanced_photo_path(self, identifier):
+        return self.photo_path(identifier).with_name(f'snapshot-{identifier}-enhanced.jpg')
+
+    def prepare_photo(self, identifier):
+        with self.photo_lock:
+            return self._prepare_photo(identifier)
+
+    def _prepare_photo(self, identifier):
+        from .photo_enhancement import enhance_photo
+        path = self.photo_path(identifier)
+        try:
+            original = path.read_bytes()
+        except FileNotFoundError as exc:
+            raise HardwareError('Photo expirée ; reprendre une capture') from exc
+        image, report = enhance_photo(original)
+        fd, name = tempfile.mkstemp(dir=self.root, prefix='.enhanced-')
+        try:
+            with os.fdopen(fd, 'wb') as output:
+                output.write(image)
+            os.replace(name, self.enhanced_photo_path(identifier))
+        finally:
+            if os.path.exists(name):
+                os.unlink(name)
+        return {'image': image, 'image_url': f'/api/hardware/photos/{identifier}/enhanced', 'enhancement': report}
+
     def capture(self):
         if not shutil.which('ffmpeg'):
             raise HardwareError('ffmpeg absent sur le serveur')
@@ -287,9 +313,12 @@ class Hardware:
                 raise HardwareError('Caméra indisponible ; vérifier /dev/video0 et les droits vidéo') from exc
             if not path.is_file() or not 0 < path.stat().st_size <= 4_000_000:
                 raise HardwareError('Image caméra invalide')
-            photos = sorted(self.root.glob('snapshot-*.jpg'), key=lambda p: p.stat().st_mtime, reverse=True)
-            for old in photos[3:]:
-                old.unlink(missing_ok=True)
+            with self.photo_lock:
+                photos = sorted((p for p in self.root.glob('snapshot-*.jpg') if re.fullmatch(r'snapshot-[a-f0-9]{32}\.jpg', p.name)),
+                                key=lambda p: p.stat().st_mtime, reverse=True)
+                for old in photos[3:]:
+                    old.with_name(old.stem + '-enhanced.jpg').unlink(missing_ok=True)
+                    old.unlink(missing_ok=True)
             width, height = map(int, size.split('x'))
             return {'id': identifier, 'image_url': f'/api/hardware/photos/{identifier}', 'width': width, 'height': height,
                     'warnings': warnings, 'warmup_seconds': 2}

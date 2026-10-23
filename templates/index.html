@@ -102,7 +102,9 @@
 <p id="cameraSettingsStatus" role="status">Les réglages disponibles dépendent du pilote de la caméra.</p><div id="cameraControls" class="grid"></div>
 <div class="buttons"><button id="cameraApply" disabled>Appliquer et reprendre une photo</button></div>
 <p>Une zone entièrement blanche sur une ancienne photo ne peut pas retrouver ses détails : il faut réduire l’exposition et prendre une nouvelle image.</p>
-</details><p id="cameraInfo" role="status"></p>
+</details><p>La correction automatique de luminosité, contraste et netteté est appliquée à chaque photo avant l’analyse GPT. L’original est conservé ; les zones déjà brûlées ne retrouvent pas leurs détails.</p>
+<label for="cameraView">Image affichée<select id="cameraView" disabled><option value="enhanced">Corrigée automatiquement · envoyée à GPT</option><option value="original">Originale · comparaison uniquement</option></select></label>
+<p id="cameraInfo" role="status"></p>
 <div class="buttons"><button id="capture">Prendre une photo · LifeCam</button></div><img id="cameraPreview" alt="Dernière photo prise par la LifeCam du Dell" hidden>
 <label for="visionQuestion">Question sur la photo</label><input id="visionQuestion" maxlength="2000" value="Décris ce que tu vois devant toi.">
 <div class="buttons"><button id="vision" disabled>Analyser la photo avec GPT</button></div>
