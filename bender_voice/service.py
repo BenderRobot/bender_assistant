@@ -27,6 +27,18 @@ class VoiceService:
         self.providers = providers or {'chatterbox': ChatterboxVoice(config), 'system': SystemVoice(config), 'elevenlabs': ElevenVoice(config)}
         self.lock = threading.RLock()  # Une seule synthèse et réservation par processus.
 
+    def activate_reference(self,reference,mood='neutral'):
+        from . import references
+        with self.lock:
+            references.validate(self.store.root,{mood:reference})
+            if not inside(self.store.root,reference).is_file():raise ValueError('Fichier de référence vocale absent.')
+            selected={**references.read(self.store.root),mood:reference}
+            references.save(self.store.root,selected)
+            self.config['reference_by_mood']={**self.config.get('reference_by_mood',{}),**selected}
+            self.config['local_provider']='chatterbox'
+            return dict(mood=mood,reference_file=reference,provider='chatterbox',
+                        note='Référence Chatterbox activée. Teste une phrase nouvelle en mode Local ; le modèle Chatterbox doit être installé.')
+
     def _key(self, text, provider, mood):
         value = {'text': text, 'mood': mood, 'voice': provider.identity(mood),
                  'lipsync': self.config.get('lipsync', {}), 'cache_version': self.config.get('cache_version', 1)}
@@ -132,6 +144,8 @@ class VoiceService:
             # Tout cache compatible peut être rejoué avant de générer, même sans réseau/clé.
             if primary is None and mode in ('auto', 'cache'):
                 for name in ('elevenlabs', local_name, 'system'):
+                    if name=='system' and mode=='auto' and self.config.get('routing',{}).get('conversation_cloud',True) and self.config.get('elevenlabs',{}).get('enabled'):
+                        continue
                     provider = self.providers[name]
                     key = self._key(text, provider, mood)
                     if self.asset(key, 'wav').is_file() and self.asset(key, 'json').is_file():
@@ -140,8 +154,14 @@ class VoiceService:
             if primary is None:
                 if mode == 'cache':
                     raise VoiceUnavailable('Aucun enregistrement en cache pour cette phrase et cette voix')
-                cloud_wanted = mode == 'cloud' or (mode == 'auto' and topic in ('news', 'narration') and self.config.get('elevenlabs', {}).get('enabled'))
-                order = (['elevenlabs'] if cloud_wanted else []) + [local_name]
+                routing=self.config.get('routing',{})
+                live_cloud=routing.get('conversation_cloud',True)
+                cloud_wanted = mode == 'cloud' or (mode == 'auto' and (live_cloud or topic in ('news', 'narration')) and self.config.get('elevenlabs', {}).get('enabled'))
+                order = ['elevenlabs'] if cloud_wanted else []
+                if mode=='local' or (mode=='auto' and not live_cloud) or routing.get('slow_fallback',False):
+                    order.append(local_name)
+                elif not cloud_wanted:
+                    warnings.append('Conversation : ElevenLabs non activé. Chatterbox est réservé à la préparation ; aucun calcul lent lancé.')
                 if self.config.get('system_fallback', True) and 'system' not in order:
                     order.append('system')
                 for name in order:
@@ -161,6 +181,13 @@ class VoiceService:
                 except (OSError, KeyError, ValueError, VoiceUnavailable):
                     warnings.append('Réplique contextuelle ignorée : fichier ou catalogue invalide')
             return {'text': text, 'segments': segments, 'warnings': warnings, 'usage': self.store.usage()}
+
+    def prepare_offline(self,text,mood='neutral'):
+        """Worker only: no API call and no generic-voice fallback."""
+        if not text.strip() or len(text)>8000:raise ValueError('Texte de préparation invalide')
+        with self.lock:
+            segment=self._generate(text.strip(),mood,self.providers['chatterbox'],[])
+            return segment
 
     def register(self, source, identifier, text, kind='quote', triggers=None, mood=None, timeline=None, eyes='normal'):
         if not re.fullmatch(r'[a-z0-9][a-z0-9_-]{0,63}', identifier) or kind not in ('quote', 'basic'):

@@ -2,18 +2,28 @@
 (() => {
  const el = id => document.getElementById(id);
  const tabs = [...document.querySelectorAll('[role=tab]')];
+ let lastWorkshop='voix';
  function show(name) {
-  const chosen = tabs.find(tab => tab.id === `tab-${name}`) || tabs[0];
+  const chosen = tabs.find(tab => tab.id === `tab-${name}`);
+  const conversation=!chosen;
+  document.body.dataset.view=conversation?'conversation':'workshop';
+  el('showConversation').setAttribute('aria-pressed',String(conversation));
+  el('showWorkshop').setAttribute('aria-pressed',String(!conversation));
+  el('workspaceHint').textContent=conversation?'Micro, texte et réponses au même endroit.':'Les réglages avancés et les créations restent ici.';
+  if(chosen)lastWorkshop=chosen.id.slice(4);
   tabs.forEach(tab => {
    const active = tab === chosen; tab.setAttribute('aria-selected', String(active)); tab.tabIndex = active ? 0 : -1;
    el(tab.getAttribute('aria-controls')).hidden = !active;
   });
-  if(!display) history.replaceState(null,'',`#${chosen.id.slice(4)}`);
+  if(!display) history.replaceState(null,'',`#${conversation?'discuter':chosen.id.slice(4)}`);
  }
+ window.BenderWorkshop={show};
+ el('showConversation').onclick=()=>show('discuter');
+ el('showWorkshop').onclick=()=>show(lastWorkshop);
  tabs.forEach((tab, i) => {
   tab.addEventListener('click', () => show(tab.id.slice(4)));
   tab.addEventListener('keydown', event => {
-   const target = event.key === 'ArrowRight' ? (i+1)%tabs.length : event.key === 'ArrowLeft' ? (i+tabs.length-1)%tabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length-1 : -1;
+   const target = ['ArrowRight','ArrowDown'].includes(event.key) ? (i+1)%tabs.length : ['ArrowLeft','ArrowUp'].includes(event.key) ? (i+tabs.length-1)%tabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length-1 : -1;
    if(target >= 0) { event.preventDefault(); show(tabs[target].id.slice(4)); tabs[target].focus(); }
   });
  });

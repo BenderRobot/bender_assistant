@@ -5,7 +5,8 @@ import threading
 from bender_brain import BrainError
 from bender_voice.hardware import HardwareError, HardwareBusy
 from .analysis import analyze
-from .processing import prepare, transcribe
+from .processing import prepare
+from .transcription import transcribe, profile, status as transcription_status, release
 from .progress import Progress
 
 
@@ -43,6 +44,10 @@ class Worker:
             self.thread=threading.Thread(target=self.run,daemon=True);self.thread.start()
 
     def run(self):
+        try:self._run()
+        finally:release()
+
+    def _run(self):
         with exclusive(self.catalog.root/'.worker.lock') as acquired:
             if not acquired:self.message='Un traitement est déjà actif.';return
             # Only this lock owner may recover jobs interrupted by a server restart.
@@ -71,7 +76,8 @@ class Worker:
                     reused=bool(media.get('transcribed'))
                     if not media.get('transcribed'):
                         media['transcript'],media['words']=transcribe(self.hardware,self.catalog.derived(identifier)/media['audio'],progress.detail)
-                        media['transcribed']=True;self.catalog.update(identifier,media=media)
+                        media['transcribed']=True;media['transcription']=profile(self.hardware.config)
+                        self.catalog.update(identifier,media=media)
                     if not media['transcript'].strip():raise ValueError('Aucune parole reconnue ; saisir une transcription puis relancer.')
                     progress.complete('transcription',reused)
                     progress.stage('analysis','GPT analyse la transcription et les images ; durée variable…')
@@ -95,4 +101,5 @@ class Worker:
     def status(self):
         external=any(item['state']=='processing' for item in self.catalog.list())
         return dict(active=bool(self.thread and self.thread.is_alive()) or external,
-                    message='Traitement en cours sur Bender.' if external else self.message,automatic=self.catalog.automatic())
+                    message='Traitement en cours sur Bender.' if external else self.message,automatic=self.catalog.automatic(),
+                    transcription=transcription_status(self.hardware.config))

@@ -47,7 +47,7 @@ class MicrophoneStop(BaseModel):
 
 
 class PlaybackRequest(BaseModel):
-    ids: list[str] = Field(min_length=1, max_length=16)
+    ids: list[str] = Field(min_length=1, max_length=64)
     eyes: Literal['normal', 'angry', 'happy', 'surprised', 'sleepy', 'sad', 'worried', 'crying', 'ref1', 'ref2', 'ref3', 'ref4', 'ref5'] = 'normal'
     custom_eyes: EyesShape | None = None
 

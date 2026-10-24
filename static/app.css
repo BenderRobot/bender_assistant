@@ -30,3 +30,45 @@
 #brainError{color:#ffb6ab}#brainAnswer{white-space:pre-wrap;color:#d9efdf}#brainStatus{padding:12px 14px;border:1px solid #536c73;border-radius:8px;background:#10191c}#brainStatus[data-ready=true]{border-color:#89b99b;color:#ccec9a}
 
 .creation-library{background:#101a1e;border:1px solid #34494b;border-radius:10px;padding:16px;margin-top:22px}.creation-library .buttons{margin:12px 0}.creation-library button{font-size:12px;padding:9px 12px}.graphic-editor{margin-top:18px;border:1px solid #536c73;border-radius:12px;background:#10191e}.graphic-editor>summary{cursor:pointer;color:#ccec9a;padding:17px;font-size:14px;font-weight:650}.graphic-editor>div{padding:0 18px 18px}.graphic-editor .editor-help{font-size:12px;color:#b8c9cc;line-height:1.7}.editor-toolbar{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:16px 0}.editor-toolbar>label{flex:1;min-width:150px;font-size:12px}.editor-inline{display:flex!important;gap:8px;align-items:center;font-size:12px}.shape-canvas{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair;background:#030709}.numeric-settings{border:1px solid #34494b;border-radius:8px;padding:12px;margin:18px 0}.numeric-settings summary{cursor:pointer;font-size:12px;color:#c9e9d4}.editor-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:10px}.editor-fields label{font-size:11px;margin:0}.editor-fields input{padding:8px!important;font-size:13px!important}.editor-fields input[type=color]{height:43px}.editor-message{font-size:12px;color:#b9e7c9;white-space:pre-wrap}.graphic-editor .buttons button{font-size:12px;padding:9px 12px}.graphic-editor .buttons{gap:8px}#editor-mouth .shape-canvas{image-rendering:pixelated}.display .creation-library,.display .graphic-editor{display:none}@media(max-width:760px){.editor-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.graphic-editor>div{padding:0 12px 12px}.editor-toolbar{gap:8px}.editor-toolbar>label{min-width:125px}}
+
+/* Everyday conversation stays separate from the workshop. */
+.workspace-nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 20px}.workspace-nav button{background:#213139;color:#dce8df;border:1px solid #536c73}.workspace-nav [aria-pressed=true]{background:#ccec9a;color:#182516;border-color:#ccec9a}.workspace-nav span{font-size:12px;color:#adc3c7;margin-left:8px}
+body[data-view=conversation] .workshop-panel,body[data-view=workshop] .conversation-panel{display:none!important}
+body[data-view=conversation] .screens{max-width:620px;margin:0 auto 18px;gap:16px}body[data-view=conversation] .screens canvas{max-height:110px;object-fit:contain}body[data-view=conversation] .screen-title h2{font-size:12px}body[data-view=conversation] #poseState{font-size:11px;margin:2px 0}
+.voice-overview{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:20px 0}.voice-configuration,.actual-voice{background:#152125;border:1px solid #536c73;border-radius:12px;padding:20px}.voice-overview .eyebrow{margin:0 0 10px;font-size:10px}.voice-overview h2{font-size:20px;color:#e5efdf;margin:8px 0}.voice-overview p{font-size:13px;margin:8px 0}.voice-overview label{font-size:13px}.voice-overview select{padding:9px;font-size:14px}.voice-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.secondary,.voice-actions button{background:#263a40;color:#d3e3db;border:1px solid #536c73;font-size:13px;padding:9px 12px}.actual-voice{border-top:3px solid #536c73}.actual-voice[data-source=elevenlabs]{border-top-color:#b6dfb0}.actual-voice[data-source=chatterbox]{border-top-color:#85c6ed}.actual-voice[data-source=system],.actual-voice[data-source=unknown]{border-top-color:#f3d28d}.source-warning{color:#f3d28d;font-size:12px;line-height:1.6;padding-left:18px}.source-warning:not(ul){padding-left:0}.small-note{font-size:12px!important;color:#aebfc2}
+.conversation-compose{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:20px 0}.conversation-compose h3{font-size:14px;color:#c2e2cb;margin:15px 0}.conversation-compose .buttons{gap:8px;margin:12px 0}.conversation-compose button{font-size:14px}.conversation-compose form>button{margin-top:12px}.transcript-review{border:1px solid #34494b;border-radius:8px;padding:12px 14px;margin:0 0 20px}.transcript-review summary,.playback-diagnostics summary{cursor:pointer;color:#bcd2c4;font-size:13px}.transcript-review button{font-size:13px;margin-top:12px}.conversation-turn .conversation-source{font-size:12px;border-left:3px solid #85c6ed;background:#1b2d32;padding:9px 12px;color:#cce0da}.conversation-source[data-source=elevenlabs]{border-left-color:#b6dfb0}.conversation-source[data-source=system]{border-left-color:#f3d28d}.playback-diagnostics{margin-top:10px}.display .workspace-nav{display:none!important}
+@media(max-width:760px){.voice-overview,.conversation-compose{grid-template-columns:1fr}.voice-overview{gap:10px}.voice-configuration,.actual-voice{padding:16px}.workspace-nav span{margin:0}.workspace-nav button{flex:1}.conversation-compose{gap:10px}body[data-view=conversation] .screens{grid-template-columns:1fr 1fr}}
+
+.audio-library>summary{cursor:pointer;color:#c2e2cb;font-size:15px;font-weight:650}.audio-library[open]>summary{margin-bottom:18px}
+
+/* The face and navigation stay together on the left. */
+body:not(.display) main{max-width:1600px}
+.workspace-layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:26px;align-items:start}
+.workspace-sidebar{position:sticky;top:18px;min-width:0;max-height:calc(100vh - 36px);overflow-y:auto;scrollbar-width:thin;padding-right:5px}
+.workspace-sidebar .screens,body[data-view=conversation] .workspace-sidebar .screens{display:grid;grid-template-columns:1fr;max-width:none;margin:0;gap:10px}
+.workspace-sidebar .screens canvas,body[data-view=conversation] .workspace-sidebar .screens canvas{display:block;max-height:130px;height:auto;object-fit:contain}
+.workspace-sidebar #mouth,body[data-view=conversation] .workspace-sidebar #mouth{max-height:90px}
+.workspace-sidebar .screen-title h2{font-size:12px;margin:8px 0}
+.workspace-sidebar #poseState{font-size:11px;margin:5px 0}
+.workspace-sidebar .workspace-nav{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:14px 0 10px}
+.workspace-sidebar .workspace-nav button{font-size:13px;margin:0;text-align:left}
+.workspace-sidebar .workspace-nav span{grid-column:1/-1;margin:2px 0;font-size:11px}
+.workspace-sidebar .workshop-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:14px 0}
+.workspace-sidebar .workshop-tabs button{padding:10px 12px;text-align:left;font-size:13px;min-width:0}
+.workspace-sidebar .connection{padding:12px;margin-bottom:12px}
+.workspace-sidebar .connection summary{line-height:1.5}
+.deployment-version{font-size:11px;color:#9eb7b8;overflow-wrap:anywhere;border-top:1px solid #34494b;padding-top:12px}
+#controls{min-width:0}
+.voice-overview{margin-top:0;gap:14px}
+.voice-overview h2{font-size:19px}
+.voice-configuration,.actual-voice{padding:16px}
+.conversation-compose{grid-template-columns:1fr}
+.media-workbench{grid-template-columns:minmax(180px,230px) minmax(0,1fr)}
+.display .workspace-layout{display:block}
+.display .workspace-sidebar{position:static;max-height:none;overflow:visible;padding:0}
+.display .workspace-sidebar .screens,body.display[data-view=conversation] .workspace-sidebar .screens{display:block;margin:0}
+body.display .workspace-sidebar .screens canvas,body.display[data-view=conversation] .workspace-sidebar .screens canvas{height:100vh;max-height:none;object-fit:contain}
+body.display .workspace-sidebar #mouth,body.display[data-view=conversation] .workspace-sidebar #mouth{height:100vh;max-height:none}
+.display .workspace-sidebar .workshop-tabs,.display .workspace-sidebar .connection,.display .deployment-version{display:none!important}
+@media(max-width:1000px){.workspace-layout{grid-template-columns:250px minmax(0,1fr);gap:18px}.voice-overview,.media-workbench{grid-template-columns:1fr}.media-list{max-height:260px}}
+@media(max-width:760px){.workspace-layout{grid-template-columns:1fr;gap:20px}.workspace-sidebar{position:static;max-height:none;overflow:visible;padding:0}.workspace-sidebar .screens,body[data-view=conversation] .workspace-sidebar .screens{grid-template-columns:1fr 1fr;align-items:center}.workspace-sidebar .workspace-nav{grid-template-columns:1fr 1fr}.workspace-sidebar .workspace-nav span{grid-column:1/-1}.workspace-sidebar .workshop-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.workspace-sidebar .screens canvas,body[data-view=conversation] .workspace-sidebar .screens canvas{max-height:none}}

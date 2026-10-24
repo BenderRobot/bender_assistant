@@ -1,11 +1,23 @@
 # Atelier Bender — menus
 
-La page d'accueil propose cinq onglets accessibles directement :
+La page s’ouvre sur **Discuter avec Bender** (`/#discuter`) : saisie de texte, démarrage du micro, fin d’écoute et journal sont regroupés. Les autres fonctions sont dans **Réglages et atelier**.
 
+Deux encarts distinguent la configuration et le résultat :
+
+- **Configuration du serveur** annonce si ElevenLabs est activé et permet de choisir le routage.
+- **Audio de la dernière réponse** utilise la source effectivement renvoyée avec l’audio, indépendamment du moteur configuré.
+
+Chaque échange conserve aussi sa source : **ElevenLabs · API**, **Chatterbox · local**, **Cache · ElevenLabs**, **Cache · Chatterbox**, **Réplique enregistrée** ou **Voix système · générique**. Une lecture depuis le cache ou le bouton Rejouer ne fait pas de nouvelle génération. Une erreur cloud ne sera donc pas présentée comme une réponse ElevenLabs si la voix système a pris le relais.
+
+La source décrit l’audio préparé ; une éventuelle erreur des enceintes reste affichée séparément. Les durées GPT et préparation audio sont mesurées côté serveur. Pour une version ancienne sans ces mesures, le navigateur affiche seulement le temps total de préparation. Le diagnostic de voix est actualisé sans faire parler Bender ni consommer de crédits.
+
+**Configurer la voix** ouvre directement ses réglages. Les bulletins, les enregistrements et les essais manuels sont repliables. Les éditeurs et les menus existants restent disponibles dans l’atelier.
+
+Les onglets avancés restent accessibles directement :
 - `/#yeux` : 13 expressions, comportement et clignement de démonstration.
 - `/#bouche` : 12 poses existantes, dents droites/arrondies et défilement de démonstration.
 - `/#voix` : extraits enregistrés, bibliothèque de répliques et synthèse à partir du texte.
-- `/#reconnaissance` : microphone du Dell, transcription locale, diagnostic et aide Vosk.
+- `/#reconnaissance` : durée maximale du micro, diagnostic et aide Vosk ; l’écoute se commande depuis Discuter.
 - `/#cerveau` : connexion du compte ChatGPT, choix du modèle et test texte ([guide](CERVEAU_GPT.md)).
 - `/#vision` : capture LifeCam et analyse explicite avec GPT.
 
@@ -29,7 +41,7 @@ Le diagnostic distingue le périphérique audio, l'outil arecord et la présence
 
 ## Validation
 
-30 tests passent. Les tests couvrent notamment la préparation d'un extrait sans synthèse, la lecture de son audio et de son calage, ainsi que le refus d'archives de références contenant des traversées de chemins, des liens ou des fichiers de catalogue manquants. Navigation, choix de pose et lecture d'un extrait avec calage visuel ont aussi été vérifiés dans le navigateur local.
+135 tests passent, dont les contrôles de source réelle, de cache, de secours, de journal par échange et de compatibilité des commandes micro. Les tests couvrent notamment la préparation d'un extrait sans synthèse, la lecture de son audio et de son calage, ainsi que le refus d'archives de références contenant des traversées de chemins, des liens ou des fichiers de catalogue manquants. Navigation, choix de pose et lecture d'un extrait avec calage visuel ont aussi été vérifiés dans le navigateur local.
 
 ## Voir et piloter la conversation
 
@@ -51,4 +63,18 @@ Référence technique : [histogrammes et transformations de pixels Pillow](https
 
 ## Samples et personnalité
 
-Le menu `/#samples` affiche les nouveaux sons et vidéos importés lors des mises à jour, leurs transcriptions, le classement GPT et les images de référence. Les passages se valident comme réplique, candidat vocal ou repère bouche/yeux. Voir [SAMPLES_PERSONNALITE.md](SAMPLES_PERSONNALITE.md).
+Le menu `/#samples` affiche les nouveaux sons et vidéos importés lors des mises à jour, leurs transcriptions Whisper locales, le classement GPT et les images de référence. Le moteur utilisé est affiché sur chaque transcription ; un bouton relance les anciens résultats Vosk, avec conservation du texte précédent. Les passages se valident comme réplique, candidat vocal ou repère bouche/yeux. Voir [SAMPLES_PERSONNALITE.md](SAMPLES_PERSONNALITE.md).
+
+
+## Atelier avec visage a gauche et controle du deploiement
+
+Les yeux et la bouche sont empiles dans la colonne de gauche. Les boutons de conversation et les menus de l'atelier sont directement dessous. Les reglages, la conversation et la source reelle de chaque audio apparaissent a droite. Sur petit ecran, la colonne passe au-dessus du contenu.
+
+Le bas du menu affiche la version du serveur et le debut du commit actif. La version de cette interface est `atelier-gauche-20261024`. Le diagnostic est disponible sans cle sur `/api/system/version` ; il ne publie aucune configuration privee.
+
+`MAJ_BENDER.ps1` affiche sept etapes : tests locaux, commit et push, preparation, transfert, installation Debian, verification reseau, fin. Tant que les tests ne sont pas termines, aucun code nouveau n'est envoye au Debian. Attendre le message `[7/7] Deploiement termine et version reseau confirmee.` Le script compare le commit attendu avec celui du processus demarre par systemd, puis controle les nouveaux fichiers de l'interface depuis le PC Windows. Une simple reponse HTTP 200 de l'ancienne version ne suffit plus pour annoncer un succes.
+
+
+Le controle des processus de preparation est portable : Windows utilise un handle de synchronisation et ne recoit aucun signal pour tester l'existence d'un worker. Le processus courant est identifie directement. Sur Linux, la sonde POSIX conserve les erreurs de permission comme un processus encore actif.
+
+Les tests du deploiement passent par `scripts/run-tests.py`. Ce lanceur ecrit un recu seulement apres la reussite et la fin de tous les tests decouverts. PowerShell verifie le nombre execute et l'identifiant unique de cette execution. Un arret silencieux de Python avec un code de sortie nul ne permet plus de continuer vers GitHub et Debian.

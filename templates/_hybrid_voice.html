@@ -1,0 +1,16 @@
+<div class="subpanel"><h3>Conversation · ElevenLabs</h3>
+<p>Les réponses nouvelles utilisent l’API ; les phrases déjà enregistrées sont réutilisées. Aucun repli automatique vers une génération Chatterbox lente.</p>
+<label class="inline"><input type="checkbox" id="liveEnabled"> Activer ElevenLabs pour les conversations (consomme les crédits de ton compte)</label>
+<label for="liveVoiceId">Voice ID ElevenLabs</label><input id="liveVoiceId" maxlength="80" autocomplete="off">
+<label for="liveModel">Modèle de conversation</label><select id="liveModel"><option value="eleven_flash_v2_5">Flash v2.5 · priorité à la rapidité</option><option value="eleven_multilingual_v2">Multilingual v2</option><option value="eleven_v3">Eleven v3</option></select>
+<button id="saveLiveVoice">Enregistrer la voix de conversation</button><p id="liveVoiceStatus" role="status">Renseigne la clé de contrôle du Dell pour configurer la voix.</p>
+<p>La clé API ElevenLabs reste dans ELEVENLABS_API_KEY sur Debian. Les plafonds de caractères configurés restent appliqués.</p></div>
+<details class="subpanel audio-library"><summary>Bulletin du matin · préparation Chatterbox</summary>
+<p>Le Dell relève les titres et courts résumés des flux choisis, puis prépare l’audio à l’avance. Le bulletin reste daté ; il est lu uniquement quand tu le demandes, par exemple « Lis-moi les infos » à 8 h 30 ou 9 h. Ce sont les textes des flux, sans résumé GPT ajouté.</p>
+<label for="bulletinFeeds">Flux RSS · une URL par ligne, six maximum</label><textarea id="bulletinFeeds" rows="3" placeholder="https://www.lemonde.fr/rss/une.xml"></textarea>
+<div class="grid"><label for="bulletinTime">Heure de préparation · Europe/Paris<input id="bulletinTime" type="time" value="06:00"></label>
+<label for="bulletinMood">Référence Chatterbox<select id="bulletinMood"><option value="excited">Énergique</option><option value="neutral">Neutre</option><option value="sarcastic">Sarcastique</option><option value="angry">Agacé</option><option value="sad">Triste</option></select></label></div>
+<label class="inline"><input id="bulletinEnabled" type="checkbox"> Préparer chaque jour à cette heure</label>
+<div class="buttons"><button id="saveBulletin">Enregistrer les flux et l’horaire</button><button id="queueBulletin">Préparer maintenant</button><button id="refreshBulletin">Actualiser</button><button id="playBulletin" disabled>Lire le bulletin prêt</button></div>
+<p id="bulletinStatus" role="status">Le service de préparation est installé par la mise à jour Debian.</p><progress id="bulletinProgress" value="0" max="1" aria-label="Progression de la préparation"></progress><ul id="bulletinSources"></ul>
+<p>La collecte RSS nécessite Internet. Une fois l’audio prêt, sa lecture est locale. Un bulletin d’hier n’est jamais présenté comme celui d’aujourd’hui.</p></details>

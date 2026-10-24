@@ -20,6 +20,7 @@ connect();
 function sendFace(state){const custom=window.BenderCustomSelection||{};state={...state,custom_eyes:custom.eyes||null,custom_mouth:state.active?null:custom.mouth||null};face=state;lastFace=performance.now();if(socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify(state));}
 async function stop(){
  window.stopWorkshopDemos?.();
+ window.BenderVoiceStatus?.failed('Préparation annulée ; aucun nouvel audio lancé.');
  run++;segments=[];player.pause();player.currentTime=0;timeline=null;
  if(hostPlaying||($('output').value==='dell'&&$('controlKey').value.trim())){try{await ioFetch('/api/hardware/stop');}catch(error){if(hostPlaying)$('error').textContent=error.message;}}
  hostPlaying=false;sendFace({pose:0,eyes:$('emotion').value,active:false});$('state').textContent='Arrêté';$('poseState').textContent='Repos';
@@ -33,9 +34,10 @@ async function playSegment(token){
  $('details').textContent=[`Source : ${segment.source}${segment.cached?' · déjà enregistré':''}`, ...new Set([...(bundle.warnings||[]),...(segment.warnings||[])])].join('\n');
  await player.play();$('state').textContent='Parole dans ce navigateur';
 }
-async function beginBundle(data,token){
+async function beginBundle(data,token,timings={}){
  if(window.BenderMicrophone?.busy)throw Error('Mets le micro en pause avant de lire un enregistrement.');
  if(token!==run)return;bundle=data;segments=bundle.segments;index=0;$('replay').disabled=false;
+ window.BenderVoiceStatus?.show(data,timings);
  $('details').textContent=segments.map(s=>`Source : ${s.source}${s.cached?' · déjà enregistré':''}`).concat(...segments.map(s=>s.warnings||[])).join('\n');
  if($('output').value==='dell'){
   timeline=null;player.pause();const res=await ioFetch('/api/hardware/play',{ids:segments.map(s=>s.id),eyes:$('emotion').value,custom_eyes:window.BenderCustomSelection?.eyes||null});
@@ -54,7 +56,8 @@ setInterval(()=>{
 function render(now){if(display&&now-lastFace>1200)face={...face,pose:0,active:false};BenderFace.render(face,now);requestAnimationFrame(render);}requestAnimationFrame(render);
 async function perform(chat,conversationTurn=null){
  if(window.BenderMicrophone?.busy){$('error').textContent='Mets le micro en pause avant de faire parler Bender.';return;}
- await stop();$('error').textContent='';$('say').disabled=$('chat').disabled=true;$('state').textContent='Préparation…';
+ await stop();$('error').textContent='';$('say').disabled=$('chat').disabled=$('conversationSend').disabled=true;$('state').textContent='Préparation…';
+ window.BenderVoiceStatus?.pending();const requestStarted=performance.now();
  const text=$('text').value,payload={mode:$('mode').value,mood:$('mood').value,allow_quote:$('quotes').checked},token=run;
  const turn=chat?(conversationTurn||window.BenderConversation.begin(text)):null;
  if(turn)window.BenderConversation.pending(turn,text);
@@ -63,14 +66,17 @@ async function perform(chat,conversationTurn=null){
   const res=await fetch(chat?'/api/chat':'/api/speech',{method:'POST',headers:{'Content-Type':'application/json',...(chat?authHeaders():{})},body:JSON.stringify(payload)});
   const data=await res.json();if(!res.ok||data.error)throw Error(data.detail||data.error||'Génération impossible');if(token!==run){if(turn)window.BenderConversation.error(turn,'Lecture annulée ; réponse non prononcée.');return;}
   if(turn)window.BenderConversation.reply(turn,data.response);
-  $('response').textContent=chat?data.response:text;if(chat&&!data.speech)throw Error(data.speech_error||'Audio indisponible');await beginBundle(chat?data.speech:data,token);
- }catch(error){$('error').textContent=error.message;$('state').textContent='Indisponible';if(turn)window.BenderConversation.error(turn,error.message);}finally{$('say').disabled=$('chat').disabled=false;}
+  const audio=chat?data.speech:data,timings={...(data.timings||{}),request_seconds:(performance.now()-requestStarted)/1000};
+  if(turn&&audio)window.BenderConversation.audio(turn,audio,timings);
+  $('response').textContent=chat?data.response:text;if(chat&&!data.speech)throw Error(data.speech_error||'Audio indisponible');await beginBundle(audio,token,timings);
+ }catch(error){$('error').textContent=error.message;$('state').textContent='Indisponible';window.BenderVoiceStatus?.failed(error.message);if(turn)window.BenderConversation.error(turn,error.message);}finally{$('say').disabled=$('chat').disabled=$('conversationSend').disabled=false;}
 }
+ $('conversationForm').onsubmit=event=>{event.preventDefault();const text=$('conversationText').value.trim();if(!text||$('conversationSend').disabled)return;$('text').value=text;perform(true);};
 $('say').onclick=()=>perform(false);$('chat').onclick=()=>perform(true);$('stop').onclick=stop;
 $('emotion').onchange=()=>{if(window.BenderCustomSelection)window.BenderCustomSelection.eyes=null;if(!timeline&&!hostPlaying)sendFace({...face,eyes:$('emotion').value,mode:$('eyeMode').value,blink:$('eyeBlink').checked});};
 $('speed').onchange=()=>{player.playbackRate=Number($('speed').value);};
 $('output').onchange=()=>{player.hidden=$('output').value==='dell';};$('output').onchange();
-$('replay').onclick=async()=>{if(!bundle)return;await stop();try{await beginBundle(bundle,run);}catch(e){$('error').textContent=e.message;}};
+$('replay').onclick=async()=>{if(!bundle)return;const replay={...bundle,segments:bundle.segments.map(s=>({...s,cached:true}))};await stop();try{await beginBundle(replay,run);}catch(e){$('error').textContent=e.message;}};
 async function showCameraImage(){
  if(!photo)return;
  const current=photo.id,url=$('cameraView').value==='original'?photo.original_image_url:photo.image_url;

@@ -260,10 +260,13 @@ class BrainTests(unittest.TestCase):
                 data = client.post('/api/chat', json=dict(message='Bonjour', mode='local')).json()
                 self.assertEqual(data['response'], 'Salut l’organique.')
                 self.assertEqual(data['speech']['segments'][0]['id'], 'speech-test')
+                self.assertGreaterEqual(data['timings']['brain_seconds'],0)
+                self.assertGreaterEqual(data['timings']['voice_seconds'],0)
                 voice.prepare.assert_called_once_with('Salut l’organique.', 'local', 'neutral', 'Bonjour', '', False)
                 voice.reset_mock()
                 result = client.post('/api/chat', json=dict(message='Texte uniquement', speech=False)).json()
                 self.assertIn('response', result); self.assertNotIn('speech', result)
+                self.assertNotIn('voice_seconds',result['timings'])
                 voice.prepare.assert_not_called()
         finally:
             server.app.dependency_overrides.clear(); server.app.dependency_overrides.update(previous)

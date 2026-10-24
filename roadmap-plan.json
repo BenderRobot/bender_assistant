@@ -365,9 +365,97 @@
         "Voix",
         "Animation"
       ],
-      "description": "Conserver les poses validées et construire une voix cohérente pour les futures répliques. Les yeux restent indépendants.",
+      "description": "Commencer par le parcours ElevenLabs → WAV → référence Chatterbox, puis tester la voix locale et le routage hybride. Conserver les poses validées ; les yeux restent indépendants.",
       "gate": "Des phrases nouvelles, courtes, longues et expressives gardent une voix et une animation cohérentes.",
       "tasks": [
+        {
+          "id": "s3-t8",
+          "title": "ElevenLabs · retrouver ma voix créée",
+          "detail": "L’abonnement et la création de la voix sont faits. Retrouver la voix dans My Voices et noter son nom.",
+          "initial_done": true,
+          "guide": {
+            "where": "ElevenLabs → Voices / My Voices",
+            "steps": ["Retrouver ta voix et vérifier que son aperçu correspond à ce que tu veux pour Bender.", "Noter son nom et, pour les futurs appels API, utiliser le menu trois points → Copy voice ID.", "Chatterbox utilisera un extrait audio de cette voix. Le Voice ID sert au service ElevenLabs et ne remplace pas un WAV de référence."],
+            "expected": "La voix est retrouvée et son nom est noté ; tu as déjà confirmé sa création.",
+            "record": "Nom de la voix et réglages retenus. Aucune clé API dans les notes."
+          }
+        },
+        {
+          "id": "s3-t9",
+          "title": "ElevenLabs · générer et télécharger une référence WAV",
+          "detail": "Produire un premier extrait français propre, d’environ 10 à 20 secondes, avec ta nouvelle voix.",
+          "initial_done": false,
+          "guide": {
+            "where": "ElevenLabs → Text to Speech → History / Historique",
+            "steps": ["Sélectionner ta voix et générer une phrase française naturelle, sans musique, bruit ajouté ni réverbération. Commencer par un ton neutre.", "Exemple : Salut, c’est Bender. Les lumières sont allumées et les circuits sont prêts. Je peux te donner la météo, lire les nouvelles ou discuter avec toi. Alors, qu’est-ce qu’on fait aujourd’hui ?", "Écouter, ouvrir l’historique à droite puis l’icône de téléchargement et choisir WAV. Nommer le fichier Bender_ElevenLabs_neutre.wav. Il s’agit du son généré, pas du modèle ElevenLabs."],
+            "expected": "Un WAV audible contenant une seule voix, claire et continue, est téléchargé sur le PC.",
+            "record": "Nom du WAV, texte prononcé, modèle et réglages ElevenLabs. Guide complet : ELEVENLABS_CHATTERBOX.md dans le dépôt."
+          }
+        },
+        {
+          "id": "s3-t10",
+          "title": "Transférer le WAV vers Bender et valider la référence",
+          "detail": "Utiliser le dossier a_importer et la mise à jour habituelle, puis choisir l’usage Référence vocale candidate.",
+          "initial_done": false,
+          "guide": {
+            "where": "PC → 02_VOIX_ET_ANIMATIONS/a_importer ; atelier → Samples et personnalité",
+            "steps": ["Déposer Bender_ElevenLabs_neutre.wav dans Documents/bender_main/02_VOIX_ET_ANIMATIONS/a_importer, puis lancer MAJ_BENDER.ps1.", "Dans Samples et personnalité, renseigner la clé de contrôle, charger la bibliothèque et attendre la fin de l’analyse du fichier.", "Sélectionner le fichier, choisir Référence vocale candidate, une humeur Neutre et un passage propre de 3 à 30 secondes. Écouter et confirmer qu’il contient seulement la voix prévue, puis valider ce passage."],
+            "expected": "La fiche montre un passage validé de type voice_reference et son fichier references/sample-….wav.",
+            "record": "Nom du sample, intervalle retenu et humeur. Le WAV voyage hors GitHub et n’est pas encore la voix active.",
+            "command_context": "PowerShell Windows",
+            "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\Documents\\bender_main\\MAJ_BENDER.ps1\" -Message \"Reference voix ElevenLabs\""]
+          }
+        },
+        {
+          "id": "s3-t11",
+          "title": "Installer Chatterbox Multilingual sur le Dell",
+          "detail": "Installer le moteur français et ses modèles locaux avant la première synthèse avec ta référence.",
+          "initial_done": false,
+          "guide": {
+            "where": "Terminal SSH Debian → ~/applications/bender_assistant",
+            "steps": ["Installer les dépendances Chatterbox et télécharger ses modèles avec les commandes ci-dessous. Cette préparation nécessite Internet et peut télécharger plusieurs Go.", "Garder le modèle Multilingual et le réglage device=cpu pour le Dell actuel ; ne pas choisir un modèle uniquement anglais.", "Redémarrer le service après installation. Les modèles ne sont pas téléchargés pendant la génération d’une phrase ; la synthèse locale devra ensuite être essayée sur ce matériel."],
+            "expected": "Les commandes se terminent sans erreur, les modèles locaux sont présents et le service redémarre.",
+            "record": "Date, versions, éventuelle erreur d’installation. Cette case ne valide pas encore la qualité ni la vitesse de la voix.",
+            "command_context": "SSH Debian, commandes une par une",
+            "commands": ["cd ~/applications/bender_assistant", ".venv/bin/python -m pip install -r requirements-chatterbox.txt", ".venv/bin/python -m bender_voice --config voice.json download-models chatterbox", "sudo systemctl restart bender.service"]
+          }
+        },
+        {
+          "id": "s3-t12",
+          "title": "Activer ma référence ElevenLabs pour Chatterbox",
+          "detail": "La référence neutre devient la voix locale de Bender avec un bouton de l’atelier.",
+          "initial_done": false,
+          "guide": {
+            "where": "Atelier → Samples et personnalité → fiche du WAV → Passages validés",
+            "steps": ["Repérer la sélection validée comme Référence vocale candidate et d’humeur neutral.", "Cliquer sur Utiliser cette voix avec Chatterbox · neutral. Le réglage est conservé sur Debian après redémarrage et après les mises à jour.", "Dans Voix et enregistrements, choisir le routage Local et une phrase nouvelle. Faire parler et vérifier que Source indique chatterbox. Une source system signale un repli générique à corriger ; le modèle n’est pas entraîné par ce bouton."],
+            "expected": "Le bouton indique Référence Chatterbox active et une nouvelle phrase est réellement générée par chatterbox.",
+            "record": "Nom de la référence, phrase testée, ressemblance et temps d’attente. Un WAV ElevenLabs ne garantit pas une voix Chatterbox identique."
+          }
+        },
+        {
+          "id": "s3-t13",
+          "title": "Créer et comparer les variantes de ton",
+          "detail": "Ajouter ensuite des références sarcastique, énergique ou triste de la même voix, une à une.",
+          "initial_done": false,
+          "guide": {
+            "where": "ElevenLabs puis Samples et personnalité ; Voix et enregistrements pour l’essai",
+            "steps": ["Commencer seulement après un essai neutre convaincant. Générer un nouvel extrait avec la même voix et le ton souhaité.", "Importer puis valider ce passage comme référence vocale avec l’humeur correspondante ; l’activer avec son bouton Chatterbox.", "Comparer plusieurs phrases inédites avec les références Neutre puis Sarcastique ou Énergique. Garder seulement celles qui améliorent le résultat ; plusieurs fichiers ne constituent pas un entraînement cumulatif."],
+            "expected": "Les variantes retenues gardent la même identité et apportent une différence utile à l’écoute.",
+            "record": "Référence et humeur retenues, phrases de comparaison, défauts et temps de génération."
+          }
+        },
+        {
+          "id": "s3-t14",
+          "title": "Brancher l’API ElevenLabs et tester le mode hybride",
+          "detail": "Option cloud pour les actualités et narrations ; la référence Chatterbox reste utilisable hors ligne.",
+          "initial_done": false,
+          "guide": {
+            "where": "Debian → .env et voice.json ; atelier → Voix et enregistrements",
+            "steps": ["Si tu veux activer les appels cloud, créer une clé API ElevenLabs et la renseigner uniquement dans ELEVENLABS_API_KEY du fichier .env sur Debian. Ne pas la coller dans le chat ni dans la roadmap.", "Dans voice.json, renseigner elevenlabs.voice_id avec le Voice ID de ta voix et activer elevenlabs.enabled. Vérifier les plafonds quotidiens et mensuels de caractères, puis redémarrer bender.service.", "Tester une phrase inédite en mode Cloud et vérifier Source elevenlabs. En mode Automatique, utiliser le sujet Actualités ou Narration pour le cloud, et Réponse habituelle pour le local. Rejouer ensuite la même phrase pour vérifier le cache et les avertissements de repli."],
+            "expected": "Les sources et le cache correspondent au routage demandé, ou le choix de reporter le cloud est consigné. Les plafonds applicatifs ne représentent pas le solde exact ElevenLabs.",
+            "record": "Voice ID, modèle, plafonds choisis et sources observées. Aucune clé secrète dans ces notes."
+          }
+        },
         {
           "id": "s3-t1",
           "title": "Nommer les poses validées",

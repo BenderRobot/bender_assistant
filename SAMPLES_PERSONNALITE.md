@@ -21,13 +21,13 @@ Le dossier de dépôt reste sur ton PC. Deux fichiers identiques, même renommé
 
 Dans l’onglet **Samples et personnalité**, le tableau de suivi se rafraîchit toutes les deux secondes après chargement de la bibliothèque. Les cinq compteurs permettent de filtrer la liste : en attente, en cours, à vérifier, sélections validées et à reprendre.
 
-La fiche du sample en cours montre la préparation FFmpeg, la transcription locale Vosk, l’analyse GPT puis la validation manuelle. Elle affiche le détail de l’opération, le temps écoulé dans l’étape et l’heure du dernier point de traitement. Les images examinées et la lecture audio par Vosk disposent d’un pourcentage mesuré ; la conversion et GPT affichent une barre indéterminée. Aucun délai de fin n’est estimé.
+La fiche du sample en cours montre la préparation FFmpeg, la transcription locale Whisper, l’analyse GPT puis la validation manuelle. Elle affiche le détail de l’opération, le temps écoulé dans l’étape et l’heure du dernier point de traitement. Les images examinées disposent d’un pourcentage mesuré. Whisper indique la position audio du dernier segment transcrit, sans la présenter comme un pourcentage de calcul. La conversion, Whisper et GPT affichent une barre indéterminée. Aucun délai de fin n’est estimé.
 
 Une erreur reste attachée à l’étape concernée. Les étapes sont enregistrées sur Bender et restent visibles après actualisation de la page ; un traitement interrompu peut reprendre en réutilisant les données locales déjà préparées. La pause prend effet après le fichier en cours. Une analyse terminée attend toujours ta vérification : elle ne valide pas automatiquement les passages. Une coupure de connexion est signalée et le dernier état reçu reste affiché.
 
 L’import calcule l’empreinte SHA-256 de chaque fichier et compare les contenus avec le catalogue du Debian. Il transfère uniquement les nouveautés, vérifie l’intégrité à l’arrivée, puis les ajoute à la file d’analyse.
 
-FFmpeg prépare une piste WAV mono, mesure son niveau et son écrêtage, et prélève au plus huit images pour une vidéo. Vosk produit une transcription française estimée et des horaires de mots. GPT reçoit le texte, ces mesures et les images horodatées pour proposer :
+FFmpeg prépare une piste WAV mono, mesure son niveau et son écrêtage, et prélève au plus huit images pour une vidéo. Whisper produit une transcription française estimée et des horaires de mots. GPT reçoit le texte, ces mesures et les images horodatées pour proposer :
 
 - Un titre et un résumé pour retrouver le sample.
 - Des thèmes, mots déclencheurs et une humeur supposée.
@@ -36,17 +36,35 @@ FFmpeg prépare une piste WAV mono, mesure son niveau et son écrêtage, et pré
 
 Cette analyse est séparée des conversations courantes de Bender et ne modifie pas leur historique. Les noms proposés sont des titres dans le catalogue ; les fichiers source restent identifiés par leur empreinte.
 
+## Améliorer les anciennes transcriptions Vosk
+
+Le moteur des **samples** utilise désormais `faster-whisper` avec le modèle multilingue **medium**, langue française imposée, processeur en int8 et deux threads. La mise à jour installe les dépendances et télécharge le modèle une seule fois (~1,5 Go). La transcription elle-même fonctionne hors ligne, sans envoyer l’audio à un service. Elle est plus lente sur le Dell ; les mesures de vitesse d’un autre PC ne prédisent pas son délai. Le modèle est libéré en fin de lot pour laisser de la mémoire à la synthèse vocale. Le microphone interactif garde son moteur actuel.
+
+Après mise à jour, clique sur **Refaire les transcriptions Vosk non validées**, puis sur **Reprendre les analyses en attente** si tu avais mis la file en pause. Les anciennes transcriptions automatiques identifiées sont recalculées ; les sélections déjà validées, les corrections manuelles identifiées et les sources inconnues sans horaires de mots sont exclues de ce lot. Pour une ancienne correction sans provenance, utilise le bouton individuel **Retranscrire avec Whisper medium** sur la fiche concernée. Le texte et les horaires précédents restent disponibles pour comparaison. Les passages audio déjà validés ne sont pas modifiés par une retranscription.
+
+Une correction tapée à la main et envoyée avec **Corriger la transcription et relancer GPT** est conservée pour l’analyse ; seul le bouton de retranscription demande une nouvelle reconnaissance du son. Whisper reste faillible, notamment sur les cris, les noms propres, les voix modifiées et la musique : vérifier à l’écoute et corriger les passages utiles.
+
+Installation manuelle de secours sur Debian :
+
+```bash
+cd ~/applications/bender_assistant
+.venv/bin/python -m pip install -r requirements-samples.txt
+.venv/bin/python -m bender_voice --config voice.json download-models whisper
+```
+
+Configuration facultative dans `voice.json` : `"sample_transcription": {"engine": "whisper", "model": "medium", "cpu_threads": 2}`. Cette valeur est aussi le défaut si la rubrique est absente. Pour privilégier la vitesse, choisir `small` et relancer le téléchargement explicite. Aucun repli silencieux vers Vosk n’est effectué si Whisper manque. [Documentation du moteur](https://github.com/SYSTRAN/faster-whisper).
+
 ## Trois usages après validation
 
 **Réplique contextuelle.** Choisis un passage de 30 secondes maximum, vérifie son texte exact, ses mots déclencheurs et son humeur, puis confirme que seul Bender parle. La réplique rejoint la bibliothèque de voix existante et apparaît dans **Voix et enregistrements** après actualisation. Son utilisation contextuelle suit les options existantes : autorisation des répliques, probabilité et délais entre lectures. La synchronisation produite pour un nouvel extrait reste acoustique ; les anciens calages visuels sont conservés.
 
-**Référence vocale candidate.** Choisis 3 à 30 secondes de voix propre. Le WAV découpé est exporté dans `data/voice/references/` et son chemin apparaît dans le catalogue. Il peut ensuite être sélectionné dans `reference_by_mood` de `voice.json` pour un essai Chatterbox. L’import n’entraîne pas un modèle et ne remplace pas la référence active. Des voix tierces ou de la musique gênante rendent la sélection impropre à cet usage ; la vérification se fait à l’écoute.
+**Référence vocale candidate.** Choisis 3 à 30 secondes de voix propre. Le WAV découpé est exporté dans `data/voice/references/` et son chemin apparaît dans le catalogue. Sous le passage validé, clique sur **Utiliser cette voix avec Chatterbox** pour l’activer pour l’humeur choisie. Ce choix est conservé dans `data/voice/reference-settings.json`, appliqué immédiatement et rechargé après redémarrage ou mise à jour. Le moteur et les modèles Chatterbox doivent être installés séparément ; teste une phrase inédite en mode Local et vérifie Source chatterbox. L’import seul n’active pas la référence et n’entraîne aucun modèle. Des voix tierces ou de la musique gênante rendent la sélection impropre à cet usage ; la vérification se fait à l’écoute. Pour un WAV généré avec ta nouvelle voix ElevenLabs, voir [ELEVENLABS_CHATTERBOX.md](ELEVENLABS_CHATTERBOX.md).
 
 **Repère bouche / yeux.** Choisis un intervalle contenant une image prélevée et donne-lui un nom. Le catalogue conserve ce repère et les descriptions proposées pour affiner ensuite les poses et la synchronisation. Les poses validées de l’éditeur ne sont pas modifiées automatiquement.
 
 ## Limites utiles à connaître
 
-La connexion actuelle Sign in with ChatGPT accepte le texte et les images, mais pas l’entrée audio/vidéo ni l’API de transcription. Le son reste traité localement ; GPT **n’écoute pas le timbre**, ne sépare pas les locuteurs et ne juge pas directement l’émotion de la voix. L’humeur est suggérée à partir du texte et des images. La transcription Vosk peut être corrigée dans l’atelier avant une nouvelle analyse. [Limites officielles de cette connexion](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations).
+La connexion actuelle Sign in with ChatGPT accepte le texte et les images, mais pas l’entrée audio/vidéo ni l’API de transcription. Le son reste traité localement ; GPT **n’écoute pas le timbre**, ne sépare pas les locuteurs et ne juge pas directement l’émotion de la voix. L’humeur est suggérée à partir du texte et des images. La transcription Whisper peut être corrigée dans l’atelier avant une nouvelle analyse. [Limites officielles de cette connexion](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations).
 
 Les images sont échantillonnées : cette étape ne constitue pas un calage labial image par image ou une reconnaissance exacte des phonèmes. Une sélection de référence vocale n’est pas un apprentissage cumulatif de Chatterbox. Le classement aide à préparer des références propres et des répliques utilisables.
 

@@ -46,6 +46,7 @@ class VoiceTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.config = {'data_dir': self.temp.name, 'local_provider': 'chatterbox', 'system_fallback': True,
+                       'routing':{'conversation_cloud':False,'slow_fallback':True},
                        'lipsync': {'engine': 'acoustic'}, 'elevenlabs': {'enabled': True, 'daily_character_limit': 100},
                        'quotes': {'probability': 1, 'global_cooldown_seconds': 0}}
         self.providers = {name: FakeVoice(name) for name in ('chatterbox', 'elevenlabs', 'system')}

@@ -5,11 +5,13 @@
 Version locale pour tester le texte → audio → bouche sur Debian. Quatre niveaux partagent le même lecteur :
 
 1. Réponses enregistrées et cache : aucune génération supplémentaire.
-2. Chatterbox Multilingual, local, avec une référence française choisie par humeur.
-3. ElevenLabs, optionnel, pour le sujet `news`/`narration` ou le mode `cloud`.
+2. Chatterbox Multilingual, local, pour préparer les textes et bulletins à l'avance avec une référence française choisie par humeur.
+3. ElevenLabs, après activation, pour les nouvelles réponses de conversation. Aucun repli automatique vers une génération Chatterbox lente.
 4. Bibliothèque de répliques contextuelles, jouées après la réponse avec probabilité et délais anti-répétition.
 
 Le texte généré par GPT passe dans cette chaîne. Le test voix seul fonctionne sans connexion au cerveau. Voir [CERVEAU_GPT.md](CERVEAU_GPT.md) pour connecter le compte ChatGPT depuis Windows. L'interface affiche les sources réellement utilisées et les replis. Les fenêtres yeux et bouche suivent le même audio via WebSocket, à 20 mises à jour par seconde.
+
+Le parcours **conversation API + bulletin RSS préparé à 6 h, lu à la demande** est décrit dans [VOIX_CONVERSATION_ET_BULLETINS.md](VOIX_CONVERSATION_ET_BULLETINS.md).
 
 ## Installation Debian
 
@@ -29,6 +31,8 @@ Le serveur écoute uniquement l'ordinateur local par défaut. `BENDER_HOST=0.0.0
 
 ## Chatterbox hors ligne
 
+Pour récupérer une voix que tu as créée chez ElevenLabs, suivre [ELEVENLABS_CHATTERBOX.md](ELEVENLABS_CHATTERBOX.md) et les tâches dédiées de l’étape 03 de la roadmap. Générer puis télécharger un WAV, l’importer comme référence vocale, puis utiliser le bouton **Utiliser cette voix avec Chatterbox** dans l’atelier. Le choix persiste dans `data/voice/reference-settings.json`, sans modifier `voice.json` ni activer les appels cloud.
+
 ```bash
 .venv/bin/python -m pip install -r requirements-chatterbox.txt
 .venv/bin/python -m bender_voice --config voice.json download-models chatterbox
@@ -46,9 +50,11 @@ Ce sont des références de conditionnement, pas un entraînement cumulatif du m
 
 ## ElevenLabs et maîtrise du budget
 
-Dans `.env`, renseigner `ELEVENLABS_API_KEY`. Dans `voice.json`, renseigner `elevenlabs.voice_id` et passer `enabled` à `true`. La clé reste côté serveur. Le mode automatique utilise le cloud pour les sujets `news`/`narration`, sinon la voix locale ; un enregistrement compatible est toujours prioritaire. Le mode local ne contacte jamais ElevenLabs.
+Le SDK Python officiel `elevenlabs` est installé avec les dépendances. La connexion par le CLI est décrite dans [ELEVENLABS_INTEGRATION.md](ELEVENLABS_INTEGRATION.md). Le serveur et la commande vocale chargent `.env.elevenlabs`, puis `.env`, depuis le dossier du projet ; les variables déjà définies dans le processus restent prioritaires. Aucun fichier de clé n'est publié sur GitHub.
 
-Les plafonds `daily_character_limit` et `monthly_character_limit` comptent les caractères réservés par jour et mois civil UTC, tous appels de ce service confondus. Le mois civil ne coïncide pas nécessairement avec le cycle de facturation. Ce n'est pas le solde exact des crédits ElevenLabs, dont le coût dépend du modèle. Une réservation reste comptée si un appel échoue : le service distant a pu générer/facturer malgré une coupure. Pas de nouvelle tentative automatique. Les requêtes dépassant un plafond passent au local.
+Dans **Voix et enregistrements**, renseigner le Voice ID de ta voix, choisir le modèle et activer ElevenLabs. Le mode automatique réutilise d'abord les enregistrements et le cache, puis ElevenLabs pour les nouvelles réponses. Chatterbox reste réservé aux préparations ou au mode local explicite. Le mode local ne contacte jamais ElevenLabs.
+
+Les plafonds `daily_character_limit` et `monthly_character_limit` comptent les caractères réservés par jour et mois civil UTC, tous appels de ce service confondus. Le mois civil ne coïncide pas nécessairement avec le cycle de facturation. Ce n'est pas le solde exact des crédits ElevenLabs, dont le coût dépend du modèle. Une réservation reste comptée si un appel échoue : le service distant a pu générer/facturer malgré une coupure. Les nouvelles tentatives du SDK sont désactivées. En conversation, une erreur ou un plafond atteint utilise la voix système si elle est autorisée, sans lancer Chatterbox.
 
 Le cache inclut le texte, la source de voix, la référence Chatterbox, l'humeur et les réglages. Les futures répétitions réutilisent audio et timeline. Pour remplacer une voix après changement de poids de modèle, augmenter `cache_version` dans `voice.json`. Le mode local permet de générer une première version locale même si une version cloud existe en cache. Un ancien repli système peut être repris en mode auto : choisir local pour régénérer avec Chatterbox après son installation.
 
@@ -123,4 +129,4 @@ Références : [Chatterbox](https://github.com/resemble-ai/chatterbox), [ElevenL
 
 ## Étape 03 : samples et personnalité
 
-Déposer les nouveautés dans `../02_VOIX_ET_ANIMATIONS/a_importer`, puis lancer la mise à jour habituelle. Le menu **Samples et personnalité** permet de consulter et valider le classement GPT. Guide : [SAMPLES_PERSONNALITE.md](SAMPLES_PERSONNALITE.md).
+Déposer les nouveautés dans `../02_VOIX_ET_ANIMATIONS/a_importer`, puis lancer la mise à jour habituelle. Les samples sont transcrits hors ligne avec Whisper medium français (modèle ~1,5 Go installé une seule fois), puis classés par GPT. Le menu **Samples et personnalité** affiche leur progression, permet de retranscrire les anciens résultats Vosk et de valider les passages. Guide : [SAMPLES_PERSONNALITE.md](SAMPLES_PERSONNALITE.md).

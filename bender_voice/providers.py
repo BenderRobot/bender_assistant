@@ -1,12 +1,8 @@
 import base64
 import hashlib
-import json
 import os
 import shutil
 import subprocess
-import urllib.error
-import urllib.parse
-import urllib.request
 
 from .config import inside
 
@@ -101,20 +97,33 @@ class ElevenVoice:
         if not self.available():
             raise VoiceUnavailable('ElevenLabs désactivé ou non configuré')
         settings = self.config['elevenlabs']
-        voice = urllib.parse.quote(settings['voice_id'], safe='')
-        url = f'https://api.elevenlabs.io/v1/text-to-speech/{voice}/with-timestamps?output_format=mp3_44100_128'
-        body = json.dumps({'text': text, 'model_id': settings.get('model_id', 'eleven_multilingual_v2')}).encode()
-        request = urllib.request.Request(url, data=body, headers={
-            'Content-Type': 'application/json', 'xi-api-key': os.environ['ELEVENLABS_API_KEY']})
         temporary = target.with_suffix('.mp3')
         try:
+            from elevenlabs import ElevenLabs
+            import httpx
+
             # Un seul essai : éviter de facturer des générations en double.
-            with urllib.request.urlopen(request, timeout=settings.get('timeout_seconds', 30)) as response:
-                payload = json.load(response)
-            temporary.write_bytes(base64.b64decode(payload['audio_base64'], validate=True))
+            timeout = settings.get('timeout_seconds', 30)
+            with httpx.Client(timeout=timeout) as transport:
+                client = ElevenLabs(api_key=os.environ['ELEVENLABS_API_KEY'],
+                                    httpx_client=transport, timeout=timeout)
+                payload = client.text_to_speech.convert_with_timestamps(
+                    voice_id=settings['voice_id'], text=text,
+                    model_id=settings.get('model_id', 'eleven_multilingual_v2'),
+                    output_format='mp3_44100_128',
+                    request_options={'max_retries': 0},
+                )
+            temporary.write_bytes(base64.b64decode(payload.audio_base_64, validate=True))
             convert_audio(temporary, target)
-            return payload.get('normalized_alignment') or payload.get('alignment')
-        except (OSError, ValueError, TypeError, KeyError, urllib.error.URLError) as exc:
-            raise VoiceUnavailable('La génération ElevenLabs a échoué ; aucun nouvel essai automatique') from exc
+            alignment = payload.normalized_alignment or payload.alignment
+            return alignment.model_dump(mode='json') if alignment is not None else None
+        except Exception as exc:
+            # Do not expose SDK error bodies or credentials through API errors/logs.
+            reason = 'La génération ElevenLabs a échoué'
+            if getattr(exc, 'status_code', None) in (401, 403):
+                reason = 'ElevenLabs : clé refusée ou permissions insuffisantes'
+            elif getattr(exc, 'status_code', None) == 429:
+                reason = 'ElevenLabs : limite du compte ou de requêtes atteinte'
+            raise VoiceUnavailable(reason + ' ; aucun nouvel essai automatique') from None
         finally:
             temporary.unlink(missing_ok=True)

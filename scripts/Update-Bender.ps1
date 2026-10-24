@@ -1,6 +1,6 @@
 [CmdletBinding(SupportsShouldProcess=$true)]
 param(
-    [string]$RepoPath = "$env:USERPROFILE\Documents\Bender\bender_assistant",
+    [string]$RepoPath = "$env:USERPROFILE\Documents\bender_main\bender_assistant",
     [string]$RemoteHost = '192.168.1.41',
     [string]$RemoteUser = 'bender',
     [string]$RemoteDirectory = 'applications/bender_assistant',
@@ -71,7 +71,7 @@ try {
     Run git @('-c','http.sslBackend=openssl','fetch','origin','main')
     & git merge-base --is-ancestor origin/main HEAD
     if ($LASTEXITCODE -ne 0) { throw 'GitHub contient des changements absents ici. Integrer origin/main avant de relancer ; aucun ecrasement automatique.' }
-    foreach ($private in @('.env','bender_memory.db','voice.json')) {
+    foreach ($private in @('.env','.env.elevenlabs','bender_memory.db','voice.json')) {
         $trackedPrivate = @(& git ls-files -- $private)
         if ($LASTEXITCODE -ne 0) { throw 'Impossible de verifier les fichiers prives suivis par Git.' }
         if ($trackedPrivate.Count -gt 0) { Run git @('rm','--cached','--',$private) }
@@ -79,6 +79,9 @@ try {
     Run git @('add','--all','--','.')
     $files = @(& git ls-files)
     foreach ($file in $files) {
+        if ($file -match '(^|/)\.env(?:\..*)?$' -and $file -ne '.env.example') {
+            throw "Fichier prive interdit dans Git : $file. Retirer ce fichier du suivi avant de relancer."
+        }
         if ($file -match '(^|/)(data|models|\.venv[^/]*|\.ssh)(/|$)|(^|/)(\.env|voice\.json|id_rsa|id_ed25519)$|\.(db|sqlite3?|wav|mp3|mp4|m4a|flac|ogg|webm|mov|mkv|pem|key)$') {
             throw "Fichier prive interdit dans Git : $file. Retirer ce fichier du suivi avant de relancer."
         }
@@ -87,7 +90,30 @@ try {
         }
     }
     $python = if (Test-Path '.venv\Scripts\python.exe') { '.venv\Scripts\python.exe' } else { 'python' }
-    Run $python @('-m','unittest','discover','-s','tests','-v')
+    Write-Host '[1/7] Tests locaux : aucun transfert vers Debian avant leur reussite.' -ForegroundColor Cyan
+    $testRunId = [guid]::NewGuid().ToString('N')
+    $testReport = Join-Path $RepoPath "data\deployment\tests-$testRunId.json"
+    $testLog = Join-Path $RepoPath 'data\deployment\tests-last.log'
+    try {
+        try {
+            Run $python @('-X','faulthandler','scripts/run-tests.py','--report',$testReport,'--run-id',$testRunId,'--log',$testLog)
+        } catch {
+            Write-Host "Rapport complet des tests : $testLog" -ForegroundColor Yellow
+            throw
+        }
+        if (-not (Test-Path -LiteralPath $testReport)) {
+            throw 'Python a ete interrompu avant la fin des tests, meme si son code de sortie vaut 0. Aucun deploiement effectue.'
+        }
+        $testResult = Get-Content -LiteralPath $testReport -Raw | ConvertFrom-Json
+        if ($testResult.run_id -ne $testRunId -or $testResult.passed -ne $true -or
+            $testResult.tests_run -lt 1 -or $testResult.tests_run -ne $testResult.expected) {
+            throw 'Le rapport ne confirme pas la fin de tous les tests. Aucun deploiement effectue.'
+        }
+        Write-Host "Tests termines : $($testResult.tests_run) / $($testResult.expected)." -ForegroundColor Green
+    } finally {
+        if (Test-Path -LiteralPath $testReport) { Remove-Item -LiteralPath $testReport -Force }
+    }
+    Write-Host '[2/7] Tests reussis. Commit puis publication GitHub.' -ForegroundColor Cyan
     & git diff --cached --quiet
     if ($LASTEXITCODE -eq 1) { Run git @('commit','-m',$Message) }
     elseif ($LASTEXITCODE -ne 0) { throw 'Verification Git impossible.' }
@@ -98,6 +124,7 @@ try {
     New-Item -ItemType Directory -Path $temp | Out-Null
     try {
         $archive = Join-Path $temp 'release.tar.gz'
+        Write-Host "[3/7] Preparation pour $RemoteUser@$RemoteHost : ~/$RemoteDirectory ($revision)." -ForegroundColor Cyan
         Run git @('archive','--format=tar.gz',"--output=$archive",$revision)
         $samplesArchive = Join-Path $temp 'reference-samples.tar.gz'
         Run $python @('scripts/prepare-reference-samples.py','--archive',$samplesArchive)
@@ -116,6 +143,20 @@ try {
         $mediaArchive = Join-Path $temp 'media-inbox.tar.gz'
         Run $python @('-m','bender_media','pack','--source',$MediaSource,'--archive',$mediaArchive,'--known',$knownMedia)
         $remoteStage = ".bender-update-$revision"
+        Write-Host '[4/7] Transfert du code, des references et des reglages prives.' -ForegroundColor Cyan
+        $elevenSettings = Join-Path $RepoPath 'data\voice\live-settings.json'
+        # Keys travel separately from Git and archives, inside a private SSH folder.
+        if ((Test-Path -LiteralPath '.env.elevenlabs') -or (Test-Path -LiteralPath $elevenSettings)) {
+            Run ssh ($sshOptions + @($target,"umask 077; mkdir -p ~/$remoteStage && chmod 700 ~/$remoteStage"))
+        }
+        if (Test-Path -LiteralPath '.env.elevenlabs') {
+            Run scp ($sshOptions + @('.env.elevenlabs',"${target}:$remoteStage/elevenlabs.env"))
+            Write-Host 'Configuration ElevenLabs transferee par SSH, hors Git.'
+        }
+        if (Test-Path -LiteralPath $elevenSettings) {
+            Run scp ($sshOptions + @($elevenSettings,"${target}:$remoteStage/elevenlabs-settings.json"))
+            Write-Host 'Choix de voix ElevenLabs transmis au Debian.'
+        }
         Run scp ($sshOptions + @($archive,"${target}:$remoteStage.tar.gz"))
         if (Test-Path -LiteralPath $samplesArchive) {
             Run scp ($sshOptions + @($samplesArchive,"${target}:$remoteStage.samples.tar.gz"))
@@ -124,7 +165,19 @@ try {
             Run scp ($sshOptions + @($mediaArchive,"${target}:$remoteStage.media.tar.gz"))
         }
         $deployCommand = "mkdir -p ~/$remoteStage && mv ~/$remoteStage.tar.gz ~/$remoteStage/release.tar.gz && { if test -f ~/$remoteStage.samples.tar.gz; then mv ~/$remoteStage.samples.tar.gz ~/$remoteStage/reference-samples.tar.gz; fi; } && { if test -f ~/$remoteStage.media.tar.gz; then mv ~/$remoteStage.media.tar.gz ~/$remoteStage/media-inbox.tar.gz; fi; } && tar -xOf ~/$remoteStage/release.tar.gz scripts/deploy-debian.sh > ~/$remoteStage/deploy.sh && bash ~/$remoteStage/deploy.sh $RemoteDirectory $revision"
+        Write-Host '[5/7] Installation Debian et redemarrage du service (sudo peut demander le mot de passe).' -ForegroundColor Cyan
         Run ssh ($sshOptions + @('-t',$target,$deployCommand))
+        Write-Host '[6/7] Verification depuis ce PC de la revision effectivement servie sur le reseau.' -ForegroundColor Cyan
+        Run $python @('scripts/verify-deployment.py',"http://${RemoteHost}:8000",$revision)
+        Write-Host '[7/7] Deploiement termine et version reseau confirmee.' -ForegroundColor Green
         Write-Host "Bender mis a jour : http://${RemoteHost}:8000 - revision $revision"
-    } finally { Remove-Item -LiteralPath $temp -Recurse -Force }
+    } finally {
+        $resolvedTemp = (Resolve-Path -LiteralPath $temp).Path
+        $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
+        if (-not $resolvedTemp.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase) -or
+            (Split-Path $resolvedTemp -Leaf) -notmatch '^bender-update-[a-f0-9]{32}$') {
+            throw 'Nettoyage interrompu : dossier temporaire inattendu.'
+        }
+        Remove-Item -LiteralPath $resolvedTemp -Recurse -Force
+    }
 } finally { Pop-Location }

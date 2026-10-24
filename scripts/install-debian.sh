@@ -5,13 +5,15 @@ system_deps=false
 chatterbox=false
 phonemes=false
 micro=false
+samples=false
 for argument in "$@"; do
   case "$argument" in
     --system-deps) system_deps=true ;;
     --chatterbox) chatterbox=true ;;
     --phonemes) phonemes=true ;;
     --micro) micro=true ;;
-    *) echo "Usage: $0 [--system-deps] [--chatterbox] [--phonemes] [--micro]"; exit 2 ;;
+    --samples) samples=true ;;
+    *) echo "Usage: $0 [--system-deps] [--chatterbox] [--phonemes] [--micro] [--samples]"; exit 2 ;;
   esac
 done
 if "$system_deps"; then
@@ -26,8 +28,10 @@ python_bin="${PYTHON_BIN:-python3}"
 if "$chatterbox"; then .venv/bin/python -m pip install -r requirements-chatterbox.txt; fi
 if "$phonemes"; then .venv/bin/python -m pip install -r requirements-phonemes.txt; fi
 if "$micro"; then .venv/bin/python -m pip install -r requirements-io.txt; fi
+if "$samples"; then .venv/bin/python -m pip install -r requirements-samples.txt; fi
 if [[ ! -f .env ]]; then cp .env.example .env; fi
 if [[ ! -f voice.json ]]; then cp voice.example.json voice.json; fi
 mkdir -p data/voice/references data/voice/library
+if "$samples"; then .venv/bin/python -m bender_voice --config voice.json download-models whisper; fi
 echo "Installation terminée. Lancement : BENDER_VOICE_CONFIG=voice.json .venv/bin/python server.py"
 echo "Chatterbox/Allosaurus : télécharger les modèles séparément, voir README.md."

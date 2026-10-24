@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .config import inside, load_config
 from .providers import VoiceUnavailable
+from .hardware import HardwareError
 from .service import VoiceService
 
 
@@ -29,11 +30,12 @@ def main():
     register.add_argument('--eyes', default='normal')
     sub.add_parser('status')
     sub.add_parser('control-token')
-    download = sub.add_parser('download-models');download.add_argument('engine', choices=['chatterbox', 'allosaurus', 'vosk'])
+    sub.add_parser('prepare-news')
+    download = sub.add_parser('download-models');download.add_argument('engine', choices=['chatterbox', 'allosaurus', 'vosk', 'whisper'])
     args = parser.parse_args()
     try:
-        from dotenv import load_dotenv
-        load_dotenv()
+        from .environment import load_environment
+        load_environment()
     except ImportError:
         pass
     config = load_config(args.config)
@@ -49,9 +51,17 @@ def main():
     elif args.command == 'status':
         print(json.dumps({'usage': service.store.usage(), 'library_entries': len(service.store.library()),
                           'cloud_enabled': config.get('elevenlabs', {}).get('enabled', False)}, indent=2))
+    elif args.command == 'prepare-news':
+        from .bulletins import Bulletins
+        result=Bulletins(service).run_due()
+        print(json.dumps({key:result.get(key) for key in ('day','state','done','total','error')},ensure_ascii=False))
+        if result['state']=='error':raise SystemExit(1)
     elif args.command == 'control-token':
         from .hardware import Hardware
         print(Hardware(config).control_token())
+    elif args.engine == 'whisper':
+        from bender_media.transcription import download
+        download(config)
     elif args.engine == 'vosk':
         from .vosk_setup import download_vosk
         download_vosk(config)
@@ -73,5 +83,5 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except (ValueError, VoiceUnavailable, OSError, subprocess.SubprocessError) as exc:
+    except (ValueError, VoiceUnavailable, HardwareError, OSError, subprocess.SubprocessError) as exc:
         raise SystemExit(str(exc))

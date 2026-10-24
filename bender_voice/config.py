@@ -10,6 +10,14 @@ def load_config(path=None):
     config = json.loads(path.read_text(encoding='utf-8-sig'))
     config['_base'] = str(path.parent)
     config['data_dir'] = str((path.parent / config.get('data_dir', 'data/voice')).resolve())
+    from .live_settings import read as read_live
+    live=read_live(config['data_dir'])
+    if live:config['elevenlabs']={**config.get('elevenlabs',{}),**live}
+    from .references import read
+    references=read(config['data_dir'])
+    if references:
+        config['reference_by_mood']={**config.get('reference_by_mood',{}),**references}
+        config['local_provider']='chatterbox'
     if config.get('local_provider', 'chatterbox') not in ('chatterbox', 'system'):
         raise ValueError('local_provider doit être chatterbox ou system')
     for field, default in [('daily_character_limit', 2000), ('monthly_character_limit', 25000)]:

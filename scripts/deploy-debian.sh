@@ -17,9 +17,13 @@ with tarfile.open(sys.argv[1]) as archive:
             raise SystemExit('Archive non sure')
         if any(x in {'data', 'models', '.git', '.env', 'voice.json', 'bender_memory.db'} or x.startswith('.venv') for x in p.parts):
             raise SystemExit('Archive contenant des donnees privees')
+        if any(x.startswith('.env.') and x != '.env.example' for x in p.parts):
+            raise SystemExit('Archive contenant une configuration privee')
 PY
 sudo -v
 if systemctl cat bender-media.service >/dev/null 2>&1; then sudo systemctl stop bender-media.service; fi
+if systemctl cat bender-bulletins.timer >/dev/null 2>&1; then sudo systemctl stop bender-bulletins.timer; fi
+if systemctl cat bender-bulletins.service >/dev/null 2>&1; then sudo systemctl stop bender-bulletins.service; fi
 backup="$HOME/.local/state/bender-backups/$(date +%Y%m%d-%H%M%S)-$$.tar.gz"
 tar -czf "$backup" --exclude='./.venv*' --exclude='./data' --exclude='./models' --exclude='./.git' -C "$target" .
 chmod 600 "$backup"
@@ -45,6 +49,10 @@ fi
 trap 'echo "Echec de mise a jour. Sauvegarde : $backup" >&2; if "$had_service"; then sudo systemctl start bender.service || true; fi' ERR
 tar -xzf "$stage/release.tar.gz" -C "$target"
 cd "$target"
+if [[ -f "$stage/elevenlabs.env" ]]; then
+  install -m 600 "$stage/elevenlabs.env" "$target/.env.elevenlabs"
+  rm -f "$stage/elevenlabs.env"
+fi
 if [[ -f "$stage/reference-samples.tar.gz" ]]; then
   python3 - "$stage/reference-samples.tar.gz" "$target/data/reference_samples" <<'PY'
 import sys
@@ -52,7 +60,11 @@ from reference_media import install_reference_archive
 print('Références installées :', install_reference_archive(sys.argv[1], sys.argv[2]))
 PY
 fi
-bash scripts/install-debian.sh --system-deps --micro
+bash scripts/install-debian.sh --system-deps --micro --samples
+if [[ -f "$stage/elevenlabs-settings.json" ]]; then
+  BENDER_VOICE_CONFIG=voice.json .venv/bin/python scripts/install-elevenlabs-settings.py "$stage/elevenlabs-settings.json"
+  rm -f "$stage/elevenlabs-settings.json"
+fi
 if [[ -f "$stage/media-inbox.tar.gz" ]]; then
   BENDER_VOICE_CONFIG=voice.json .venv/bin/python -m bender_media import-archive "$stage/media-inbox.tar.gz"
 fi
@@ -69,8 +81,9 @@ Type=simple
 User=$(id -un)
 WorkingDirectory=$target
 EnvironmentFile=-$target/.env
+EnvironmentFile=-$target/.env.elevenlabs
 # EnvironmentFile overrides Environment=; set deployment values on the process.
-ExecStart=/usr/bin/env BENDER_HOST=0.0.0.0 BENDER_PORT=8000 "BENDER_VOICE_CONFIG=$target/voice.json" "$target/.venv/bin/python" "$target/server.py"
+ExecStart=/usr/bin/env BENDER_HOST=0.0.0.0 BENDER_PORT=8000 BENDER_REVISION=$revision "BENDER_VOICE_CONFIG=$target/voice.json" "$target/.venv/bin/python" "$target/server.py"
 Restart=on-failure
 RestartSec=5
 UMask=0077
@@ -90,6 +103,7 @@ Type=oneshot
 User=$(id -un)
 WorkingDirectory=$target
 EnvironmentFile=-$target/.env
+EnvironmentFile=-$target/.env.elevenlabs
 ExecStart=/usr/bin/env "BENDER_VOICE_CONFIG=$target/voice.json" "$target/.venv/bin/python" -m bender_media process-pending
 UMask=0077
 Nice=10
@@ -100,6 +114,7 @@ EOF
 systemd-analyze verify "$media_unit"
 sudo install -m 644 "$media_unit" /etc/systemd/system/bender-media.service
 rm -f "$media_unit"
+bash scripts/install-bulletin-timer.sh
 sudo systemctl daemon-reload
 sudo systemctl enable --now bender.service
 sudo systemctl enable bender-media.service
@@ -109,6 +124,7 @@ for attempt in {1..30}; do
     sleep 1
 done
 if ! "$healthy"; then sudo journalctl -u bender.service -n 30 --no-pager; false; fi
+.venv/bin/python scripts/verify-deployment.py http://127.0.0.1:8000 "$revision"
 printf '%s\n' "$revision" > DEPLOYED_COMMIT
 sudo systemctl start --no-block bender-media.service
 echo "Version $revision active. Sauvegarde : $backup"

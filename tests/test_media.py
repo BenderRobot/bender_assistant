@@ -213,6 +213,7 @@ class MediaTests(unittest.TestCase):
         app.dependency_overrides[get_hardware]=lambda:self.hardware
         app.dependency_overrides[get_media]=lambda:self.catalog
         app.dependency_overrides[get_media_worker]=lambda:worker
+        app.dependency_overrides[get_voice]=lambda:self.voice
         headers={'X-Bender-Control-Token':self.hardware.control_token()}
         with TestClient(app) as client:
             self.assertEqual(client.get('/api/media').status_code,403)
@@ -223,8 +224,63 @@ class MediaTests(unittest.TestCase):
             response=client.post(f'/api/media/{identifier}/retry',headers=headers,json={'transcript':'texte corrigé'})
             self.assertEqual(response.status_code,200)
             self.assertEqual(self.catalog.get(identifier)['media']['transcript'],'texte corrigé')
+            self.assertEqual(self.catalog.get(identifier)['media']['transcription']['engine'],'manual')
             self.assertEqual(self.catalog.get(identifier)['progress'],{})
             self.assertEqual(client.get(f'/api/media/{identifier}/audio',headers=headers).status_code,200)
             client.post(f'/api/media/{identifier}/retry',headers=headers,json={'transcript':''})
             self.assertFalse(self.catalog.get(identifier)['media']['transcribed'])
         self.assertEqual(worker.start.call_count,2)
+
+    @unittest.skipUnless(shutil.which('ffmpeg'),'FFmpeg requis pour le WAV de référence')
+    def test_only_approved_voice_references_can_be_activated_with_control_key(self):
+        identifier=self.prepared();self.catalog.update(identifier,state='review')
+        entry=approve(self.catalog,identifier,Approval(use='voice_reference',start=0,end=3,text='bonjour',title='Eleven neutre',bender_only=True),self.voice)
+        app=FastAPI();app.include_router(build_media_router())
+        app.dependency_overrides[get_hardware]=lambda:self.hardware
+        app.dependency_overrides[get_media]=lambda:self.catalog
+        app.dependency_overrides[get_voice]=lambda:self.voice
+        headers={'X-Bender-Control-Token':self.hardware.control_token()}
+        url=f'/api/media/{identifier}/reference';body={'selection_id':entry['selection_id']}
+        with TestClient(app) as client:
+            self.assertEqual(client.post(url,json=body).status_code,403)
+            self.assertEqual(client.post(url,headers=headers,json={'selection_id':'f'*16}).status_code,400)
+            result=client.post(url,headers=headers,json=body)
+            self.assertEqual(result.status_code,200);self.assertEqual(result.json()['provider'],'chatterbox')
+        self.assertEqual(self.voice.config['reference_by_mood']['neutral'],entry['reference_file'])
+        self.assertTrue((self.voice.store.root/'reference-settings.json').is_file())
+
+    def test_retranscribe_preserves_previous_text_and_approved_passages(self):
+        identifier=self.prepared();media=self.catalog.get(identifier)['media']
+        media['words']=[dict(word='bonjour',start=0,end=1)]
+        self.catalog.update(identifier,state='review',media=media,approved=[{'title':'Passage déjà validé'}])
+        worker=Mock();app=FastAPI();app.include_router(build_media_router())
+        app.dependency_overrides[get_hardware]=lambda:self.hardware
+        app.dependency_overrides[get_media]=lambda:self.catalog
+        app.dependency_overrides[get_media_worker]=lambda:worker
+        headers={'X-Bender-Control-Token':self.hardware.control_token()}
+        with TestClient(app) as client:
+            self.assertEqual(client.post(f'/api/media/{identifier}/retry',headers=headers,json={'retranscribe':True,'transcript':'conflit'}).status_code,400)
+            result=client.post(f'/api/media/{identifier}/retry',headers=headers,json={'retranscribe':True})
+            self.assertEqual(result.status_code,200)
+        item=self.catalog.get(identifier)
+        self.assertEqual(item['state'],'pending');self.assertFalse(item['media']['transcribed'])
+        self.assertEqual(item['media']['previous_transcription']['text'],'bonjour')
+        self.assertEqual(len(item['media']['previous_transcription']['words']),1)
+        self.assertEqual(item['approved'],[{'title':'Passage déjà validé'}]);worker.start.assert_called_once()
+
+    def test_bulk_retranscription_skips_approved_manual_and_uncertain_legacy_text(self):
+        for index,(source,state,words) in enumerate([(None,'review',True),('vosk','error',True),('manual','review',False),('vosk','approved',True),(None,'review',False),('faster-whisper','review',True)],1):
+            identifier=format(index,'064x');self.catalog.add(identifier,'sample.wav','.wav')
+            media=dict(audio='audio.wav',transcript='texte',transcribed=True,words=[{'word':'texte'}] if words else [])
+            if source:media['transcription']={'engine':source}
+            self.catalog.update(identifier,state=state,media=media)
+        worker=Mock();app=FastAPI();app.include_router(build_media_router())
+        app.dependency_overrides[get_hardware]=lambda:self.hardware
+        app.dependency_overrides[get_media]=lambda:self.catalog
+        app.dependency_overrides[get_media_worker]=lambda:worker
+        with TestClient(app) as client:
+            self.assertEqual(client.post('/api/media/retranscribe-legacy').status_code,403)
+            response=client.post('/api/media/retranscribe-legacy',headers={'X-Bender-Control-Token':self.hardware.control_token()})
+            self.assertEqual(response.json(),{'queued':2})
+        self.assertEqual([self.catalog.get(format(i,'064x'))['state'] for i in range(1,7)],['pending','pending','review','approved','review','review'])
+        worker.start.assert_called_once()

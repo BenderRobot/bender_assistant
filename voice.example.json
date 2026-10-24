@@ -1,6 +1,8 @@
 {
   "data_dir": "data/voice",
   "local_provider": "chatterbox",
+  "routing": {"conversation_cloud": true, "slow_fallback": false},
+  "sample_transcription": {"engine": "whisper", "model": "medium", "cpu_threads": 2},
   "system_fallback": true,
   "reference_by_mood": {"neutral": "references/neutre.wav"},
   "chatterbox": {"model_dir": "models/chatterbox", "device": "cpu", "exaggeration": 0.5, "cfg_weight": 0.5},

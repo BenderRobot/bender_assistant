@@ -5,7 +5,7 @@
  const controller=window.BenderMicrophone={get busy(){return busy;}};
  function lock(active){
   busy=active;
-  if(active){saved=['say','chat','replay','playRecording','capture','vision'].map(id=>[$(id),$(id).disabled]);saved.forEach(([button])=>button.disabled=true);}
+  if(active){saved=['say','chat','conversationSend','replay','playRecording','capture','vision'].map(id=>[$(id),$(id).disabled]);saved.forEach(([button])=>button.disabled=true);}
   else{saved.forEach(([button,disabled])=>button.disabled=disabled);saved=[];}
   $('listen').disabled=active;$('recordSeconds').disabled=active;
   $('pauseMicrophone').disabled=$('cancelMicrophone').disabled=!active;

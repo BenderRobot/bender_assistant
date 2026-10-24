@@ -1,7 +1,10 @@
 'use strict';
 (() => {
  const stateNames={pending:'En attente',processing:'Analyse en cours',review:'À vérifier',approved:'Sélections validées',error:'À reprendre'};
- const stages=[['preparation','Préparation','Audio et images'],['transcription','Transcription','Vosk · en local'],['analysis','Analyse GPT','Noms et catégories'],['validation','Validation','Par toi, après écoute']];
+ const stages=[['preparation','Préparation','Audio et images'],['transcription','Transcription','Whisper · en local'],['analysis','Analyse GPT','Noms et catégories'],['validation','Validation','Par toi, après écoute']];
+ let transcriber={engine:'faster-whisper',model:'medium'};
+ let voiceReferences={};
+ const engineName=source=>source?.engine==='manual'?'Correction manuelle':source?.engine==='faster-whisper'?`Whisper ${source.model||''}`:source?.engine==='vosk'?'Vosk':'Ancienne transcription';
  const contentVersion=item=>JSON.stringify([item.state,item.error,item.media,item.analysis,item.approved]);
  let items=[],selected=null,loaded=false,dirty=false,version=null,urls=[],loading=false;
  let listVersion=null,countVersion=null,activityVersion=null,selectedProgressVersion=null;
@@ -21,7 +24,9 @@
    const status=complete?'done':active&&item.state==='error'?'error':active&&item.state==='processing'?'current':'waiting';
    const step=make('li');step.className=`media-stage ${status}`;
    const reused=(p.completed||[]).some(entry=>entry.stage===key&&entry.reused);
-   step.append(make('span',complete?'✓':status==='error'?'!':String(stages.findIndex(s=>s[0]===key)+1)),make('strong',label),make('small',reused?'Déjà disponible':caption));
+   const source=key==='transcription'?(complete?item.media.transcription:transcriber):null;
+   const subtitle=key==='transcription'?engineName(source)+' · local':caption;
+   step.append(make('span',complete?'✓':status==='error'?'!':String(stages.findIndex(s=>s[0]===key)+1)),make('strong',label),make('small',reused?'Déjà disponible':subtitle));
    if(status==='current')step.setAttribute('aria-current','step');track.append(step);
   }
   root.append(track);
@@ -80,6 +85,10 @@
   if(loading)return;loading=true;
   try{
    const data=await(await ioFetch('/api/media',null,'GET')).json();items=data.items;loaded=true;
+   const previousReferences=JSON.stringify(voiceReferences);voiceReferences=data.voice_references||{};
+   if(previousReferences!==JSON.stringify(voiceReferences))version=null;
+   if(data.worker.transcription)transcriber=data.worker.transcription;
+   el('mediaTranscriptionStatus').textContent=transcriber.engine==='faster-whisper'?`Samples : Whisper ${transcriber.model} · français · processeur · ${transcriber.ready&&transcriber.installed?'prêt hors ligne':'installation nécessaire via la mise à jour'}`:'Samples : Vosk sélectionné dans la configuration.';
    el('mediaAutomatic').checked=data.worker.automatic;
    const pending=items.filter(item=>['pending','processing'].includes(item.state)).length;
    el('mediaStatus').textContent=`${items.length} sample(s) · ${pending} en attente ou en cours. ${data.worker.message}`;
@@ -108,9 +117,14 @@
   (item.media.warnings||[]).forEach(warning=>root.append(make('p',warning)));
   if(item.media.metrics)root.append(make('p',`Mesures locales : niveau ${item.media.metrics.rms_dbfs} dBFS · échantillons écrêtés ${item.media.metrics.clipped_percent} %. La musique et les autres locuteurs doivent être vérifiés à l’écoute.`));
   const transcript=make('textarea');transcript.rows=4;transcript.maxLength=8000;transcript.disabled=item.state==='processing';transcript.value=item.media.transcript||'';transcript.setAttribute('aria-label','Transcription du sample');transcript.oninput=()=>{dirty=true;};
-  root.append(make('h4','Transcription Vosk · à vérifier'),transcript);
+  root.append(make('h4',engineName(item.media.transcription)+' · à vérifier'),transcript);
   const retry=make('button','Corriger la transcription et relancer GPT');retry.disabled=item.state==='processing';
   retry.onclick=()=>execute(retry,async()=>{await ioFetch(`/api/media/${item.id}/retry`,item.media.audio?{transcript:transcript.value}:{});dirty=false;await refresh();});root.append(retry);
+  const redo=make('button',`Retranscrire avec ${engineName(transcriber)}`);redo.disabled=item.state==='processing';
+  redo.onclick=()=>execute(redo,async()=>{await ioFetch(`/api/media/${item.id}/retry`,{retranscribe:true});dirty=false;await refresh();});root.append(redo);
+  if(item.media.previous_transcription?.text){
+   const previous=make('details');previous.append(make('summary','Comparer avec la transcription précédente'),make('p',item.media.previous_transcription.text));root.append(previous);
+  }
   if(!item.media.audio||item.state==='processing')return;
   const form=make('div');root.append(form);
   form.append(make('h4','Choisir et valider un passage'));
@@ -142,7 +156,18 @@
    dirty=false;await refresh();el('mediaStatus').textContent=result.note||'Passage validé et conservé pour son usage choisi.';
   });form.append(approval);
   form.append(make('p','Une sélection audio dure 30 secondes maximum. Les références vocales restent des candidates à tester avec le moteur de voix. La validation d’une expression conserve un repère, sans modifier les poses déjà créées.'));
-  if(item.approved.length)root.append(make('h4','Passages validés'),...item.approved.map(entry=>make('p',`${entry.title} · ${entry.start.toFixed(2)}–${entry.end.toFixed(2)} s · ${entry.use}${entry.reference_file?' · '+entry.reference_file:''}`)));
+  if(item.approved.length){
+   root.append(make('h4','Passages validés'));
+   for(const entry of item.approved){
+    root.append(make('p',`${entry.title} · ${entry.start.toFixed(2)}-${entry.end.toFixed(2)} s · ${entry.use}${entry.reference_file?' · '+entry.reference_file:''}`));
+    if(entry.use==='voice_reference'&&entry.reference_file){
+     const active=voiceReferences[entry.mood]===entry.reference_file;
+     const activate=make('button',active?`Référence Chatterbox active · ${entry.mood}`:`Utiliser cette voix avec Chatterbox · ${entry.mood}`);
+     activate.disabled=active;
+     activate.onclick=()=>execute(activate,async()=>{const result=await(await ioFetch(`/api/media/${item.id}/reference`,{selection_id:entry.selection_id})).json();dirty=false;await refresh();el('mediaStatus').textContent=result.note;});root.append(activate);
+    }
+   }
+  }
   const frames=make('div');frames.className='media-frames';root.append(frames);
   for(const frame of item.media.frames||[]){
    const card=make('figure');card.append(make('figcaption',`${frame.time.toFixed(2)} s`));frames.append(card);
@@ -153,6 +178,7 @@
  }
  el('mediaRefresh').onclick=()=>execute(el('mediaRefresh'),refresh);
  el('mediaResume').onclick=()=>execute(el('mediaResume'),async()=>{await ioFetch('/api/media/resume');await refresh();});
+ el('mediaRetranscribeLegacy').onclick=()=>execute(el('mediaRetranscribeLegacy'),async()=>{const result=await(await ioFetch('/api/media/retranscribe-legacy')).json();await refresh();el('mediaStatus').textContent=`${result.queued} ancienne(s) transcription(s) remise(s) dans la file. Les validations et corrections manuelles identifiées sont conservées.`;});
  el('mediaAutomatic').onchange=()=>execute(el('mediaAutomatic'),async()=>{await ioFetch('/api/media/options',{automatic:el('mediaAutomatic').checked});await refresh();});
  el('mediaSearch').oninput=el('mediaFilter').onchange=drawList;
  setInterval(()=>{

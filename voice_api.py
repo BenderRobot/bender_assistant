@@ -1,5 +1,7 @@
 import asyncio
 import importlib.util
+import os
+import time
 from functools import lru_cache
 from typing import Literal
 
@@ -32,7 +34,10 @@ class SpeechRequest(BaseModel):
 @router.post('/api/speech')
 async def speech(req: SpeechRequest, service=Depends(get_voice)):
     try:
-        return await asyncio.to_thread(service.prepare, **req.model_dump())
+        started = time.perf_counter()
+        result = await asyncio.to_thread(service.prepare, **req.model_dump())
+        result['timings'] = {'voice_seconds': round(time.perf_counter() - started, 3)}
+        return result
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     except VoiceUnavailable as exc:
@@ -43,6 +48,12 @@ async def speech(req: SpeechRequest, service=Depends(get_voice)):
 def status(service=Depends(get_voice)):
     return {'cloud_enabled': service.config.get('elevenlabs', {}).get('enabled', False),
             'local_provider': service.config.get('local_provider', 'chatterbox'),
+            'conversation_cloud':service.config.get('routing',{}).get('conversation_cloud',True),
+            'cloud_key_configured':bool(os.getenv('ELEVENLABS_API_KEY')),
+            'cloud_sdk_installed': importlib.util.find_spec('elevenlabs') is not None,
+            'cloud_integration': 'sdk-with-timestamps-v1',
+            'cloud_voice_id':service.config.get('elevenlabs',{}).get('voice_id',''),
+            'cloud_model_id':service.config.get('elevenlabs',{}).get('model_id','eleven_flash_v2_5'),
             'chatterbox_installed': importlib.util.find_spec('chatterbox') is not None,
             'lipsync_engine': service.config.get('lipsync', {}).get('engine', 'acoustic'),
             'library_entries': len(service.store.library()), 'usage': service.store.usage()}

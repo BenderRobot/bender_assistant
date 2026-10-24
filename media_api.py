@@ -37,8 +37,22 @@ class MediaOptions(BaseModel):
     automatic:bool
 
 
+class ReferenceSelection(BaseModel):
+    selection_id:str=Field(pattern=r'^[a-f0-9]{16}$')
+
+
 class Retry(BaseModel):
     transcript:str|None=Field(default=None,max_length=8000)
+    retranscribe:bool=False
+
+
+def queue_transcription(catalog,item):
+    media={**item['media']}
+    if media.get('transcript'):
+        media['previous_transcription']=dict(text=media['transcript'],words=media.get('words',[]),
+                                             source=media.get('transcription',{'engine':'vosk-legacy'}))
+    media.update(transcribed=False,words=[])
+    catalog.update(item['id'],state='pending',error='',progress={},media=media)
 
 
 class Approval(BaseModel):
@@ -90,11 +104,11 @@ def build_media_router():
     router=APIRouter(prefix='/api/media',dependencies=[Depends(require_control)])
 
     @router.get('')
-    def catalog(catalog=Depends(get_media),worker=Depends(get_media_worker)):
+    def catalog(catalog=Depends(get_media),worker=Depends(get_media_worker),voice=Depends(get_voice)):
         items=catalog.list()
         for item in items:
             for frame in item['media'].get('frames',[]):frame['url']=f"/api/media/{item['id']}/frames/{frame['index']}"
-        return dict(items=items,worker=worker.status())
+        return dict(items=items,worker=worker.status(),voice_references=voice.config.get('reference_by_mood',{}))
 
     @router.post('/options')
     def options(req:MediaOptions,catalog=Depends(get_media),worker=Depends(get_media_worker)):
@@ -106,16 +120,34 @@ def build_media_router():
     def resume(catalog=Depends(get_media),worker=Depends(get_media_worker)):
         catalog.automatic(True);worker.start();return worker.status()
 
+    @router.post('/retranscribe-legacy')
+    def retranscribe_legacy(catalog=Depends(get_media),worker=Depends(get_media_worker)):
+        queued=0
+        with _review_lock:
+            for item in catalog.list():
+                media=item['media'];source=media.get('transcription',{}).get('engine')
+                # Before provenance was stored, manual edits cleared word timestamps.
+                legacy=source=='vosk' or (source is None and bool(media.get('words')))
+                if item['state'] in ('review','error') and media.get('audio') and media.get('transcribed') and legacy:
+                    queue_transcription(catalog,item);queued+=1
+        if queued:worker.start()
+        return dict(queued=queued)
+
     @router.post('/{identifier}/retry')
     def retry(identifier:str,req:Retry,catalog=Depends(get_media),worker=Depends(get_media_worker)):
         try:
             item=catalog.get(identifier)
             if item['state']=='processing':raise ValueError('Ce sample est déjà en cours d’analyse.')
             media=item['media']
+            if req.retranscribe:
+                if req.transcript is not None:raise ValueError('Choisir une transcription manuelle ou une nouvelle reconnaissance, pas les deux.')
+                queue_transcription(catalog,item);worker.start();return {'status':'pending'}
             if req.transcript is not None:
                 if not media.get('audio'):raise ValueError('Préparer d’abord la piste audio avec une première analyse.')
                 text=req.transcript.strip()
-                if text!=media.get('transcript',''):media['words']=[]
+                if text!=media.get('transcript',''):
+                    media['words']=[]
+                    media['transcription']={'engine':'manual','language':'fr'}
                 media.update(transcript=text,transcribed=bool(text))
             catalog.update(identifier,state='pending',error='',media=media,progress={})
             worker.start();return {'status':'pending'}
@@ -125,6 +157,16 @@ def build_media_router():
     async def approval(identifier:str,req:Approval,catalog=Depends(get_media),voice=Depends(get_voice)):
         try:return await asyncio.to_thread(approve,catalog,identifier,req,voice)
         except (ValueError,OSError,VoiceUnavailable) as exc:raise HTTPException(400,str(exc)) from exc
+
+    @router.post('/{identifier}/reference')
+    def activate_reference(identifier:str,req:ReferenceSelection,catalog=Depends(get_media),voice=Depends(get_voice)):
+        try:
+            with _review_lock:
+                item=catalog.get(identifier)
+                selection=next((entry for entry in item['approved'] if entry['selection_id']==req.selection_id),None)
+                if not selection or selection.get('use')!='voice_reference':raise ValueError('Valider ce passage comme référence vocale avant de l’activer.')
+                return voice.activate_reference(selection['reference_file'],selection['mood'])
+        except (ValueError,OSError,KeyError) as exc:raise HTTPException(400,str(exc)) from exc
 
     @router.get('/{identifier}/frames/{index}')
     def frame(identifier:str,index:int,catalog=Depends(get_media)):
