@@ -230,7 +230,7 @@ class BrainTests(unittest.TestCase):
         http=Mock()
         http.request.side_effect=lambda *args,**kwargs:Reply(events=[dict(type='response.output_text.delta',delta='Salut.'),dict(type='response.completed')])
         client=Client(self.auth,http)
-        client.respond('Bonjour')
+        client.respond('Pourquoi le ciel est bleu ?')
         payload=http.request.call_args.kwargs['json']
         self.assertEqual(payload['reasoning'],{'effort':'low'})
         self.assertIn('une ou deux phrases',payload['instructions'])
@@ -242,8 +242,74 @@ class BrainTests(unittest.TestCase):
     def test_network_errors_are_safe_to_display(self):
         identifier = self.connected(); self.auth.select_model(identifier, 'available-model')
         http = Mock(); http.request.side_effect = requests.ConnectionError('private-access')
-        with self.assertRaises(BrainError) as caught: Client(self.auth,http).respond('Bonjour')
+        with self.assertRaises(BrainError) as caught: Client(self.auth,http).respond('Pourquoi le ciel est bleu ?')
         self.assertNotIn('private-access', str(caught.exception))
+
+    def test_exact_greeting_has_no_remote_request_and_stays_in_account_history(self):
+        identifier=self.connected();http=Mock();client=Client(self.auth,http)
+        answer=client.respond('Salut, Bender !')
+        self.assertIn('Salut Benjamin',answer)
+        self.assertEqual(answer.timing_metadata,{'brain_source':'local'})
+        http.request.assert_not_called()
+        with client._history_db() as conn:
+            rows=conn.execute('SELECT account,user,answer FROM exchanges').fetchall()
+        self.assertEqual(rows,[(identifier,'Salut, Bender !',str(answer))])
+        self.auth.logout()
+        with self.assertRaises(BrainError):client.respond('salut')
+
+    def test_repeated_greeting_reuses_elevenlabs_audio_without_gpt_or_new_synthesis(self):
+        from bender_voice.service import VoiceService
+        from test_voice import FakeVoice
+        self.connected();http=Mock();client=Client(self.auth,http)
+        providers={name:FakeVoice(name) for name in ('elevenlabs','chatterbox','system')}
+        voice=VoiceService({'data_dir':str(Path(self.temp.name)/'voice'),
+                            'lipsync':{'engine':'acoustic'},'elevenlabs':{'enabled':True}},providers)
+        first=voice.prepare(client.respond('salut'),mode='cloud')
+        second=voice.prepare(client.respond('Salut !'),mode='cloud')
+        http.request.assert_not_called()
+        self.assertEqual(providers['elevenlabs'].calls,1)
+        self.assertEqual(providers['chatterbox'].calls,0)
+        self.assertEqual(first['segments'][0]['id'],second['segments'][0]['id'])
+        self.assertTrue(second['segments'][0]['cached'])
+
+    def test_quick_phrases_do_not_swallow_questions_or_contextual_acknowledgements(self):
+        from bender_brain.quick_replies import quick_reply
+        for text in ('salut','BONJOUR !','merci Bender','à bientôt'):
+            self.assertIsNotNone(quick_reply(text))
+        for text in ('salut explique-moi la météo','ne dis pas salut','merci mais comment ça marche ?',
+                     'oui','non','ok','ça va ?','salut demain à 6 heures'):
+            self.assertIsNone(quick_reply(text),text)
+
+    def test_conversation_prefers_available_luna_without_changing_vision_or_saved_model(self):
+        identifier=self.connected();self.auth.select_model(identifier,'gpt-6.1-sol')
+        http=Mock();client=Client(self.auth,http)
+        def request(method,path,**kwargs):
+            if method=='GET':
+                return Reply(dict(models=[dict(slug='gpt-6-luna',visibility='list')]))
+            return Reply(events=[dict(type='response.output_text.delta',delta='Une réponse.'),dict(type='response.completed')])
+        http.request.side_effect=request
+        first=client.respond('Quelle est la couleur du ciel ?')
+        self.assertEqual(first.timing_metadata['brain_model'],'gpt-6-luna')
+        self.assertEqual(first.timing_metadata['brain_effort'],'none')
+        self.assertEqual(http.request.call_args.kwargs['json']['reasoning'],{'effort':'none'})
+        client.respond('Et la mer ?')
+        self.assertEqual(sum(call.args[0]=='GET' for call in http.request.call_args_list),1)
+        client.respond('Décris cette photo',image_bytes=b'jpeg')
+        self.assertEqual(http.request.call_args.kwargs['json']['model'],'gpt-6.1-sol')
+        self.assertNotIn('reasoning',http.request.call_args.kwargs['json'])
+        self.assertEqual(self.auth.status()['model'],'gpt-6.1-sol')
+
+    def test_unavailable_light_model_keeps_selected_model_and_caches_the_lookup(self):
+        identifier=self.connected();self.auth.select_model(identifier,'gpt-6.1-sol')
+        http=Mock();client=Client(self.auth,http)
+        def request(method,path,**kwargs):
+            if method=='GET':return Reply(dict(models=[dict(slug='gpt-6.1-sol',visibility='list')]))
+            return Reply(events=[dict(type='response.output_text.delta',delta='Une réponse.'),dict(type='response.completed')])
+        http.request.side_effect=request
+        self.assertEqual(client.respond('Une question').timing_metadata['brain_model'],'gpt-6.1-sol')
+        client.respond('Une autre question')
+        self.assertEqual(sum(call.args[0]=='GET' for call in http.request.call_args_list),1)
+        self.assertEqual(http.request.call_args.kwargs['json']['reasoning'],{'effort':'low'})
 
     def test_web_settings_require_control_and_public_status_is_safe(self):
         self.connected()
@@ -301,3 +367,19 @@ class BrainTests(unittest.TestCase):
                 voice.prepare.assert_not_called()
         finally:
             server.app.dependency_overrides.clear(); server.app.dependency_overrides.update(previous)
+
+    def test_chat_reports_local_answer_without_claiming_a_gpt_call(self):
+        import memory
+        with patch.object(memory,'DB_PATH',str(Path(self.temp.name)/'old-memory.db')):
+            import server
+        from bender_brain.client import BrainAnswer
+        previous=dict(server.app.dependency_overrides)
+        try:
+            server.app.dependency_overrides[require_control]=lambda:None
+            with TestClient(server.app) as client,patch('server.process_command',return_value=BrainAnswer('Salut.',source='local')):
+                result=client.post('/api/chat',json={'message':'salut','speech':False}).json()
+            self.assertEqual(result['response'],'Salut.')
+            self.assertEqual(result['timings']['brain_source'],'local')
+            self.assertNotIn('brain_model',result['timings'])
+        finally:
+            server.app.dependency_overrides.clear();server.app.dependency_overrides.update(previous)

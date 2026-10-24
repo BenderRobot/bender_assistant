@@ -137,7 +137,8 @@ async def chat_endpoint(req: ChatRequest):
         response_text = await asyncio.to_thread(process_command, user_message)
         brain_seconds = time.perf_counter() - started
         
-        result = {"response": response_text, "timings": {"brain_seconds": round(brain_seconds, 3)}}
+        result = {"response": response_text, "timings": {"brain_seconds": round(brain_seconds, 3),
+                  **getattr(response_text,'timing_metadata',{})}}
         if req.speech:
             voice_started = time.perf_counter()
             topic = 'news' if any(w in user_message.casefold() for w in ('actualité', 'actualite', 'news', 'nouvelles du jour')) else ''

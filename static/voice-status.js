@@ -24,7 +24,10 @@
   const seconds=value=>Number(value).toLocaleString('fr-FR',{maximumFractionDigits:1})+' s';
   const valid=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0;
   const parts=[];
-  if(valid(data.brain_seconds))parts.push(`GPT : ${seconds(data.brain_seconds)}`);
+  if(valid(data.brain_seconds)){
+   const origin=data.brain_source==='local'?'Réponse locale':data.brain_model?`GPT (${data.brain_model})`:'GPT';
+   parts.push(`${origin} : ${seconds(data.brain_seconds)}`);
+  }
   if(valid(data.voice_seconds))parts.push(`Préparation audio : ${seconds(data.voice_seconds)}`);
   if(!parts.length&&valid(data.request_seconds))parts.push(`Réponse et audio prêts en ${seconds(data.request_seconds)}`);
   return parts.join(' · ');

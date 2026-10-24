@@ -9,6 +9,7 @@ import requests
 
 from . import BrainError
 from .auth import Auth, RESOURCE
+from .quick_replies import quick_reply
 
 INSTRUCTIONS = '''Tu es Bender, l'assistant robot personnel de Benjamin. Réponds en français,
 avec un humour sarcastique et une légère touche de robot bougon, tout en restant utile.
@@ -86,10 +87,20 @@ def response_text(response):
     raise BrainError('Connexion ChatGPT interrompue avant la fin ; réessayer. Aucune réponse partielle mémorisée.')
 
 
+class BrainAnswer(str):
+    def __new__(cls, text, source='chatgpt', model=None, effort=None):
+        answer = super().__new__(cls, text)
+        answer.timing_metadata = {'brain_source': source}
+        if model:answer.timing_metadata['brain_model'] = model
+        if effort:answer.timing_metadata['brain_effort'] = effort
+        return answer
+
+
 class Client:
     def __init__(self, auth=None, http=None):
         self.auth = auth or Auth()
         self.http = http or requests.Session()
+        self._conversation_models = {}
 
     def _request(self, method, path, credential, **kwargs):
         try:
@@ -129,6 +140,25 @@ class Client:
         if slug not in {item['slug'] for item in self.catalog(credential)}:
             raise BrainError('Ce modèle n’est pas disponible pour le compte actif.')
         self.auth.select_model(identifier, slug)
+        self._conversation_models.clear()
+
+    def _conversation_model(self, identifier, credential, selected, available=None):
+        # Keep an explicitly chosen alternative and all vision/catalogue tasks.
+        # For the current general-purpose default, prefer Luna only when this
+        # exact account's catalogue lists it. Never guess an available model.
+        if selected != 'gpt-6.1-sol':return selected
+        key=(identifier,selected);now=time.monotonic()
+        cached=self._conversation_models.get(key)
+        if cached and cached[0]>now:return cached[1]
+        duration=300
+        try:
+            entries=available if available is not None else self.catalog(credential)
+            chosen='gpt-6-luna' if any(item['slug']=='gpt-6-luna' for item in entries) else selected
+        except BrainError:
+            chosen=selected;duration=60
+        if len(self._conversation_models)>=16:self._conversation_models.clear()
+        self._conversation_models[key]=(now+duration,chosen)
+        return chosen
 
     @contextmanager
     def _history_db(self):
@@ -144,10 +174,20 @@ class Client:
         if not text.strip() or len(text) > 8000:
             raise BrainError('Saisir un message entre 1 et 8 000 caractères.')
         identifier, credential = self.auth.credential()
+        quick = quick_reply(text) if image_bytes is None else None
+        if quick is not None:
+            with self._history_db() as conn:
+                conn.execute('INSERT INTO exchanges (account,user,answer,created) VALUES (?,?,?,?)',
+                             (identifier,text,quick,time.time()))
+            return BrainAnswer(quick,source='local')
         slug = credential.get('model')
+        available=None
         if not slug:
-            slug = self.catalog(credential)[0]['slug']
+            available=self.catalog(credential)
+            slug = available[0]['slug']
             self.auth.select_model(identifier, slug)
+        if image_bytes is None:
+            slug=self._conversation_model(identifier,credential,slug,available)
         with self._history_db() as conn:
             rows = conn.execute('SELECT user, answer FROM exchanges WHERE account=? ORDER BY id DESC LIMIT 10', (identifier,)).fetchall()
         messages = []
@@ -167,8 +207,10 @@ class Client:
             # preserve the request contract of other user-selected models.
             if slug == 'gpt-6.1-sol':
                 payload['reasoning'] = {'effort': 'low'}
+            elif slug == 'gpt-6-luna':
+                payload['reasoning'] = {'effort': 'none'}
         with self._request('POST', '/responses', credential, stream=True, json=payload) as response:
             answer = response_text(response)
         with self._history_db() as conn:
             conn.execute('INSERT INTO exchanges (account,user,answer,created) VALUES (?,?,?,?)', (identifier, text, answer, time.time()))
-        return answer
+        return BrainAnswer(answer,model=slug,effort=payload.get('reasoning',{}).get('effort'))
