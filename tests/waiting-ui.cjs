@@ -6,22 +6,22 @@ const path=require('node:path');
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};
 const flush=async()=>{for(let n=0;n<20;n++)await Promise.resolve();};
 function setup(){
- const elements={},tasks=new Map(),events=[];let serial=0;
- const el=id=>elements[id]??={value:'',checked:false,disabled:false,textContent:'',pause(){},addEventListener(){}};
+ const elements={},tasks=new Map(),events=[],intervals=[];let serial=0;
+ const el=id=>elements[id]??={value:'',checked:false,disabled:false,textContent:'',listeners:{},pause(){this.paused=true;},async play(){this.paused=false;},addEventListener(name,callback){this.listeners[name]=callback;}};
  el('output').value='browser';el('mode').value='auto';el('emotion').value='normal';
  el('text').value='Pourquoi le ciel est bleu ?';
  const journal={begin:()=>({answered:false}),pending(){},reply(turn){turn.answered=true;},audio(){},error(){},status(){}};
  class Socket{static OPEN=1;readyState=1;send(){}}
  const context={console,AbortController,AbortSignal,URLSearchParams,URL,
   location:{search:'',protocol:'http:',host:'test'},performance:{now:()=>0},
-  sessionStorage:{getItem:()=>''},WebSocket:Socket,requestAnimationFrame(){},setInterval(){},
+  sessionStorage:{getItem:()=>''},WebSocket:Socket,requestAnimationFrame(){},setInterval(fn){intervals.push(fn);},
   setTimeout(fn,delay){const id=++serial;tasks.set(id,{fn,delay});return id;},clearTimeout:id=>tasks.delete(id),
   document:{getElementById:id=>id==='waitingEnabled'?null:el(id)},
   window:{BenderConversation:journal},fetch:async()=>{throw Error('Unexpected fetch');}};
  vm.createContext(context);
  for(const file of ['waiting-cue.js','app.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../static',file),'utf8'),context);
  const tick=async delay=>{const entry=[...tasks].find(([,task])=>task.delay===delay);assert.ok(entry,`Timer ${delay} missing`);tasks.delete(entry[0]);await entry[1].fn();await flush();};
- return {context,el,events,tasks,tick,run:code=>vm.runInContext(code,context),Cue:context.window.BenderWaitingCue};
+ return {context,el,events,tasks,intervals,tick,run:code=>vm.runInContext(code,context),Cue:context.window.BenderWaitingCue};
 }
 async function classTests(){
  const s=setup(),pending=deferred();let plays=0,cancels=0;
@@ -95,5 +95,20 @@ async function conversationTests(){
  s.context.window.BenderMicrophone={busy:true};await s.run('perform(true)');
  assert.equal(answers,2);assert.equal(lookups,2);
 }
-(async()=>{await classTests();await playbackTests();await conversationTests();console.log('Waiting audio: parallel preparation, fast answers, cancellation, microphone and handoff OK');})()
+async function scenarioFaces(){
+ const s=setup();
+ s.context.window.BenderCustomSelection={eyes:{old:'manual'}};
+ s.context.moodBundle={segments:[{id:'mood',audio_url:'/mood.wav',timeline_url:'/mood.json',source:'library',face_override:{eyes:'crying',custom_eyes:null}}]};
+ s.context.fetch=async()=>({ok:true,json:async()=>({cues:[{t:0,pose:2}],duration:2})});
+ await s.run('beginBundle(moodBundle,run)');
+ s.intervals[0]();
+ assert.equal(s.run('face.eyes'),'crying');assert.equal(s.run('face.custom_eyes'),null,'Scenario clears unrelated manual eyes');
+ s.el('player').listeners.ended();await flush();
+ assert.equal(s.run('face.eyes'),'crying');assert.equal(s.run('face.active'),false);
+ s.el('output').value='dell';let payload;
+ s.context.fetch=async(url,options)=>{if(url==='/api/hardware/play')payload=JSON.parse(options.body);return {ok:true,json:async()=>({active:false,status:'finished'})};};
+ await s.run('beginBundle(moodBundle,run)');
+ assert.deepEqual(payload.faces,[{eyes:'crying',custom_eyes:null}]);
+}
+(async()=>{await classTests();await playbackTests();await conversationTests();await scenarioFaces();console.log('Waiting audio and scenario faces: parallel preparation, cancellation, microphone and Dell/browser handoff OK');})()
  .catch(error=>{console.error(error);process.exitCode=1;});

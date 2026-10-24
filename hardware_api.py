@@ -4,7 +4,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from bender_voice.config import load_config
 from bender_voice.hardware import Hardware, HardwareError, HardwareBusy
@@ -46,10 +46,19 @@ class MicrophoneStop(BaseModel):
     cancel: bool = False
 
 
-class PlaybackRequest(BaseModel):
-    ids: list[str] = Field(min_length=1, max_length=64)
+class PlaybackFace(BaseModel):
     eyes: Literal['normal', 'angry', 'happy', 'surprised', 'sleepy', 'sad', 'worried', 'crying', 'ref1', 'ref2', 'ref3', 'ref4', 'ref5'] = 'normal'
     custom_eyes: EyesShape | None = None
+
+
+class PlaybackRequest(PlaybackFace):
+    ids: list[str] = Field(min_length=1, max_length=64)
+    faces:list[PlaybackFace|None]|None=Field(default=None,max_length=64)
+
+    @model_validator(mode='after')
+    def matching_faces(self):
+        if self.faces is not None and len(self.faces)!=len(self.ids):raise ValueError('Une expression par segment audio est requise.')
+        return self
 
 
 class VisionRequest(BaseModel):
@@ -188,6 +197,9 @@ def build_hardware_router(brain_callback):
         try:
             if player.hardware.microphone_session.snapshot()['status'] in ('recording', 'stopping', 'transcribing'):
                 raise HardwareBusy('Mettre le micro en pause avant de faire parler Bender')
+            if req.faces is not None:
+                return await player.start(req.ids,req.eyes,custom_eyes=req.custom_eyes.model_dump() if req.custom_eyes else None,
+                                          faces=[face.model_dump() if face else None for face in req.faces])
             if req.custom_eyes is not None:
                 return await player.start(req.ids, req.eyes, custom_eyes=req.custom_eyes.model_dump())
             return await player.start(req.ids, req.eyes)

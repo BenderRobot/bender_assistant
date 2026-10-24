@@ -29,7 +29,8 @@ class ConversationWorkspaceTests(unittest.TestCase):
         for name in ('listen','pauseMicrophone','cancelMicrophone','heardText','sendTranscript','askAfterListen',
                      'mode','conversationForm','conversationSend','actualVoiceName','actualVoiceCard',
                      'recordSeconds','say','chat','liveEnabled','controlKey','mediaShowVersions',
-                     'mediaSources','mediaVersionsPanel','versionAudio','versionList'):
+                     'mediaSources','mediaVersionsPanel','versionAudio','versionList',
+                     'scenarioMood','scenarioIntensity','scenarioEyes','scenarioRecording','scenarioChoice'):
             self.assertEqual(counts[name],1,name)
         self.assertIn('data-view="conversation"',html)
         sidebar=html.split('<aside class="workspace-sidebar"',1)[1].split('</aside>',1)[0]

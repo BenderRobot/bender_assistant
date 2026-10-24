@@ -1,0 +1,16 @@
+<details class="subpanel audio-library" id="moodScenarios">
+<summary>Scénarios d’humeur · phrases et expressions des yeux</summary>
+<p>Dis ou écris « Bender, sois triste », « sois un peu sarcastique » ou « sois très joyeux ». Le scénario est tiré au hasard dans l’humeur et l’intensité demandées, en évitant une répétition immédiate. L’humeur concerne cette réaction ; elle ne classe pas automatiquement les conversations suivantes.</p>
+<div class="grid"><label for="scenarioMood">Humeur<select id="scenarioMood"><option value="sad">Triste</option><option value="neutral">Neutre</option><option value="sarcastic">Sarcastique</option><option value="angry">Agacé</option><option value="excited">Énergique / joyeux</option></select></label>
+<label for="scenarioIntensity">Intensité<select id="scenarioIntensity"><option value="1">1 · Légère</option><option value="2" selected>2 · Marquée</option><option value="3">3 · Forte</option></select></label></div>
+<div class="buttons"><button id="loadScenarios">Charger les scénarios</button><button id="testScenario">Jouer un scénario au hasard</button></div>
+<p id="scenarioResult" role="status">Les scénarios sont conservés sur le serveur Bender.</p>
+<label for="scenarioChoice">Scénario à modifier<select id="scenarioChoice"></select></label>
+<label for="scenarioName">Nom<input id="scenarioName" maxlength="100"></label>
+<label for="scenarioRecording">Voix<select id="scenarioRecording"><option value="">Faire prononcer le texte ci-dessous</option></select></label>
+<label for="scenarioText">Phrase<textarea id="scenarioText" rows="2" maxlength="1000"></textarea></label>
+<label for="scenarioEyes">Expression des yeux<select id="scenarioEyes"></select></label>
+<label class="inline"><input id="scenarioEnabled" type="checkbox" checked> Inclure ce scénario dans le tirage au hasard</label>
+<div class="buttons"><button id="saveScenario" disabled>Enregistrer ce scénario</button><button id="copyScenario" disabled>Enregistrer une nouvelle variante</button></div>
+<p>« Faire prononcer » utilise le moteur de voix choisi dans l’atelier et peut consommer des crédits ElevenLabs. Une réplique enregistrée est relue sans génération. L’intensité choisit la phrase et les yeux ; l’intonation dépend du moteur et de la référence vocale. Les yeux personnalisés sont copiés dans le scénario à l’enregistrement.</p>
+</details>

@@ -83,7 +83,7 @@
   el('versionList').replaceChildren(...nodes);
  }
  window.BenderVersions={show,stopPreview:clearPreview,update(data){
-  if(!data)return;const next=JSON.stringify(data);snapshot=data;if(stamp===next)return;stamp=next;draw();
+  if(!data)return;window.BenderMoods?.updateLibrary(data);const next=JSON.stringify(data);snapshot=data;if(stamp===next)return;stamp=next;draw();
  }};
  el('mediaShowSources').onclick=()=>show('sources');
  el('mediaShowVersions').onclick=()=>{show('versions');if(!snapshot)el('mediaRefresh').click();};

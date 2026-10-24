@@ -2,7 +2,7 @@ const $=id=>document.getElementById(id);
 const display=new URLSearchParams(location.search).get('display');
 if(display){document.body.classList.add('display',display==='eyes'?'eyes-only':'mouth-only');document.addEventListener('dblclick',()=>document.documentElement.requestFullscreen());}
 let socket,lastFace=0,face={pose:0,eyes:'normal',active:false},bundle=null,segments=[],index=0,timeline=null,run=0,hostPlaying=false,photo=null,photoBlob=null;
-let waitingCue=null,waitingFace=null,activePreparation=null,preparationStarting=false;
+let waitingCue=null,waitingFace=null,activePreparation=null,preparationStarting=false,playbackFace=null;
 const player=$('player');
 $('controlKey').value=sessionStorage.getItem('benderControlKey')||'';
 $('controlKey').onchange=()=>sessionStorage.setItem('benderControlKey',$('controlKey').value);
@@ -18,7 +18,7 @@ function hostState(state){
 }
 function connect(){socket=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/api/face');socket.onmessage=e=>{face=JSON.parse(e.data);lastFace=performance.now();if(face.playback)hostState(face.playback);};socket.onclose=()=>setTimeout(connect,1500);}
 connect();
-function sendFace(state){const custom=window.BenderCustomSelection||{};state={...state,custom_eyes:custom.eyes||null,custom_mouth:state.active?null:custom.mouth||null};face=state;lastFace=performance.now();if(socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify(state));}
+function sendFace(state){const custom=window.BenderCustomSelection||{};state={...state,custom_eyes:Object.hasOwn(state,'custom_eyes')?state.custom_eyes:custom.eyes||null,custom_mouth:state.active?null:custom.mouth||null};face=state;lastFace=performance.now();if(socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify(state));}
 async function stop(){
  window.stopWorkshopDemos?.();
  window.BenderVersions?.stopPreview();
@@ -26,7 +26,7 @@ async function stop(){
  run++;activePreparation?.abort.abort();activePreparation=null;
  const oldWaiting=waitingCue;waitingCue=null;
  await oldWaiting?.cancel();
- segments=[];player.pause();player.currentTime=0;timeline=null;
+ segments=[];player.pause();player.currentTime=0;timeline=null;playbackFace=null;
  if(hostPlaying||($('output').value==='dell'&&$('controlKey').value.trim())){try{await ioFetch('/api/hardware/stop');}catch(error){if(hostPlaying)$('error').textContent=error.message;}}
  hostPlaying=false;sendFace({pose:0,eyes:$('emotion').value,active:false});$('state').textContent='Arrêté';$('poseState').textContent='Repos';
  if(!window.BenderMicrophone?.busy)$('say').disabled=$('chat').disabled=$('conversationSend').disabled=false;
@@ -34,19 +34,20 @@ async function stop(){
 function cueAt(time){let current={t:0,pose:0,family:'REST'};for(const cue of timeline?.cues||[]){if(cue.t>time)break;current=cue;}return current;}
 async function playSegment(token){
  if(token!==run)return;
- if(index>=segments.length){timeline=null;sendFace({pose:0,eyes:$('emotion').value,active:false});$('state').textContent='Terminé';$('poseState').textContent='Repos';return;}
- const segment=segments[index];const res=await fetch(segment.timeline_url);if(!res.ok)throw Error('Timeline indisponible');
+ if(index>=segments.length){timeline=null;sendFace({pose:0,eyes:$('emotion').value,active:false,...playbackFace});$('state').textContent='Terminé';$('poseState').textContent='Repos';return;}
+ const segment=segments[index];playbackFace=segment.face_override||null;const res=await fetch(segment.timeline_url);if(!res.ok)throw Error('Timeline indisponible');
  const data=await res.json();if(token!==run)return;timeline=data;player.src=segment.audio_url;player.playbackRate=Number($('speed').value);
  $('details').textContent=[`Source : ${segment.source}${segment.cached?' · déjà enregistré':''}`, ...new Set([...(bundle.warnings||[]),...(segment.warnings||[])])].join('\n');
  await player.play();$('state').textContent='Parole dans ce navigateur';
 }
 async function beginBundle(data,token,timings={}){
  if(window.BenderMicrophone?.busy)throw Error('Mets le micro en pause avant de lire un enregistrement.');
- if(token!==run)return;bundle=data;segments=bundle.segments;index=0;$('replay').disabled=false;
+ if(token!==run)return;bundle=data;segments=bundle.segments;index=0;playbackFace=segments[0]?.face_override||null;$('replay').disabled=false;
  window.BenderVoiceStatus?.show(data,timings);
  $('details').textContent=segments.map(s=>`Source : ${s.source}${s.cached?' · déjà enregistré':''}`).concat(...segments.map(s=>s.warnings||[])).join('\n');
  if($('output').value==='dell'){
-  timeline=null;player.pause();const res=await ioFetch('/api/hardware/play',{ids:segments.map(s=>s.id),eyes:$('emotion').value,custom_eyes:window.BenderCustomSelection?.eyes||null});
+  timeline=null;player.pause();const res=await ioFetch('/api/hardware/play',{ids:segments.map(s=>s.id),eyes:$('emotion').value,custom_eyes:window.BenderCustomSelection?.eyes||null,
+   ...(segments.some(s=>s.face_override)?{faces:segments.map(s=>s.face_override||null)}:{})});
   const state=await res.json();if(token!==run){await ioFetch('/api/hardware/stop');return;}hostState(state);
   hostState(await (await ioFetch('/api/hardware/playback',null,'GET')).json());
  }else await playSegment(token);
@@ -59,7 +60,7 @@ setInterval(()=>{
   sendFace({pose:cue.pose,eyes:waitingFace.eyes,active:!waitingFace.audio.paused,rounded:!!cue.rounded});return;
  }
  if(timeline){const cue=cueAt(player.currentTime),eyes=segments[index]?.eyes;
- sendFace({pose:player.ended?0:cue.pose,eyes:eyes&&eyes!=='normal'?eyes:$('emotion').value,active:!player.paused,rounded:!!cue.rounded||$('teeth').value==='rounded',mode:$('eyeMode').value,blink:$('eyeBlink').checked});
+ sendFace({pose:player.ended?0:cue.pose,eyes:eyes&&eyes!=='normal'?eyes:$('emotion').value,active:!player.paused,rounded:!!cue.rounded||$('teeth').value==='rounded',mode:$('eyeMode').value,blink:$('eyeBlink').checked,...playbackFace});
  $('poseState').textContent=(cue.phone?`Son estimé : ${cue.phone}`:cue.family==='ACOUSTIC_FALLBACK'?'Estimation acoustique':cue.family||'Repère manuel')+` · pose ${cue.pose+1}`;
  }
 },50);
@@ -125,6 +126,7 @@ async function perform(chat,conversationTurn=null){
   const res=await fetch(chat?'/api/chat':'/api/speech',{method:'POST',signal:preparation.abort.signal,headers:{'Content-Type':'application/json',...(chat?authHeaders():{})},body:JSON.stringify(payload)});
   const data=await res.json();if(!res.ok||data.error)throw Error(data.detail||data.error||'Génération impossible');if(token!==run){if(turn)window.BenderConversation.error(turn,'Lecture annulée ; réponse non prononcée.');return;}
   if(turn)window.BenderConversation.reply(turn,data.response);
+  window.BenderMoods?.showResult(data);
   const audio=chat?data.speech:data,timings={...(data.timings||{}),request_seconds:(performance.now()-requestStarted)/1000};
   if(turn&&audio)window.BenderConversation.audio(turn,audio,timings);
   $('response').textContent=chat?data.response:text;if(chat&&!data.speech)throw Error(data.speech_error||'Audio indisponible');

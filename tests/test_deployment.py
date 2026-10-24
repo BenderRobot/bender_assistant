@@ -17,12 +17,13 @@ class DeploymentTests(unittest.TestCase):
             '/api/system/version': {'ui_version': verifier['UI_VERSION'], 'revision': REVISION},
             '/openapi.json': {'paths': {path: {} for path in (
                 '/api/media/{identifier}/reference', '/api/bulletins', '/api/voice/live-settings',
-                '/api/chat/acknowledgement', '/api/voice/waiting/prepare', '/api/media/versions')}},
+                '/api/chat/acknowledgement', '/api/voice/waiting/prepare', '/api/media/versions', '/api/moods/prepare')}},
             '/static/bulletins.js': '/api/bulletins/play',
             '/api/voice/status': {'cloud_integration': 'sdk-with-timestamps-v1', 'cloud_sdk_installed': True},
             '/': '<aside class="workspace-sidebar"><p id="deploymentVersion"></p></aside>'
                  '<h2 id="actualVoiceName"></h2><script src="/static/voice-status.js"></script>'
-                 '<script src="/static/waiting-cue.js"></script><script src="/static/media-versions.js"></script>',
+                 '<script src="/static/waiting-cue.js"></script><script src="/static/media-versions.js"></script>'
+                 '<script src="/static/mood-scenarios.js"></script>',
             '/static/voice-status.js': 'BenderVoiceStatus',
         }
 

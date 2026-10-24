@@ -30,6 +30,8 @@ from bulletin_api import router as bulletin_router
 app.include_router(bulletin_router)
 from waiting_api import router as waiting_router
 app.include_router(waiting_router)
+from mood_api import router as mood_router, get_moods
+app.include_router(mood_router)
 from hardware_api import build_hardware_router, require_control
 app.include_router(build_hardware_router(process_command))
 from brain_api import build_brain_router
@@ -128,6 +130,18 @@ async def chat_endpoint(req: ChatRequest):
         user_message = req.message
         if not user_message:
             return {"error": "Message vide"}
+        from bender_voice.moods import command as mood_command, reply as mood_reply
+        mood=mood_command(user_message)
+        if mood:
+            started=time.perf_counter()
+            try:
+                result=await asyncio.to_thread(mood_reply,get_moods(),get_voice(),*mood,req.mode,req.speech)
+                if req.speech:result['timings']['voice_seconds']=round(time.perf_counter()-started,3)
+                return result
+            except (ValueError,OSError) as exc:
+                return {'error':str(exc)}
+            except Exception:
+                return {'error':'Scénario vocal indisponible ; vérifier sa réplique et le moteur de voix.'}
         from bender_voice.bulletins import Bulletins, news_request
         if news_request(user_message):
             ready=await asyncio.to_thread(Bulletins(get_voice()).answer,user_message)

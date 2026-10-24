@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 from bender_brain.quick_replies import quick_reply
 from bender_voice import waiting
+from bender_voice.moods import command as mood_command
 from bender_voice.providers import VoiceUnavailable
 from hardware_api import require_control
 from voice_api import get_voice
@@ -34,7 +35,7 @@ def prepare(voice=Depends(get_voice)):
 
 @router.post('/api/chat/acknowledgement', dependencies=[Depends(require_control)])
 def acknowledgement(req: WaitingRequest, voice=Depends(get_voice)):
-    if req.mode == 'local' or quick_reply(req.message) is not None or not voice.config.get('elevenlabs', {}).get('enabled'):
+    if req.mode == 'local' or quick_reply(req.message) is not None or mood_command(req.message) is not None or not voice.config.get('elevenlabs', {}).get('enabled'):
         return {'segment': None}
     items = waiting.catalogue(voice)['items']
     choices = [item for item in items if item['id'] != req.previous] or items

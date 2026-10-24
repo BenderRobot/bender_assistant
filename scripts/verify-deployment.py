@@ -20,7 +20,7 @@ def verify(base='http://127.0.0.1:8000', expected_revision=None):
         raise ValueError('Revision servie differente du commit deploye : ' + str(version.get('revision')))
     paths = json.loads(read('/openapi.json'))['paths']
     for path in ('/api/media/{identifier}/reference', '/api/bulletins', '/api/voice/live-settings',
-                 '/api/chat/acknowledgement', '/api/voice/waiting/prepare', '/api/media/versions'):
+                 '/api/chat/acknowledgement', '/api/voice/waiting/prepare', '/api/media/versions', '/api/moods/prepare'):
         if path not in paths:
             raise ValueError('Application obsolete ; route absente : ' + path)
     if '/api/bulletins/play' not in read('/static/bulletins.js'):
@@ -35,7 +35,7 @@ def verify(base='http://127.0.0.1:8000', expected_revision=None):
             raise ValueError('ElevenLabs active mais Voice ID absent ; choisir la voix dans l atelier')
     page = read('/')
     for marker in ('id="actualVoiceName"', '/static/voice-status.js', 'class="workspace-sidebar"',
-                   'id="deploymentVersion"', '/static/waiting-cue.js', '/static/media-versions.js'):
+                   'id="deploymentVersion"', '/static/waiting-cue.js', '/static/media-versions.js', '/static/mood-scenarios.js'):
         if marker not in page:
             raise ValueError('Atelier incomplet ; element absent : ' + marker)
     if 'BenderVoiceStatus' not in read('/static/voice-status.js'):

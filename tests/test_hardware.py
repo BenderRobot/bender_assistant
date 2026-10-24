@@ -159,5 +159,30 @@ class HardwareTests(unittest.TestCase):
             self.assertFalse(endpoint(player)['busy'])
         asyncio.run(scenario())
 
+    def test_scenario_eyes_override_a_recordings_eyes_without_changing_its_timeline(self):
+        bundle=self.voice.prepare('Une phrase')
+        identifier=bundle['segments'][0]['id'];path=self.voice.asset(identifier,'json')
+        content=json.loads(path.read_text(encoding='utf-8'));content['eyes']='happy'
+        path.write_text(json.dumps(content),encoding='utf-8');before=path.read_bytes()
+        events=[]
+        class Process:
+            returncode=0
+            def __init__(self):self.n=0
+            def poll(self):self.n+=1;return None if self.n<3 else 0
+        async def broadcast(event):events.append(event)
+        async def scenario():
+            player=HostPlayer(self.voice,self.hardware,broadcast,lambda value:None)
+            with patch('shutil.which',return_value='aplay'),patch('subprocess.Popen',side_effect=lambda *a,**k:Process()):
+                await player.start([identifier,identifier],eyes='normal',custom_eyes={'stale':True},
+                                   faces=[{'eyes':'crying','custom_eyes':None},None])
+                await player.task
+        asyncio.run(scenario())
+        first=[event for event in events if event.get('active') and event['playback']['segment']==0]
+        second=[event for event in events if event.get('active') and event['playback']['segment']==1]
+        self.assertTrue(first);self.assertTrue(second)
+        self.assertTrue(all(event['eyes']=='crying' and event['custom_eyes'] is None for event in first))
+        self.assertTrue(all(event['eyes']=='happy' for event in second))
+        self.assertEqual(path.read_bytes(),before)
+
 
 if __name__ == '__main__':unittest.main()
