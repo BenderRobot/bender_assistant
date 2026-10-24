@@ -85,6 +85,7 @@
   if(loading)return;loading=true;
   try{
    const data=await(await ioFetch('/api/media',null,'GET')).json();items=data.items;loaded=true;
+   window.BenderVersions?.update(data.versions);
    const previousReferences=JSON.stringify(voiceReferences);voiceReferences=data.voice_references||{};
    if(previousReferences!==JSON.stringify(voiceReferences))version=null;
    if(data.worker.transcription)transcriber=data.worker.transcription;
@@ -177,6 +178,11 @@
   }
  }
  el('mediaRefresh').onclick=()=>execute(el('mediaRefresh'),refresh);
+ window.BenderMedia={openSample(identifier){
+  const item=items.find(item=>item.id===identifier);if(!item)return;
+  selected=identifier;dirty=false;version=null;drawList();drawDetail(item);
+  el('mediaDetail').scrollIntoView({behavior:'smooth',block:'nearest'});
+ }};
  el('mediaResume').onclick=()=>execute(el('mediaResume'),async()=>{await ioFetch('/api/media/resume');await refresh();});
  el('mediaRetranscribeLegacy').onclick=()=>execute(el('mediaRetranscribeLegacy'),async()=>{const result=await(await ioFetch('/api/media/retranscribe-legacy')).json();await refresh();el('mediaStatus').textContent=`${result.queued} ancienne(s) transcription(s) remise(s) dans la file. Les validations et corrections manuelles identifiées sont conservées.`;});
  el('mediaAutomatic').onchange=()=>execute(el('mediaAutomatic'),async()=>{await ioFetch('/api/media/options',{automatic:el('mediaAutomatic').checked});await refresh();});

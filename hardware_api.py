@@ -2,7 +2,7 @@ import asyncio
 from functools import lru_cache
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
@@ -197,11 +197,11 @@ def build_hardware_router(brain_callback):
             raise device_error(exc) from exc
 
     @router.post('/api/hardware/stop', dependencies=[Depends(require_control)])
-    async def stop(player=Depends(get_host_player)):
-        return await player.stop()
+    async def stop(player=Depends(get_host_player), job: str | None = Query(default=None, pattern=r'^[a-f0-9]{32}$')):
+        return await player.stop(job=job) if job is not None else await player.stop()
 
     @router.get('/api/hardware/playback', dependencies=[Depends(require_control)])
     def playback(player=Depends(get_host_player)):
-        return player.state
+        return {**player.state, 'busy': bool(player.task and not player.task.done())}
 
     return router

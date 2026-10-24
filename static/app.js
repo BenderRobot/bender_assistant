@@ -2,28 +2,34 @@ const $=id=>document.getElementById(id);
 const display=new URLSearchParams(location.search).get('display');
 if(display){document.body.classList.add('display',display==='eyes'?'eyes-only':'mouth-only');document.addEventListener('dblclick',()=>document.documentElement.requestFullscreen());}
 let socket,lastFace=0,face={pose:0,eyes:'normal',active:false},bundle=null,segments=[],index=0,timeline=null,run=0,hostPlaying=false,photo=null,photoBlob=null;
+let waitingCue=null,waitingFace=null,activePreparation=null,preparationStarting=false;
 const player=$('player');
 $('controlKey').value=sessionStorage.getItem('benderControlKey')||'';
 $('controlKey').onchange=()=>sessionStorage.setItem('benderControlKey',$('controlKey').value);
 function authHeaders(){return {'X-Bender-Control-Token':$('controlKey').value.trim()};}
-async function ioFetch(path,payload,method='POST'){
- const res=await fetch(path,{method,headers:{...authHeaders(),...(method==='POST'?{'Content-Type':'application/json'}:{})},...(method==='POST'?{body:JSON.stringify(payload||{})}:{})});
+async function ioFetch(path,payload,method='POST',signal){
+ const res=await fetch(path,{method,signal,headers:{...authHeaders(),...(method==='POST'?{'Content-Type':'application/json'}:{})},...(method==='POST'?{body:JSON.stringify(payload||{})}:{})});
  if(!res.ok){const data=await res.json().catch(()=>({}));throw Error(data.detail||'Périphérique indisponible');}return res;
 }
 function hostState(state){
  hostPlaying=state.active;
  if(state.active){$('state').textContent=`Parole sur le Dell · ${state.elapsed||0} s`;$('poseState').textContent=`Lecture sur le Dell · pose ${face.pose+1}`;}
- else{$('state').textContent=state.status==='error'?'Erreur audio Dell':state.status==='stopped'?'Arrêté':'Terminé';$('poseState').textContent='Repos';if(state.error)$('error').textContent=state.error;}
+ else{$('state').textContent=activePreparation?'Préparation de la réponse.':state.status==='error'?'Erreur audio Dell':state.status==='stopped'?'Arrêté':'Terminé';$('poseState').textContent='Repos';if(state.error)$('error').textContent=state.error;}
 }
 function connect(){socket=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/api/face');socket.onmessage=e=>{face=JSON.parse(e.data);lastFace=performance.now();if(face.playback)hostState(face.playback);};socket.onclose=()=>setTimeout(connect,1500);}
 connect();
 function sendFace(state){const custom=window.BenderCustomSelection||{};state={...state,custom_eyes:custom.eyes||null,custom_mouth:state.active?null:custom.mouth||null};face=state;lastFace=performance.now();if(socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify(state));}
 async function stop(){
  window.stopWorkshopDemos?.();
+ window.BenderVersions?.stopPreview();
  window.BenderVoiceStatus?.failed('Préparation annulée ; aucun nouvel audio lancé.');
- run++;segments=[];player.pause();player.currentTime=0;timeline=null;
+ run++;activePreparation?.abort.abort();activePreparation=null;
+ const oldWaiting=waitingCue;waitingCue=null;
+ await oldWaiting?.cancel();
+ segments=[];player.pause();player.currentTime=0;timeline=null;
  if(hostPlaying||($('output').value==='dell'&&$('controlKey').value.trim())){try{await ioFetch('/api/hardware/stop');}catch(error){if(hostPlaying)$('error').textContent=error.message;}}
  hostPlaying=false;sendFace({pose:0,eyes:$('emotion').value,active:false});$('state').textContent='Arrêté';$('poseState').textContent='Repos';
+ if(!window.BenderMicrophone?.busy)$('say').disabled=$('chat').disabled=$('conversationSend').disabled=false;
 }
 function cueAt(time){let current={t:0,pose:0,family:'REST'};for(const cue of timeline?.cues||[]){if(cue.t>time)break;current=cue;}return current;}
 async function playSegment(token){
@@ -48,28 +54,86 @@ async function beginBundle(data,token,timings={}){
 player.addEventListener('ended',()=>{index++;playSegment(run).catch(error=>{$('error').textContent=error.message;});});
 setInterval(()=>{
  if(display||hostPlaying)return;
+ if(waitingFace){
+  const cue=waitingFace.timeline.cues.reduce((current,item)=>item.t<=waitingFace.audio.currentTime?item:current,{pose:0});
+  sendFace({pose:cue.pose,eyes:waitingFace.eyes,active:!waitingFace.audio.paused,rounded:!!cue.rounded});return;
+ }
  if(timeline){const cue=cueAt(player.currentTime),eyes=segments[index]?.eyes;
  sendFace({pose:player.ended?0:cue.pose,eyes:eyes&&eyes!=='normal'?eyes:$('emotion').value,active:!player.paused,rounded:!!cue.rounded||$('teeth').value==='rounded',mode:$('eyeMode').value,blink:$('eyeBlink').checked});
  $('poseState').textContent=(cue.phone?`Son estimé : ${cue.phone}`:cue.family==='ACOUSTIC_FALLBACK'?'Estimation acoustique':cue.family||'Repère manuel')+` · pose ${cue.pose+1}`;
  }
 },50);
 function render(now){if(display&&now-lastFace>1200)face={...face,pose:0,active:false};BenderFace.render(face,now);requestAnimationFrame(render);}requestAnimationFrame(render);
+async function playWaitingCue(cue,token){
+ if(token!==run||window.BenderMicrophone?.busy)return null;
+ const eyes=$('emotion').value;
+ if($('output').value==='browser'){
+  const response=await fetch(cue.timeline_url,{signal:AbortSignal.timeout(2000)});if(!response.ok||token!==run)return null;
+  const data=await response.json();if(token!==run)return null;
+  const audio=new Audio(cue.audio_url);let resolveDone,timeout;
+  const done=new Promise(resolve=>resolveDone=resolve);
+  const current={audio,timeline:data,eyes};
+  const finish=()=>{clearTimeout(timeout);if(waitingFace===current){waitingFace=null;if(token===run)sendFace({pose:0,eyes,active:false});}resolveDone();};
+  const cancel=async()=>{audio.pause();finish();};
+  audio.onended=finish;audio.onerror=finish;
+  waitingFace=current;
+  let starting;
+  try{await Promise.race([audio.play(),new Promise((_,reject)=>{starting=setTimeout(()=>reject(Error('Audio d’attente indisponible')),2000);})]);}
+  catch(error){await cancel();throw error;}finally{clearTimeout(starting);}
+  timeout=setTimeout(()=>{cancel();},Math.min(cue.duration,6)*1000+1500);
+  if(token!==run)await cancel();
+  return {done,cancel};
+ }
+ const response=await ioFetch('/api/hardware/play',{ids:[cue.id],eyes,custom_eyes:window.BenderCustomSelection?.eyes||null},'POST',AbortSignal.timeout(2500));
+ const state=await response.json(),job=state.job;
+ let resolveDone,polling,ended=false;
+ const done=new Promise(resolve=>resolveDone=resolve);
+ const finish=()=>{if(ended)return;ended=true;clearTimeout(polling);resolveDone();};
+ const cancel=async()=>{if(ended)return;finish();if(job)await ioFetch(`/api/hardware/stop?job=${encodeURIComponent(job)}`,{},'POST',AbortSignal.timeout(1000)).catch(()=>{});};
+ const deadline=performance.now()+Math.min(cue.duration,6)*1000+1500;
+ const poll=async()=>{
+  if(ended)return;
+  if(token!==run||performance.now()>deadline){await cancel();return;}
+  try{
+   const current=await(await ioFetch('/api/hardware/playback',null,'GET',AbortSignal.timeout(800))).json();
+   if(current.job!==job||(!current.active&&!current.busy)){finish();return;}
+  }catch(_){/* Keep a bounded wait; a failed cue must never block the answer. */}
+  if(!ended)polling=setTimeout(poll,100);
+ };
+ if(token!==run)await cancel();else polling=setTimeout(poll,60);
+ return {done,cancel};
+}
 async function perform(chat,conversationTurn=null){
  if(window.BenderMicrophone?.busy){$('error').textContent='Mets le micro en pause avant de faire parler Bender.';return;}
- await stop();$('error').textContent='';$('say').disabled=$('chat').disabled=$('conversationSend').disabled=true;$('state').textContent='Préparation…';
+ if(activePreparation||preparationStarting)return;
+ preparationStarting=true;const stopping=stop(),startingRun=run;
+ try{await stopping;}finally{preparationStarting=false;}
+ if(run!==startingRun||window.BenderMicrophone?.busy)return;
+ $('error').textContent='';$('say').disabled=$('chat').disabled=$('conversationSend').disabled=true;$('state').textContent='Préparation…';
  window.BenderVoiceStatus?.pending();const requestStarted=performance.now();
  const text=$('text').value,payload={mode:$('mode').value,mood:$('mood').value,allow_quote:$('quotes').checked},token=run;
+ const preparation={abort:new AbortController()};activePreparation=preparation;
  const turn=chat?(conversationTurn||window.BenderConversation.begin(text)):null;
  if(turn)window.BenderConversation.pending(turn,text);
+ const currentWaiting=chat&&window.BenderWaitingAudio?.enabled&&window.BenderWaitingAudio.ready!==0?new window.BenderWaitingCue({
+  lookup:signal=>window.BenderWaitingAudio.lookup(text,payload.mode,signal),play:cue=>playWaitingCue(cue,token),
+  onStart:cue=>{if(token===run&&turn&&!turn.answered)window.BenderConversation.status(`Bender : « ${cue.text} » — réponse en préparation.`);}
+ }):null;
+ waitingCue=currentWaiting;
  try{
   Object.assign(payload,chat?{message:text}:{text,context:$('context').value,topic:$('topic').value});
-  const res=await fetch(chat?'/api/chat':'/api/speech',{method:'POST',headers:{'Content-Type':'application/json',...(chat?authHeaders():{})},body:JSON.stringify(payload)});
+  const res=await fetch(chat?'/api/chat':'/api/speech',{method:'POST',signal:preparation.abort.signal,headers:{'Content-Type':'application/json',...(chat?authHeaders():{})},body:JSON.stringify(payload)});
   const data=await res.json();if(!res.ok||data.error)throw Error(data.detail||data.error||'Génération impossible');if(token!==run){if(turn)window.BenderConversation.error(turn,'Lecture annulée ; réponse non prononcée.');return;}
   if(turn)window.BenderConversation.reply(turn,data.response);
   const audio=chat?data.speech:data,timings={...(data.timings||{}),request_seconds:(performance.now()-requestStarted)/1000};
   if(turn&&audio)window.BenderConversation.audio(turn,audio,timings);
-  $('response').textContent=chat?data.response:text;if(chat&&!data.speech)throw Error(data.speech_error||'Audio indisponible');await beginBundle(audio,token,timings);
- }catch(error){$('error').textContent=error.message;$('state').textContent='Indisponible';window.BenderVoiceStatus?.failed(error.message);if(turn)window.BenderConversation.error(turn,error.message);}finally{$('say').disabled=$('chat').disabled=$('conversationSend').disabled=false;}
+  $('response').textContent=chat?data.response:text;if(chat&&!data.speech)throw Error(data.speech_error||'Audio indisponible');
+  await currentWaiting?.finish();if(token!==run)return;
+  await beginBundle(audio,token,timings);
+ }catch(error){await currentWaiting?.cancel();if(token!==run)return;$('error').textContent=error.message;$('state').textContent='Indisponible';window.BenderVoiceStatus?.failed(error.message);if(turn)window.BenderConversation.error(turn,error.message);}finally{
+  if(waitingCue===currentWaiting)waitingCue=null;
+  if(activePreparation===preparation){activePreparation=null;if(!window.BenderMicrophone?.busy)$('say').disabled=$('chat').disabled=$('conversationSend').disabled=false;}
+ }
 }
  $('conversationForm').onsubmit=event=>{event.preventDefault();const text=$('conversationText').value.trim();if(!text||$('conversationSend').disabled)return;$('text').value=text;perform(true);};
 $('say').onclick=()=>perform(false);$('chat').onclick=()=>perform(true);$('stop').onclick=stop;

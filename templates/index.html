@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bender · Conversation et atelier</title><link rel="stylesheet" href="/static/app.css?v=atelier-gauche-20261024"></head>
+<title>Bender · Conversation et atelier</title><link rel="stylesheet" href="/static/app.css?v=versions-20261024"></head>
 <body data-view="conversation"><main>
 <nav class="top-links" aria-label="Projet"><a href="/">Atelier Bender</a><a href="/roadmap">Roadmap</a><a href="/kanban">Kanban</a></nav>
 <header><div><p class="eyebrow">CONVERSATION ET ATELIER</p><h1>Bender</h1></div><span id="state" role="status">Prêt</span></header>
@@ -94,16 +94,18 @@
 </section>
 <section id="panel-samples" role="tabpanel" aria-labelledby="tab-samples" class="workshop-panel" hidden>
 <h2>Étape 03 · Samples et personnalité</h2>
+<div class="buttons media-views" aria-label="Vue des samples"><button id="mediaShowSources" aria-pressed="true">1 · Préparer les samples</button><button id="mediaShowVersions" aria-pressed="false">2 · Versions de Bender</button></div>
+<div class="buttons"><button id="mediaRefresh">Charger / actualiser mes samples</button><button id="mediaResume">Reprendre les analyses en attente</button></div>
+<p id="mediaStatus" role="status">Renseigne la clé de contrôle du Dell, puis charge la bibliothèque.</p><p id="mediaError" role="alert"></p>
+<div id="mediaSources">
 <p>Ta voix ElevenLabs : télécharge un WAV dans l’historique ElevenLabs, importe-le ici, valide-le comme <strong>Référence vocale candidate</strong> puis utilise le bouton <strong>Utiliser cette voix avec Chatterbox</strong>. Le <a href="/roadmap#step-3">parcours détaillé de l’étape 03</a> explique aussi l’installation et le test du moteur local.</p>
 <p>Dépose tes sons et vidéos dans <strong>Documents / bender_main / 02_VOIX_ET_ANIMATIONS / a_importer</strong> sur ton PC. La mise à jour habituelle transfère les nouveaux fichiers vers Bender. Chaque contenu identique n’est importé qu’une fois.</p>
 <p>Whisper transcrit localement les extraits en français ; GPT propose des noms, thèmes, humeurs et passages utiles à partir du texte et d'images horodatées. GPT n'écoute pas le timbre sonore avec cette connexion. Les propositions restent à vérifier avant leur utilisation.</p>
-<div class="buttons"><button id="mediaRefresh">Charger / actualiser mes samples</button><button id="mediaResume">Reprendre les analyses en attente</button></div>
 <p id="mediaTranscriptionStatus" role="status">Samples : Whisper français en local · modèle medium (~1,5 Go) installé une seule fois lors de la mise à jour.</p>
 <div class="buttons"><button id="mediaRetranscribeLegacy">Refaire les transcriptions Vosk non validées</button></div>
 <p>La retranscription conserve le texte précédent pour comparaison. Les passages déjà validés et les corrections manuelles identifiées sont conservés. Tu peux aussi relancer un seul sample depuis sa fiche.</p>
 <label class="inline"><input type="checkbox" id="mediaAutomatic" checked> Analyser automatiquement les nouveaux samples après les mises à jour</label>
 <p>Décoche cette option pour mettre les analyses en pause après le fichier en cours. Les traitements utilisent le quota de ton compte ChatGPT et reprennent uniquement les nouveaux contenus ou ceux que tu relances.</p>
-<p id="mediaStatus" role="status">Renseigne la clé de contrôle du Dell, puis charge la bibliothèque.</p><p id="mediaError" role="alert"></p>
 <section class="media-dashboard" aria-label="Suivi du traitement des samples">
 <div class="media-dashboard-title"><h3>Traitement des samples</h3><span id="mediaSync">En attente de chargement</span></div>
 <div id="mediaCounts" class="media-counts"></div>
@@ -114,6 +116,8 @@
 <div class="grid"><label for="mediaSearch">Rechercher un sample<input id="mediaSearch" placeholder="Réplique, humeur, sujet, nom…"></label><label for="mediaFilter">État<select id="mediaFilter"><option value="">Tous</option><option value="pending">En attente</option><option value="processing">Analyse en cours</option><option value="review">À vérifier</option><option value="approved">Sélections validées</option><option value="error">À reprendre</option></select></label></div>
 <div class="media-workbench"><div id="mediaList" class="media-list"></div><div id="mediaDetail" class="media-detail"><p>Sélectionne un sample pour consulter sa transcription, ses images et les passages proposés.</p></div></div>
 <p>Utilise des extraits courts : WAV, MP3, MP4, M4A, FLAC, OGG, WEBM, MOV ou MKV · 180 secondes et 100 Mo maximum par fichier. Les répliques validées rejoignent la bibliothèque existante. Les références vocales sont exportées comme candidates ; elles ne remplacent pas automatiquement la voix active et n’entraînent pas Chatterbox.</p>
+</div>
+{% include '_media_versions.html' %}
 </section>
 <section id="panel-reconnaissance" role="tabpanel" aria-labelledby="tab-reconnaissance" class="workshop-panel" hidden>
 <h2>Réglages et diagnostic du micro</h2><p>Pour parler à Bender, utilise « Discuter avec Bender » en haut de la page.</p>
@@ -166,4 +170,4 @@
 <p id="response"></p><pre id="details"></pre></details><p id="error" role="alert"></p></section>
 </section>
 </div>
-</main><script src="/static/shape-renderer.js"></script><script src="/static/poses.js"></script><script src="/static/voice-status.js?v=conversation-rapide-20261024"></script><script src="/static/conversation.js?v=atelier-gauche-20261024"></script><script src="/static/app.js?v=atelier-gauche-20261024"></script><script src="/static/workshop.js?v=atelier-gauche-20261024"></script><script src="/static/pose-editor.js"></script><script src="/static/brain.js"></script><script src="/static/microphone.js?v=atelier-gauche-20261024"></script><script src="/static/camera.js"></script><script src="/static/media.js?v=chatterbox-reference-20261024"></script><script src="/static/bulletins.js?v=hybrid-20261024"></script></body></html>
+</main><script src="/static/shape-renderer.js"></script><script src="/static/poses.js"></script><script src="/static/voice-status.js?v=conversation-rapide-20261024"></script><script src="/static/conversation.js?v=atelier-gauche-20261024"></script><script src="/static/waiting-cue.js?v=waiting-20261024"></script><script src="/static/app.js?v=versions-20261024"></script><script src="/static/workshop.js?v=versions-20261024"></script><script src="/static/pose-editor.js"></script><script src="/static/brain.js"></script><script src="/static/microphone.js?v=atelier-gauche-20261024"></script><script src="/static/camera.js"></script><script src="/static/media-versions.js?v=versions-20261024"></script><script src="/static/media.js?v=versions-20261024"></script><script src="/static/bulletins.js?v=hybrid-20261024"></script></body></html>

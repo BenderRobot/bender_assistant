@@ -28,6 +28,8 @@ ROOT = Path(__file__).resolve().parent
 app.include_router(voice_router)
 from bulletin_api import router as bulletin_router
 app.include_router(bulletin_router)
+from waiting_api import router as waiting_router
+app.include_router(waiting_router)
 from hardware_api import build_hardware_router, require_control
 app.include_router(build_hardware_router(process_command))
 from brain_api import build_brain_router

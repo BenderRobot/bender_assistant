@@ -28,7 +28,8 @@ class ConversationWorkspaceTests(unittest.TestCase):
         self.assertFalse([name for name,count in counts.items() if count!=1])
         for name in ('listen','pauseMicrophone','cancelMicrophone','heardText','sendTranscript','askAfterListen',
                      'mode','conversationForm','conversationSend','actualVoiceName','actualVoiceCard',
-                     'recordSeconds','say','chat','liveEnabled','controlKey'):
+                     'recordSeconds','say','chat','liveEnabled','controlKey','mediaShowVersions',
+                     'mediaSources','mediaVersionsPanel','versionAudio','versionList'):
             self.assertEqual(counts[name],1,name)
         self.assertIn('data-view="conversation"',html)
         sidebar=html.split('<aside class="workspace-sidebar"',1)[1].split('</aside>',1)[0]

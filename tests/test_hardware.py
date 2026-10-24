@@ -134,5 +134,30 @@ class HardwareTests(unittest.TestCase):
             self.assertFalse(player.state['active'])
         asyncio.run(scenario());self.assertFalse(ownership[-1])
 
+    def test_stale_acknowledgement_cannot_stop_a_newer_playback(self):
+        async def broadcast(event):pass
+        async def scenario():
+            player=HostPlayer(self.voice,self.hardware,broadcast,lambda active:None)
+            player.state={'active':True,'status':'playing','job':'b'*32}
+            with patch.object(player,'_cleanup_process') as cleanup:
+                state=await player.stop(job='a'*32)
+                self.assertTrue(state['active']);cleanup.assert_not_called()
+                await player.stop(job='b'*32)
+                cleanup.assert_called_once()
+            self.assertFalse(player.state['active'])
+        asyncio.run(scenario())
+
+    def test_playback_stays_busy_until_the_previous_task_has_finished(self):
+        from types import SimpleNamespace
+        endpoint=next(route.endpoint for route in build_hardware_router(lambda *args: '').routes
+                      if route.path=='/api/hardware/playback')
+        async def scenario():
+            task=asyncio.create_task(asyncio.sleep(0))
+            player=SimpleNamespace(state={'active':False,'status':'finished'},task=task)
+            self.assertTrue(endpoint(player)['busy'])
+            await task
+            self.assertFalse(endpoint(player)['busy'])
+        asyncio.run(scenario())
+
 
 if __name__ == '__main__':unittest.main()

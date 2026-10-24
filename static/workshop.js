@@ -5,6 +5,7 @@
  let lastWorkshop='voix';
  function show(name) {
   const chosen = tabs.find(tab => tab.id === `tab-${name}`);
+  if(chosen?.id!=='tab-samples')window.BenderVersions?.stopPreview();
   const conversation=!chosen;
   document.body.dataset.view=conversation?'conversation':'workshop';
   el('showConversation').setAttribute('aria-pressed',String(conversation));

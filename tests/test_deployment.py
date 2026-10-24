@@ -16,11 +16,13 @@ class DeploymentTests(unittest.TestCase):
         self.responses = {
             '/api/system/version': {'ui_version': verifier['UI_VERSION'], 'revision': REVISION},
             '/openapi.json': {'paths': {path: {} for path in (
-                '/api/media/{identifier}/reference', '/api/bulletins', '/api/voice/live-settings')}},
+                '/api/media/{identifier}/reference', '/api/bulletins', '/api/voice/live-settings',
+                '/api/chat/acknowledgement', '/api/voice/waiting/prepare', '/api/media/versions')}},
             '/static/bulletins.js': '/api/bulletins/play',
             '/api/voice/status': {'cloud_integration': 'sdk-with-timestamps-v1', 'cloud_sdk_installed': True},
             '/': '<aside class="workspace-sidebar"><p id="deploymentVersion"></p></aside>'
-                 '<h2 id="actualVoiceName"></h2><script src="/static/voice-status.js"></script>',
+                 '<h2 id="actualVoiceName"></h2><script src="/static/voice-status.js"></script>'
+                 '<script src="/static/waiting-cue.js"></script><script src="/static/media-versions.js"></script>',
             '/static/voice-status.js': 'BenderVoiceStatus',
         }
 
@@ -56,6 +58,12 @@ class DeploymentTests(unittest.TestCase):
             self.assertEqual(result['revision'], expected)
             self.assertEqual(set(result), {'revision', 'ui_version'})
             self.assertNotIn('secret-test-value', json.dumps(result))
+
+    def test_waiting_audio_routes_are_required_before_deployment_is_accepted(self):
+        del self.responses['/openapi.json']['paths']['/api/chat/acknowledgement']
+        with patch.dict(verify.__globals__, urlopen=self.open):
+            with self.assertRaisesRegex(ValueError, 'acknowledgement'):
+                verify('http://test', REVISION)
 
     def test_enabled_elevenlabs_requires_a_key_and_voice_in_the_running_service(self):
         voice=self.responses['/api/voice/status']

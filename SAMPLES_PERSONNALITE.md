@@ -56,6 +56,33 @@ Configuration facultative dans `voice.json` : `"sample_transcription": {"engine"
 
 ## Trois usages après validation
 
+### Retrouver les versions de Bender
+
+Dans **Samples et personnalité**, les vues **1 · Préparer les samples** et
+**2 · Versions de Bender** séparent le traitement des sources de la bibliothèque
+validée. Charge les samples, puis ouvre la seconde vue. Les cartes Neutre,
+Sarcastique, Agacé, Énergique et Triste affichent les répliques prêtes, les
+références disponibles et actives, et les repères visuels par humeur. Une carte
+vide indique une humeur à compléter ; elle ne reçoit pas artificiellement la
+référence neutre par défaut.
+
+Tu peux filtrer par humeur, usage ou texte, écouter le WAV exact d'un passage
+validé, retrouver sa fiche source et tester une réplique enregistrée avec la
+bouche sur la sortie audio choisie. Ces lectures n'appellent ni GPT, ni ElevenLabs,
+ni Chatterbox. L'écoute simple utilise les enceintes du navigateur ; le test avec
+la bouche respecte la sortie Dell/navigateur. Le micro doit être en pause.
+
+Une référence peut être activée explicitement pour son humeur avec **Utiliser
+pour cette humeur**. Elle guide ensuite Chatterbox ; elle ne produit pas à elle
+seule une réplique et ne change pas la voix ElevenLabs. Les repères bouche/yeux
+ne deviennent pas automatiquement des animations. Un fichier manquant ou une
+réplique désactivée n'est pas compté comme prêt. Les validations existantes et
+les fichiers originaux sont conservés.
+
+Les mots déclencheurs et les réglages des répliques contextuelles continuent de
+déterminer leur emploi en conversation. Le regroupement par humeur ne signifie
+pas que GPT sélectionne déjà toutes ces humeurs automatiquement.
+
 **Réplique contextuelle.** Choisis un passage de 30 secondes maximum, vérifie son texte exact, ses mots déclencheurs et son humeur, puis confirme que seul Bender parle. La réplique rejoint la bibliothèque de voix existante et apparaît dans **Voix et enregistrements** après actualisation. Son utilisation contextuelle suit les options existantes : autorisation des répliques, probabilité et délais entre lectures. La synchronisation produite pour un nouvel extrait reste acoustique ; les anciens calages visuels sont conservés.
 
 **Référence vocale candidate.** Choisis 3 à 30 secondes de voix propre. Le WAV découpé est exporté dans `data/voice/references/` et son chemin apparaît dans le catalogue. Sous le passage validé, clique sur **Utiliser cette voix avec Chatterbox** pour l’activer pour l’humeur choisie. Ce choix est conservé dans `data/voice/reference-settings.json`, appliqué immédiatement et rechargé après redémarrage ou mise à jour. Le moteur et les modèles Chatterbox doivent être installés séparément ; teste une phrase inédite en mode Local et vérifie Source chatterbox. L’import seul n’active pas la référence et n’entraîne aucun modèle. Des voix tierces ou de la musique gênante rendent la sélection impropre à cet usage ; la vérification se fait à l’écoute. Pour un WAV généré avec ta nouvelle voix ElevenLabs, voir [ELEVENLABS_CHATTERBOX.md](ELEVENLABS_CHATTERBOX.md).

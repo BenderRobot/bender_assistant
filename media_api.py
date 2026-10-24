@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from bender_media.catalog import Catalog, valid_id
 from bender_media.processing import cut_audio
 from bender_media.worker import Worker
+from bender_media.versions import overview, audio_path
 from bender_voice.config import load_config
 from bender_voice.providers import VoiceUnavailable
 from hardware_api import get_hardware, require_control
@@ -108,7 +109,24 @@ def build_media_router():
         items=catalog.list()
         for item in items:
             for frame in item['media'].get('frames',[]):frame['url']=f"/api/media/{item['id']}/frames/{frame['index']}"
-        return dict(items=items,worker=worker.status(),voice_references=voice.config.get('reference_by_mood',{}))
+        return dict(items=items,worker=worker.status(),voice_references=voice.config.get('reference_by_mood',{}),
+                    versions=overview(catalog,voice,items))
+
+    @router.get('/versions')
+    def versions(catalog=Depends(get_media),voice=Depends(get_voice)):
+        return overview(catalog,voice)
+
+    @router.get('/{identifier}/selections/{selection_id}/audio')
+    def selection_audio(identifier:str,selection_id:str,catalog=Depends(get_media),voice=Depends(get_voice)):
+        try:
+            item=catalog.get(identifier)
+            selection=next((entry for entry in item['approved'] if entry['selection_id']==selection_id),None)
+            if selection is None:raise ValueError('Passage non validé.')
+            path,_=audio_path(selection,voice)
+            if not path.is_file():raise ValueError('Fichier introuvable.')
+            return FileResponse(path,media_type='audio/wav',headers={'Cache-Control':'no-store'})
+        except (ValueError,KeyError,OSError) as exc:
+            raise HTTPException(404,'Audio du passage validé introuvable.') from exc
 
     @router.post('/options')
     def options(req:MediaOptions,catalog=Depends(get_media),worker=Depends(get_media_worker)):

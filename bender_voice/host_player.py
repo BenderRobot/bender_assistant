@@ -82,7 +82,9 @@ class HostPlayer:
             self.ownership(False)
             await self.broadcast({'pose': 0, 'eyes': eyes, 'custom_eyes': custom_eyes, 'active': False, 'playback': self.state})
 
-    async def stop(self):
+    async def stop(self, job=None):
+        if job is not None and self.state.get('job') != job:
+            return dict(self.state)
         if self.task and not self.task.done():
             self.task.cancel()
             try:

@@ -1,0 +1,14 @@
+<div id="mediaVersionsPanel" hidden>
+<h3>Les versions de Bender que tu construis</h3>
+<p>Chaque humeur rassemble tes passages validés. Les répliques se lisent directement ; les références servent à guider Chatterbox ; les repères visuels restent à associer aux poses.</p>
+<div id="versionMoods" class="version-moods" aria-label="Versions par humeur"></div>
+<div class="grid">
+<label for="versionSearch">Chercher une réplique ou un sujet<input id="versionSearch" type="search" placeholder="Lumière, bonjour, Noël…"></label>
+<label for="versionUse">Type de passage<select id="versionUse"><option value="">Tous les usages</option><option value="quote">Répliques pour les réponses</option><option value="voice_reference">Références Chatterbox</option><option value="expression">Repères bouche et yeux</option></select></label>
+</div>
+<button id="versionAll" class="secondary">Toutes les humeurs</button>
+<p id="versionStatus" role="status">Charge tes samples pour retrouver les passages validés.</p>
+<div id="versionPreview" class="subpanel" hidden><p id="versionPreviewTitle"></p><audio id="versionAudio" controls preload="none"></audio><p>Écoute du passage enregistré sur ce PC. Aucun texte nouveau n’est généré.</p></div>
+<div id="versionList" class="version-list"></div>
+<p>Une humeur sans passage est une version à compléter. Importer davantage de fichiers n’entraîne pas Chatterbox et ne modifie pas automatiquement ta voix ElevenLabs.</p>
+</div>

@@ -49,3 +49,29 @@ Les salutations exactes (`salut`, `bonjour`, `bonsoir`), remerciements et formul
 Les autres réponses privilégient une ou deux phrases, sauf demande nécessitant des détails. Le lecteur attend encore la réponse et l'audio complets : le délai réel doit être mesuré après installation sur Debian, et aucun délai fixe n'est garanti.
 
 Références : [SDK officiel](https://github.com/elevenlabs/elevenlabs-python), [audio avec horaires](https://elevenlabs.io/docs/api-reference/text-to-speech/convert-with-timestamps).
+
+## Phrases d'attente
+
+Dans **Voix et enregistrements → Phrases d'attente pendant la réponse**, utiliser
+**Préparer les deux phrases avec ElevenLabs** une fois pour la voix choisie. Cette
+action protégée par la clé de contrôle génère « Bonne question, je regarde ça. »
+et « Un instant, je réfléchis. ». Seules les phrases absentes du cache consomment
+des caractères, avec les plafonds habituels. Il faut les préparer à nouveau après
+un changement de voix, de modèle ou de réglage qui change l'identité du cache.
+
+Pendant une conversation, la requête GPT et la préparation de la réponse partent
+immédiatement. Après 900 ms, si la réponse n'est pas prête, le navigateur choisit
+une phrase déjà enregistrée. Cette lecture ne génère rien et ne prend pas le
+verrou de synthèse. Les salutations locales, le mode Local et un cache vide passent
+directement à la réponse. La case d'activation est mémorisée dans ce navigateur.
+
+La bouche suit aussi la phrase d'attente, sur les enceintes du Dell ou dans le
+navigateur selon la sortie choisie. Une phrase commencée se termine avant la
+réponse, sans chevauchement. « Arrêter » annule la lecture et empêche une réponse
+ancienne de démarrer ; cela ne garantit pas l'annulation d'un appel cloud déjà
+reçu par le fournisseur. Le journal, la source audio et « Rejouer » concernent
+toujours la réponse réelle.
+
+Ce mécanisme rend l'attente audible sans accélérer le calcul GPT. Si la préparation
+dure plus longtemps que la courte phrase, un silence reste possible ; les phrases
+ne tournent pas en boucle et n'annoncent pas une recherche Internet inexistante.
