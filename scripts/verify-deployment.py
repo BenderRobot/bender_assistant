@@ -27,6 +27,11 @@ def verify(base='http://127.0.0.1:8000', expected_revision=None):
     voice = json.loads(read('/api/voice/status'))
     if voice.get('cloud_integration') != 'sdk-with-timestamps-v1' or not voice.get('cloud_sdk_installed'):
         raise ValueError('SDK ElevenLabs absent ; verifier installation et redemarrage du service')
+    if voice.get('cloud_enabled'):
+        if not voice.get('cloud_key_configured'):
+            raise ValueError('ElevenLabs active mais cle API absente du service ; verifier .env.elevenlabs et redemarrer bender.service')
+        if not voice.get('cloud_voice_id'):
+            raise ValueError('ElevenLabs active mais Voice ID absent ; choisir la voix dans l atelier')
     page = read('/')
     for marker in ('id="actualVoiceName"', '/static/voice-status.js', 'class="workspace-sidebar"', 'id="deploymentVersion"'):
         if marker not in page:

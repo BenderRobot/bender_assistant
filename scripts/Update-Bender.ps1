@@ -90,6 +90,9 @@ try {
         }
     }
     $python = if (Test-Path '.venv\Scripts\python.exe') { '.venv\Scripts\python.exe' } else { 'python' }
+    if (Test-Path -LiteralPath '.env.elevenlabs') {
+        Run $python @('scripts/check-elevenlabs-key.py')
+    }
     Write-Host '[1/7] Tests locaux : aucun transfert vers Debian avant leur reussite.' -ForegroundColor Cyan
     $testRunId = [guid]::NewGuid().ToString('N')
     $testReport = Join-Path $RepoPath "data\deployment\tests-$testRunId.json"

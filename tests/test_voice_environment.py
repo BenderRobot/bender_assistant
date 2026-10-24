@@ -33,3 +33,23 @@ class EnvironmentTests(unittest.TestCase):
             with patch.dict(os.environ, {}, clear=True):
                 load_environment(root)
                 self.assertEqual(os.environ['ELEVENLABS_API_KEY'], 'legacy-test-key')
+
+    def test_empty_service_variable_cannot_mask_the_private_key_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / '.env.elevenlabs').write_text('ELEVENLABS_API_KEY=file-test-key\n', encoding='utf-8-sig')
+            (root / '.env').write_text('ELEVENLABS_API_KEY=\nBENDER_PORT=8000\n')
+            for empty in ('', '   '):
+                with patch.dict(os.environ, {'ELEVENLABS_API_KEY': empty, 'BENDER_PORT': '8124'}, clear=True):
+                    load_environment(root)
+                    self.assertEqual(os.environ['ELEVENLABS_API_KEY'], 'file-test-key')
+                    self.assertEqual(os.environ['BENDER_PORT'], '8124')
+
+    def test_empty_private_placeholder_does_not_mask_a_legacy_key(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / '.env.elevenlabs').write_text('ELEVENLABS_API_KEY=\n')
+            (root / '.env').write_text('ELEVENLABS_API_KEY=legacy-test-key\n')
+            with patch.dict(os.environ, {}, clear=True):
+                load_environment(root)
+                self.assertEqual(os.environ['ELEVENLABS_API_KEY'], 'legacy-test-key')

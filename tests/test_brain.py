@@ -225,6 +225,20 @@ class BrainTests(unittest.TestCase):
         with brain._history_db() as conn:
             self.assertEqual(conn.execute('SELECT count(*) FROM exchanges').fetchone()[0], 0)
 
+    def test_conversation_uses_low_effort_for_the_documented_sol_model(self):
+        identifier=self.connected();self.auth.select_model(identifier,'gpt-6.1-sol')
+        http=Mock()
+        http.request.side_effect=lambda *args,**kwargs:Reply(events=[dict(type='response.output_text.delta',delta='Salut.'),dict(type='response.completed')])
+        client=Client(self.auth,http)
+        client.respond('Bonjour')
+        payload=http.request.call_args.kwargs['json']
+        self.assertEqual(payload['reasoning'],{'effort':'low'})
+        self.assertIn('une ou deux phrases',payload['instructions'])
+        self.assertNotIn('service_tier',payload)
+        client.respond('Analyse cette photo',image_bytes=b'jpeg')
+        self.assertNotIn('reasoning',http.request.call_args.kwargs['json'])
+        self.assertNotIn('une ou deux phrases',http.request.call_args.kwargs['json']['instructions'])
+
     def test_network_errors_are_safe_to_display(self):
         identifier = self.connected(); self.auth.select_model(identifier, 'available-model')
         http = Mock(); http.request.side_effect = requests.ConnectionError('private-access')

@@ -56,3 +56,15 @@ class DeploymentTests(unittest.TestCase):
             self.assertEqual(result['revision'], expected)
             self.assertEqual(set(result), {'revision', 'ui_version'})
             self.assertNotIn('secret-test-value', json.dumps(result))
+
+    def test_enabled_elevenlabs_requires_a_key_and_voice_in_the_running_service(self):
+        voice=self.responses['/api/voice/status']
+        voice.update(cloud_enabled=True,cloud_key_configured=False,cloud_voice_id='test-voice')
+        with patch.dict(verify.__globals__, urlopen=self.open):
+            with self.assertRaisesRegex(ValueError,'cle API absente'):
+                verify('http://test',REVISION)
+            voice['cloud_key_configured']=True
+            self.assertEqual(verify('http://test',REVISION)['revision'],REVISION)
+            voice['cloud_voice_id']=''
+            with self.assertRaisesRegex(ValueError,'Voice ID absent'):
+                verify('http://test',REVISION)

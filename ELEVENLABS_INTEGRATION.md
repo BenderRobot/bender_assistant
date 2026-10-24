@@ -40,4 +40,8 @@ La clé seule n'active pas les générations. Les réglages publics sont conserv
 
 Les tests automatisés utilisent des réponses simulées, sans dépenser de crédits. Un essai vocal réel demande une autorisation distincte et consomme les crédits du compte.
 
+Une variable `ELEVENLABS_API_KEY` vide héritée du service ne masque plus la clé du fichier privé. Les fichiers UTF-8 avec BOM sont acceptés. Une clé non vide fournie au processus reste prioritaire. La mise à jour contrôle le chargement de la clé sur Windows et Debian sans afficher sa valeur, puis refuse de confirmer le déploiement si le service annonce ElevenLabs activé avec une clé ou un Voice ID absent. Ces contrôles ne génèrent aucun audio et ne prouvent pas à eux seuls la validité distante de la clé.
+
+Pour le modèle GPT actuellement utilisé, `gpt-6.1-sol`, les conversations sans photo demandent un effort `low` et privilégient une ou deux phrases, sauf demande nécessitant des détails. Les analyses d'images et les classements des samples conservent leur traitement. Le lecteur attend encore la réponse et l'audio complets : le délai réel doit être mesuré après installation sur Debian. Référence : [modèle GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol).
+
 Références : [SDK officiel](https://github.com/elevenlabs/elevenlabs-python), [audio avec horaires](https://elevenlabs.io/docs/api-reference/text-to-speech/convert-with-timestamps).

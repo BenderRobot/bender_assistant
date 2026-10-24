@@ -61,6 +61,9 @@ print('Références installées :', install_reference_archive(sys.argv[1], sys.a
 PY
 fi
 bash scripts/install-debian.sh --system-deps --micro --samples
+if [[ -f "$target/.env.elevenlabs" ]]; then
+  .venv/bin/python scripts/check-elevenlabs-key.py
+fi
 if [[ -f "$stage/elevenlabs-settings.json" ]]; then
   BENDER_VOICE_CONFIG=voice.json .venv/bin/python scripts/install-elevenlabs-settings.py "$stage/elevenlabs-settings.json"
   rm -f "$stage/elevenlabs-settings.json"
