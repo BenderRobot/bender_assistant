@@ -31,7 +31,16 @@ class ReferenceRepairTests(unittest.TestCase):
         with tarfile.open(archive,'w:gz') as bundle:
             for name in FILES:bundle.add(ROOT/name,arcname=name)
         self.stage=self.root/'extracted';self.stage.mkdir()
-        with tarfile.open(archive) as bundle:bundle.extractall(self.stage,filter='data')
+        # Older Debian Python 3.11 builds have no extraction filter argument.
+        # Copy only the expected regular files into these fixed test paths.
+        with tarfile.open(archive) as bundle:
+            for name in FILES:
+                member=bundle.getmember(name)
+                if not member.isfile():raise ValueError('Expected a regular payload file: '+name)
+                destination=self.stage/name
+                destination.parent.mkdir(parents=True,exist_ok=True)
+                with bundle.extractfile(member) as source:
+                    destination.write_bytes(source.read())
 
     def check(self):
         return subprocess.run([bash_path(),'--noprofile','--norc',
