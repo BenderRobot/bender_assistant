@@ -36,4 +36,21 @@ Après succès, ouvrir http://192.168.1.41:8000/roadmap et actualiser si nécess
 
 ## Validation
 
-27 tests logiciels passent, dont cinq tests de roadmap : persistance après recréation de l'application, migration des anciennes cases, notes/statuts indépendants des actions et refus des identifiants/valeurs invalides ou écritures d'une autre origine. L'aperçu local utilise une base distincte ; ses données de test ne sont pas déployées.
+Les tests de roadmap couvrent : persistance après recréation de l'application, migration des anciennes cases, notes/statuts indépendants des actions et refus des identifiants/valeurs invalides ou écritures d'une autre origine. L'aperçu local utilise une base distincte ; ses données de test ne sont pas déployées.
+
+
+## Actualisation du 25 octobre 2026
+
+Le plan conserve les neuf macro-étapes et tous les anciens identifiants. Il passe
+à 76 actions avec les nouveaux parcours : médiathèque, Whisper, bibliothèque par
+humeur, import et vérification, références, scénarios à trois intensités, hasard,
+phrases d’attente, mesures de délai/synchro, ventilation arrière, visière et RSS.
+Chaque nouvelle action contient ses instructions déroulantes et son critère de
+validation. Le code terminé et les essais sur le robot sont des cases distinctes.
+
+Les notes et les statuts existants du Debian ont été préservés, puis enrichis par
+un point daté. Les étapes 0, 1 et 2 restent validées comme Benjamin l’avait choisi.
+Les acquis Chatterbox, API ElevenLabs et évaluation de la lenteur CPU ont été
+cochés d’après les essais et les contrôles existants. Les nouvelles actions sont
+visibles après chargement du nouveau plan par le serveur ; les notes sont déjà
+visibles sur la roadmap et le Kanban.

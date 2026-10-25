@@ -27,16 +27,28 @@ class RoadmapTests(unittest.TestCase):
             client = self.client(path)
             initial = client.get('/api/roadmap').json()['progress']
             self.assertTrue(initial['s0-t1']['done'])
-            self.assertFalse(initial['s1-t3']['done'])
-            for key, done in [('s0-t1', False), ('s1-t3', True), ('s2-t1', True)]:
+            self.assertTrue(initial['s1-t3']['done'])
+            for key, done in [('s0-t1', False), ('s1-t3', False), ('s2-t1', True)]:
                 result = client.put(f'/api/roadmap/tasks/{key}', json={'done': done})
                 self.assertEqual(result.status_code, 200)
                 self.assertIsNotNone(result.json()['updated_at'])
             progress = self.client(path).get('/api/roadmap').json()['progress']
             self.assertFalse(progress['s0-t1']['done'])
-            self.assertTrue(progress['s1-t3']['done'])
+            self.assertFalse(progress['s1-t3']['done'])
             self.assertTrue(progress['s2-t1']['done'])
-            self.assertFalse(progress['s2-t2']['done'])
+            self.assertTrue(progress['s2-t2']['done'])
+
+    def test_updated_plan_separates_implemented_scenarios_from_robot_validation(self):
+        self.assertEqual(PLAN['version'],'2026-10-25')
+        self.assertTrue(TASKS['s3-t20']['initial_done'])
+        self.assertFalse(TASKS['s3-t21']['initial_done'])
+        self.assertFalse(TASKS['s3-t23']['initial_done'])
+        self.assertFalse(TASKS['s5-t8']['initial_done'])
+        self.assertFalse(TASKS['s5-t9']['initial_done'])
+        self.assertFalse(TASKS['s7-t7']['initial_done'])
+        for task in TASKS.values():
+            self.assertTrue(task['guide']['steps'])
+            self.assertTrue(task['guide']['expected'])
 
     def test_invalid_input_and_cross_origin_write_rejected(self):
         with tempfile.TemporaryDirectory() as directory:

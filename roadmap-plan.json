@@ -1,6 +1,6 @@
 {
   "title": "Bender Jarvis",
-  "version": "2026-10-23",
+  "version": "2026-10-25",
   "steps": [
     {
       "id": "step-0",
@@ -70,7 +70,7 @@
           "id": "s0-t4",
           "title": "Choisir les références de travail",
           "detail": "Confirmer le modèle CAO validé et nommer les versions de poses à conserver.",
-          "initial_done": false,
+          "initial_done": true,
           "guide": {
             "where": "BENDER_PROJET_VALIDE_20261022 et banc_essai",
             "steps": [
@@ -81,8 +81,26 @@
             "expected": "Une référence CAO et une liste de poses validées sont clairement identifiées, sans ambiguïté entre versions.",
             "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
           }
+        },
+        {
+          "id": "s0-t5",
+          "title": "Ranger les médias et vérifier leur intégrité",
+          "detail": "59 déplacements vérifiés, 6 doublons archivés et aucun fichier supprimé. Les 53 sources uniques sont regroupées par type.",
+          "initial_done": true,
+          "guide": {
+            "where": "02_VOIX_ET_ANIMATIONS → MEDIATHEQUE.md, MEDIATHEQUE.csv et _archives_rangement",
+            "steps": [
+              "Retrouver les 34 sons originaux, 8 vidéos et 11 fichiers ElevenLabs dans les sous-dossiers de a_importer.",
+              "Conserver le manifeste avec anciens chemins et empreintes SHA-256 ; les doublons sont archivés, pas supprimés.",
+              "Laisser les fichiers techniques de banc_essai et bender_assistant/data en place pour conserver les lecteurs et calages."
+            ],
+            "expected": "Les sources sont retrouvables et les 59 destinations ont la même empreinte que les originaux.",
+            "record": "Date, résultat réel, version testée et éventuel point bloquant. Une validation du code ne remplace pas un essai sur le robot."
+          }
         }
-      ]
+      ],
+      "initial_status": "validated",
+      "initial_notes": "Tete validé mais manque les composant pour etre sur des cote - revoir le tunnel de flux d'air dans le bloc arrière - revoir trou visiere\n\n[Point projet — 25/10/2026]\nRangement réalisé : 59 fichiers déplacés, 6 doublons archivés, aucun supprimé. 53 sources uniques : 34 sons originaux, 8 vidéos et 11 voix ElevenLabs. Inventaire MEDIATHEQUE.csv et manifeste réversible disponibles. Les copies techniques du banc d’essai et les calages restent en place.\n[/Point projet]"
     },
     {
       "id": "step-1",
@@ -142,7 +160,7 @@
           "id": "s1-t3",
           "title": "Tester après redémarrage",
           "detail": "Redémarrer Debian, ouvrir la page web depuis le PC et vérifier le service.",
-          "initial_done": false,
+          "initial_done": true,
           "guide": {
             "where": "Debian puis navigateur du PC Windows",
             "steps": [
@@ -158,7 +176,7 @@
           "id": "s1-t4",
           "title": "Valider le microphone dans la page",
           "detail": "Renseigner la clé de contrôle puis enregistrer une phrase avec le micro du Dell.",
-          "initial_done": false,
+          "initial_done": true,
           "guide": {
             "where": "Banc d’essai web → Périphériques du Dell",
             "steps": [
@@ -178,13 +196,13 @@
           "id": "s1-t5",
           "title": "Tester la photo",
           "detail": "Prendre une image avec le bouton caméra et vérifier le cadrage.",
-          "initial_done": false,
+          "initial_done": true,
           "guide": {
             "where": "Banc d’essai web → bouton Prendre une photo",
             "steps": [
               "Vérifier que la clé de contrôle est renseignée et que la LifeCam est branchée au Dell.",
               "Placer un objet reconnaissable devant la caméra puis prendre une photo.",
-              "Contrôler que l’image est récente et que le cadrage couvre la zone utile. La description Gemini se teste séparément."
+              "Contrôler que l’image est récente et que le cadrage couvre la zone utile. La description GPT se teste séparément."
             ],
             "expected": "Une image récente, nette et correctement cadrée s’affiche dans la page.",
             "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
@@ -194,7 +212,7 @@
           "id": "s1-t6",
           "title": "Tester les enceintes du Dell",
           "detail": "Faire jouer une réponse sur le Dell, puis vérifier son arrêt.",
-          "initial_done": false,
+          "initial_done": true,
           "guide": {
             "where": "Banc d’essai web → Sortie de la voix : Enceintes du Dell",
             "steps": [
@@ -210,7 +228,7 @@
           "id": "s1-t7",
           "title": "Vérifier une mise à jour complète",
           "detail": "Lancer MAJ_BENDER.ps1 et contrôler le réseau, les configurations et les samples après redémarrage du service.",
-          "initial_done": false,
+          "initial_done": true,
           "guide": {
             "where": "PowerShell Windows → bender_main/MAJ_BENDER.ps1",
             "steps": [
@@ -230,7 +248,7 @@
           "id": "s1-t8",
           "title": "Vérifier la confidentialité et le dépannage",
           "detail": "Confirmer que les secrets restent hors de Git et noter comment consulter les journaux et récupérer une panne.",
-          "initial_done": false,
+          "initial_done": true,
           "guide": {
             "where": "Dépôt Git et journaux Debian",
             "steps": [
@@ -246,7 +264,9 @@
             ]
           }
         }
-      ]
+      ],
+      "initial_status": "validated",
+      "initial_notes": "[Point projet — 25/10/2026]\nContrôle HTTP/SSH : le serveur Debian répond, GPT est connecté, ElevenLabs Flash v2.5 est actif et les moteurs locaux sont présents. Version du processus observée : 4e8b5a1. Le code local 5f91470 contient les scénarios ; terminer la mise à jour et le redémarrage pour les charger. Les validations déjà faites de cette étape sont conservées.\n[/Point projet]"
     },
     {
       "id": "step-2",
@@ -263,7 +283,7 @@
           "id": "s2-t1",
           "title": "Afficher le texte compris",
           "detail": "Comparer la transcription avec ce que tu as réellement dit avant de juger la réponse.",
-          "initial_done": false,
+          "initial_done": true,
           "guide": {
             "where": "Banc d’essai → capture micro et affichage de transcription",
             "steps": [
@@ -279,7 +299,7 @@
           "id": "s2-t2",
           "title": "Répondre avec le son et la bouche",
           "detail": "Lire l’audio et sa chronologie de poses sur la même horloge, puis revenir au repos.",
-          "initial_done": false,
+          "initial_done": true,
           "guide": {
             "where": "Banc d’essai → conversation, son et affichages",
             "steps": [
@@ -295,7 +315,7 @@
           "id": "s2-t3",
           "title": "Réussir dix échanges courts",
           "detail": "Noter les questions, les transcriptions, les réponses et les délais observés.",
-          "initial_done": false,
+          "initial_done": true,
           "guide": {
             "where": "Session de test → 01_PILOTAGE/SUIVI_PROJET.md",
             "steps": [
@@ -311,7 +331,7 @@
           "id": "s2-t4",
           "title": "Arrêter proprement la parole",
           "detail": "Vérifier qu’Arrêter coupe le son et libère la bouche pour la prochaine réponse.",
-          "initial_done": false,
+          "initial_done": true,
           "guide": {
             "where": "Interface web et gestion de lecture côté serveur",
             "steps": [
@@ -327,7 +347,7 @@
           "id": "s2-t5",
           "title": "Tester les erreurs",
           "detail": "Essayer un silence, une phrase mal reconnue et un service indisponible.",
-          "initial_done": false,
+          "initial_done": true,
           "guide": {
             "where": "Banc d’essai → scénarios d’erreur contrôlés",
             "steps": [
@@ -343,7 +363,7 @@
           "id": "s2-t6",
           "title": "Tester la vision sur demande",
           "detail": "Prendre une photo puis demander explicitement une description. Le mot de réveil viendra après cette boucle.",
-          "initial_done": false,
+          "initial_done": true,
           "guide": {
             "where": "Banc d’essai → photo puis analyse de la photo",
             "steps": [
@@ -355,18 +375,20 @@
             "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
           }
         }
-      ]
+      ],
+      "initial_status": "validated",
+      "initial_notes": "phase fini\n\n[Point projet — 25/10/2026]\nConversation, transcription visible, réponse contextuelle et vision ont été confirmées par Benjamin. L’API ElevenLabs fonctionne ; Chatterbox CPU est trop lent pour le direct (42,5 s de préparation observées). Choix retenu : API pour discuter, cache/enregistrements quand disponibles, Chatterbox pour la préparation en arrière-plan. Les nouveaux essais de naturel et de délai sont suivis en étape 3.\n[/Point projet]"
     },
     {
       "id": "step-3",
       "number": 3,
-      "title": "Voix et personnalité",
+      "title": "Voix, humeurs et personnalité",
       "domains": [
         "Voix",
         "Animation"
       ],
-      "description": "Commencer par le parcours ElevenLabs → WAV → référence Chatterbox, puis tester la voix locale et le routage hybride. Conserver les poses validées ; les yeux restent indépendants.",
-      "gate": "Des phrases nouvelles, courtes, longues et expressives gardent une voix et une animation cohérentes.",
+      "description": "Organiser les samples, choisir les voix et composer des réactions variées avec phrases, yeux et bouche, puis les vérifier sur le robot.",
+      "gate": "Les répliques et les références sont vérifiées à l’écoute ; les scénarios aux trois intensités, leur variation et leur synchro fonctionnent sur des essais nouveaux.",
       "tasks": [
         {
           "id": "s3-t8",
@@ -375,9 +397,244 @@
           "initial_done": true,
           "guide": {
             "where": "ElevenLabs → Voices / My Voices",
-            "steps": ["Retrouver ta voix et vérifier que son aperçu correspond à ce que tu veux pour Bender.", "Noter son nom et, pour les futurs appels API, utiliser le menu trois points → Copy voice ID.", "Chatterbox utilisera un extrait audio de cette voix. Le Voice ID sert au service ElevenLabs et ne remplace pas un WAV de référence."],
+            "steps": [
+              "Retrouver ta voix et vérifier que son aperçu correspond à ce que tu veux pour Bender.",
+              "Noter son nom et, pour les futurs appels API, utiliser le menu trois points → Copy voice ID.",
+              "Chatterbox utilisera un extrait audio de cette voix. Le Voice ID sert au service ElevenLabs et ne remplace pas un WAV de référence."
+            ],
             "expected": "La voix est retrouvée et son nom est noté ; tu as déjà confirmé sa création.",
             "record": "Nom de la voix et réglages retenus. Aucune clé API dans les notes."
+          }
+        },
+        {
+          "id": "s3-t11",
+          "title": "Installer Chatterbox Multilingual sur le Dell",
+          "detail": "Installer le moteur français et ses modèles locaux avant la première synthèse avec ta référence.",
+          "initial_done": true,
+          "guide": {
+            "where": "Terminal SSH Debian → ~/applications/bender_assistant",
+            "steps": [
+              "Installer les dépendances Chatterbox et télécharger ses modèles avec les commandes ci-dessous. Cette préparation nécessite Internet et peut télécharger plusieurs Go.",
+              "Garder le modèle Multilingual et le réglage device=cpu pour le Dell actuel ; ne pas choisir un modèle uniquement anglais.",
+              "Redémarrer le service après installation. Les modèles ne sont pas téléchargés pendant la génération d’une phrase ; la synthèse locale devra ensuite être essayée sur ce matériel."
+            ],
+            "expected": "Les commandes se terminent sans erreur, les modèles locaux sont présents et le service redémarre.",
+            "record": "Date, versions, éventuelle erreur d’installation. Cette case ne valide pas encore la qualité ni la vitesse de la voix.",
+            "command_context": "SSH Debian, commandes une par une",
+            "commands": [
+              "cd ~/applications/bender_assistant",
+              ".venv/bin/python -m pip install -r requirements-chatterbox.txt",
+              ".venv/bin/python -m bender_voice --config voice.json download-models chatterbox",
+              "sudo systemctl restart bender.service"
+            ]
+          }
+        },
+        {
+          "id": "s3-t14",
+          "title": "Utiliser ElevenLabs en conversation et le cache",
+          "detail": "ElevenLabs Flash v2.5 est actif pour la conversation ; Chatterbox est réservé à la préparation en arrière-plan.",
+          "initial_done": true,
+          "guide": {
+            "where": "Atelier → Voix et enregistrements → Conversation · ElevenLabs",
+            "steps": [
+              "Configurer la voix dans l’atelier ; la clé privée reste dans .env.elevenlabs sur le serveur, hors Git et hors des notes.",
+              "Vérifier dans la conversation que la source réelle affiche ElevenLabs · API pour une phrase nouvelle ; distinguer cette source de Chatterbox et de la voix système.",
+              "Rejouer un audio ou réutiliser une phrase compatible pour vérifier le cache. Le choix retenu est API pour le direct et Chatterbox pour les bulletins préparés."
+            ],
+            "expected": "La conversation utilise bien ElevenLabs ; la source réelle et le cache sont visibles. Ce fonctionnement a été confirmé par Benjamin.",
+            "record": "Modèle, source observée, temps GPT et préparation audio ; jamais de clé secrète."
+          }
+        },
+        {
+          "id": "s3-t7",
+          "title": "Évaluer la voix locale sur le Dell",
+          "detail": "Essais CPU effectués : génération locale trop lente en direct (environ 42,5 s observées). Décision : ElevenLabs en conversation, Chatterbox pour les préparations.",
+          "initial_done": true,
+          "guide": {
+            "where": "Dell → moteur de synthèse local et référence de voix",
+            "steps": [
+              "Choisir une référence vocale propre et préparer plusieurs phrases françaises de longueurs différentes.",
+              "Tester la génération locale sur le Dell avec son matériel réel et relever le temps d’attente.",
+              "Écouter prononciation, régularité et expressivité, puis consigner si la qualité et le délai conviennent à la conversation."
+            ],
+            "expected": "Le choix de voix locale est fondé sur des essais mesurés sur le Dell, avec ses limites connues.",
+            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
+          }
+        },
+        {
+          "id": "s3-t15",
+          "title": "Installer Whisper medium pour les samples",
+          "detail": "Modèle français local et dépendances présents sur Debian. L’installation est contrôlée ; la qualité des anciennes transcriptions reste à vérifier.",
+          "initial_done": true,
+          "guide": {
+            "where": "Atelier → Samples et personnalité → état de la transcription",
+            "steps": [
+              "Vérifier Whisper medium prêt hors ligne dans le diagnostic.",
+              "Distinguer la transcription des samples du moteur Vosk utilisé par le micro interactif.",
+              "Ne pas écraser une correction manuelle ni une sélection validée lors d’une retranscription."
+            ],
+            "expected": "Le moteur et le modèle sont présents ; contrôle SSH effectué sans nouvelle transcription.",
+            "record": "Date, résultat réel, version testée et éventuel point bloquant. Une validation du code ne remplace pas un essai sur le robot."
+          }
+        },
+        {
+          "id": "s3-t16",
+          "title": "Disposer de la bibliothèque Versions de Bender",
+          "detail": "Vue par humeur livrée : écoute, retour au sample, références Chatterbox et test des répliques avec la bouche.",
+          "initial_done": true,
+          "guide": {
+            "where": "Atelier → Samples et personnalité → Versions de Bender",
+            "steps": [
+              "Charger les samples et retrouver les cartes Neutre, Sarcastique, Agacé, Énergique et Triste.",
+              "Distinguer réplique prête, référence vocale disponible/active et repère visuel.",
+              "Utiliser les liens vers les sources sans modifier les validations existantes."
+            ],
+            "expected": "La vue est intégrée au code et à la version 4e8b5a1 déployée sur Debian.",
+            "record": "Date, résultat réel, version testée et éventuel point bloquant. Une validation du code ne remplace pas un essai sur le robot."
+          }
+        },
+        {
+          "id": "s3-t20",
+          "title": "Coder les scénarios d’humeur et leurs intensités",
+          "detail": "45 variantes de départ : 5 humeurs × 3 niveaux × 3 variantes ; choix aléatoire sans répétition immédiate du même scénario.",
+          "initial_done": true,
+          "guide": {
+            "where": "Code → HUMEURS_ET_SCENARIOS.md ; 171 tests automatisés réussis au 24/10",
+            "steps": [
+              "Associer à chaque scénario une phrase ou une réplique enregistrée et des yeux intégrés ou personnalisés.",
+              "Reconnaître localement les commandes explicites comme Sois triste et Sois très joyeux.",
+              "Transmettre les yeux avec les segments audio sans réécrire les timelines ni les poses de bouche."
+            ],
+            "expected": "Le code et les tests sont prêts dans le commit 5f91470 ; le test réel sur Debian est suivi séparément.",
+            "record": "Date, résultat réel, version testée et éventuel point bloquant. Une validation du code ne remplace pas un essai sur le robot."
+          }
+        },
+        {
+          "id": "s3-t21",
+          "title": "Déployer puis essayer les scénarios sur le Dell",
+          "detail": "Le serveur observé tourne encore sur 4e8b5a1 ; les scénarios du commit 5f91470 ne sont pas encore chargés par ce processus.",
+          "initial_done": false,
+          "guide": {
+            "where": "Windows → MAJ_BENDER.ps1 puis Debian → atelier",
+            "steps": [
+              "Terminer la mise à jour habituelle ; le redémarrage du service peut demander le mot de passe sudo sur Debian.",
+              "Vérifier la révision réellement servie, charger les scénarios et comparer Sois un peu triste, Sois triste et Sois très triste.",
+              "Tester les yeux et la bouche ensemble sur la sortie Dell, puis sur le navigateur ; essayer Arrêter et Rejouer."
+            ],
+            "expected": "Le processus Debian sert la bonne révision et les trois niveaux jouent les bons yeux avec leur audio.",
+            "record": "Date, résultat réel, version testée et éventuel point bloquant. Une validation du code ne remplace pas un essai sur le robot."
+          }
+        },
+        {
+          "id": "s3-t17",
+          "title": "Transférer les nouveaux fichiers de la médiathèque",
+          "detail": "Le dossier a_importer contient 53 sources uniques ; seuls les contenus encore absents du Debian doivent être transférés.",
+          "initial_done": false,
+          "guide": {
+            "where": "Windows → MAJ_BENDER.ps1 puis atelier → Samples et personnalité",
+            "steps": [
+              "Ajouter les sons, vidéos et voix ElevenLabs dans leur sous-dossier respectif ; conserver montages longs et essais hors du dépôt a_importer.",
+              "Lancer la mise à jour et lire le nombre de nouveaux médias importés, sans réimporter les doublons par contenu.",
+              "Vérifier après transfert que les sélections existantes et les références actives sont toujours présentes."
+            ],
+            "expected": "Les nouveautés apparaissent dans la file et les validations antérieures sont conservées.",
+            "record": "Date, résultat réel, version testée et éventuel point bloquant. Une validation du code ne remplace pas un essai sur le robot."
+          }
+        },
+        {
+          "id": "s3-t18",
+          "title": "Vérifier les samples encore à relire",
+          "detail": "14 samples étaient à vérifier au dernier inventaire Debian. Ajouter ensuite les nouveaux extraits ; le nombre peut évoluer.",
+          "initial_done": false,
+          "guide": {
+            "where": "Atelier → Samples et personnalité → Préparer les samples",
+            "steps": [
+              "Filtrer À vérifier, écouter le passage et corriger la transcription si nécessaire.",
+              "Vérifier les bornes et choisir Réplique, Référence vocale ou Repère bouche/yeux ; confirmer la voix et la propreté à l’écoute.",
+              "Traiter les anciennes transcriptions au cas par cas : 23 n’ont pas de provenance Whisper enregistrée, ce qui ne prouve pas qu’elles sont toutes Vosk."
+            ],
+            "expected": "Chaque passage conservé a un texte vérifié, un usage et une humeur confirmés.",
+            "record": "Date, résultat réel, version testée et éventuel point bloquant. Une validation du code ne remplace pas un essai sur le robot."
+          }
+        },
+        {
+          "id": "s3-t19",
+          "title": "Compléter les références vocales par humeur",
+          "detail": "5 références candidates sont validées ; les références actives couvrent actuellement Neutre et Énergique. Aucune sélection Triste au dernier inventaire.",
+          "initial_done": false,
+          "guide": {
+            "where": "Atelier → Versions de Bender → Références Chatterbox",
+            "steps": [
+              "Écouter les références existantes et choisir les meilleurs passages pour les humeurs encore absentes.",
+              "Activer explicitement la référence de chaque humeur ; une référence neutre de secours ne remplit pas les autres humeurs.",
+              "Comparer une courte phrase nouvelle seulement quand un test vocal est souhaité. Les références ne constituent pas un entraînement cumulatif."
+            ],
+            "expected": "Les humeurs retenues possèdent une référence propre et testée ; les absences sont notées sans fausse validation.",
+            "record": "Date, résultat réel, version testée et éventuel point bloquant. Une validation du code ne remplace pas un essai sur le robot."
+          }
+        },
+        {
+          "id": "s3-t22",
+          "title": "Personnaliser les phrases et les yeux des variantes",
+          "detail": "Choisir les expressions pour chaque humeur et intensité ; remplacer des textes de départ par les meilleures répliques enregistrées.",
+          "initial_done": false,
+          "guide": {
+            "where": "Versions de Bender → Scénarios d’humeur",
+            "steps": [
+              "Charger les scénarios, choisir une humeur, un niveau et une variante.",
+              "Modifier la phrase ou choisir une réplique validée ; associer des yeux intégrés ou une création de l’éditeur.",
+              "Enregistrer une nouvelle variante pour garder l’original ; tester le résultat à l’écoute et à l’image."
+            ],
+            "expected": "Les variantes retenues expriment l’humeur souhaitée. L’intonation vocale est jugée à l’écoute, pas déduite du seul nom du scénario.",
+            "record": "Date, résultat réel, version testée et éventuel point bloquant. Une validation du code ne remplace pas un essai sur le robot."
+          }
+        },
+        {
+          "id": "s3-t23",
+          "title": "Vérifier le tirage aléatoire et la persistance",
+          "detail": "Les tests logiciels passent ; vérifier maintenant la variation naturelle sur le robot, puis après redémarrage et mise à jour.",
+          "initial_done": false,
+          "guide": {
+            "where": "Conversation et Scénarios d’humeur",
+            "steps": [
+              "Demander cinq fois la même humeur au même niveau et vérifier qu’un groupe avec plusieurs variantes ne répète pas immédiatement le même scénario.",
+              "Désactiver une variante puis vérifier qu’elle ne peut plus être choisie. Un groupe vide doit signaler l’absence de scénario.",
+              "Vérifier que les éditions survivent au redémarrage ; le suivi des derniers tirages peut repartir à zéro."
+            ],
+            "expected": "Les variantes actives sont respectées, les éditions persistent et les limites du tirage sont connues.",
+            "record": "Date, résultat réel, version testée et éventuel point bloquant. Une validation du code ne remplace pas un essai sur le robot."
+          }
+        },
+        {
+          "id": "s3-t24",
+          "title": "Préparer et tester les phrases d’attente",
+          "detail": "Deux phrases courtes peuvent être préparées une seule fois avec ElevenLabs, puis relues du cache pendant la vraie réponse.",
+          "initial_done": false,
+          "guide": {
+            "where": "Voix et enregistrements → Phrases d’attente pendant la réponse",
+            "steps": [
+              "Préparer les deux phrases avec le bouton explicite ; seules les phrases absentes consomment des crédits.",
+              "Poser une question demandant une réponse plus longue : vérifier que la préparation continue pendant la phrase et que les audios ne se chevauchent pas.",
+              "Tester une salutation rapide, Arrêter et une commande d’humeur : aucune phrase d’attente superflue ou relance tardive."
+            ],
+            "expected": "L’attente est plus naturelle sans annoncer une recherche Internet inexistante ; un silence reste possible si la réponse tarde.",
+            "record": "Date, résultat réel, version testée et éventuel point bloquant. Une validation du code ne remplace pas un essai sur le robot."
+          }
+        },
+        {
+          "id": "s3-t25",
+          "title": "Mesurer les délais et la synchro sur des phrases nouvelles",
+          "detail": "Relever séparément transcription, GPT, préparation audio et lecture ; vérifier des phrases courtes, longues et expressives.",
+          "initial_done": false,
+          "guide": {
+            "where": "Conversation → journal et Lecture / résultat",
+            "steps": [
+              "Faire une série de phrases inédites avec l’API, puis rejouer les mêmes pour observer le cache.",
+              "Relever les délais réellement affichés et comparer petite/grande ouverture ainsi que les silences.",
+              "Noter les défauts restants ; la synchronisation actuelle reste acoustique tant qu’un autre moteur n’est pas activé et confirmé."
+            ],
+            "expected": "Un relevé reproductible de délai, qualité vocale et cohérence bouche/yeux guide les prochains réglages.",
+            "record": "Date, résultat réel, version testée et éventuel point bloquant. Une validation du code ne remplace pas un essai sur le robot."
           }
         },
         {
@@ -387,7 +644,11 @@
           "initial_done": false,
           "guide": {
             "where": "ElevenLabs → Text to Speech → History / Historique",
-            "steps": ["Sélectionner ta voix et générer une phrase française naturelle, sans musique, bruit ajouté ni réverbération. Commencer par un ton neutre.", "Exemple : Salut, c’est Bender. Les lumières sont allumées et les circuits sont prêts. Je peux te donner la météo, lire les nouvelles ou discuter avec toi. Alors, qu’est-ce qu’on fait aujourd’hui ?", "Écouter, ouvrir l’historique à droite puis l’icône de téléchargement et choisir WAV. Nommer le fichier Bender_ElevenLabs_neutre.wav. Il s’agit du son généré, pas du modèle ElevenLabs."],
+            "steps": [
+              "Sélectionner ta voix et générer une phrase française naturelle, sans musique, bruit ajouté ni réverbération. Commencer par un ton neutre.",
+              "Exemple : Salut, c’est Bender. Les lumières sont allumées et les circuits sont prêts. Je peux te donner la météo, lire les nouvelles ou discuter avec toi. Alors, qu’est-ce qu’on fait aujourd’hui ?",
+              "Écouter, ouvrir l’historique à droite puis l’icône de téléchargement et choisir WAV. Nommer le fichier Bender_ElevenLabs_neutre.wav. Il s’agit du son généré, pas du modèle ElevenLabs."
+            ],
             "expected": "Un WAV audible contenant une seule voix, claire et continue, est téléchargé sur le PC.",
             "record": "Nom du WAV, texte prononcé, modèle et réglages ElevenLabs. Guide complet : ELEVENLABS_CHATTERBOX.md dans le dépôt."
           }
@@ -398,26 +659,18 @@
           "detail": "Utiliser le dossier a_importer et la mise à jour habituelle, puis choisir l’usage Référence vocale candidate.",
           "initial_done": false,
           "guide": {
-            "where": "PC → 02_VOIX_ET_ANIMATIONS/a_importer ; atelier → Samples et personnalité",
-            "steps": ["Déposer Bender_ElevenLabs_neutre.wav dans Documents/bender_main/02_VOIX_ET_ANIMATIONS/a_importer, puis lancer MAJ_BENDER.ps1.", "Dans Samples et personnalité, renseigner la clé de contrôle, charger la bibliothèque et attendre la fin de l’analyse du fichier.", "Sélectionner le fichier, choisir Référence vocale candidate, une humeur Neutre et un passage propre de 3 à 30 secondes. Écouter et confirmer qu’il contient seulement la voix prévue, puis valider ce passage."],
+            "where": "02_VOIX_ET_ANIMATIONS/a_importer/voix_elevenlabs puis atelier → Samples et personnalité",
+            "steps": [
+              "Déposer le court extrait ElevenLabs dans a_importer/voix_elevenlabs, puis lancer la mise à jour habituelle. Les sous-dossiers sont pris en compte.",
+              "Dans Samples et personnalité, renseigner la clé de contrôle, charger la bibliothèque et attendre la fin de l’analyse du fichier.",
+              "Sélectionner le fichier, choisir Référence vocale candidate, une humeur Neutre et un passage propre de 3 à 30 secondes. Écouter et confirmer qu’il contient seulement la voix prévue, puis valider ce passage."
+            ],
             "expected": "La fiche montre un passage validé de type voice_reference et son fichier references/sample-….wav.",
             "record": "Nom du sample, intervalle retenu et humeur. Le WAV voyage hors GitHub et n’est pas encore la voix active.",
             "command_context": "PowerShell Windows",
-            "commands": ["powershell -NoProfile -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\Documents\\bender_main\\MAJ_BENDER.ps1\" -Message \"Reference voix ElevenLabs\""]
-          }
-        },
-        {
-          "id": "s3-t11",
-          "title": "Installer Chatterbox Multilingual sur le Dell",
-          "detail": "Installer le moteur français et ses modèles locaux avant la première synthèse avec ta référence.",
-          "initial_done": false,
-          "guide": {
-            "where": "Terminal SSH Debian → ~/applications/bender_assistant",
-            "steps": ["Installer les dépendances Chatterbox et télécharger ses modèles avec les commandes ci-dessous. Cette préparation nécessite Internet et peut télécharger plusieurs Go.", "Garder le modèle Multilingual et le réglage device=cpu pour le Dell actuel ; ne pas choisir un modèle uniquement anglais.", "Redémarrer le service après installation. Les modèles ne sont pas téléchargés pendant la génération d’une phrase ; la synthèse locale devra ensuite être essayée sur ce matériel."],
-            "expected": "Les commandes se terminent sans erreur, les modèles locaux sont présents et le service redémarre.",
-            "record": "Date, versions, éventuelle erreur d’installation. Cette case ne valide pas encore la qualité ni la vitesse de la voix.",
-            "command_context": "SSH Debian, commandes une par une",
-            "commands": ["cd ~/applications/bender_assistant", ".venv/bin/python -m pip install -r requirements-chatterbox.txt", ".venv/bin/python -m bender_voice --config voice.json download-models chatterbox", "sudo systemctl restart bender.service"]
+            "commands": [
+              "powershell -NoProfile -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\Documents\\bender_main\\MAJ_BENDER.ps1\" -Message \"Reference voix ElevenLabs\""
+            ]
           }
         },
         {
@@ -427,7 +680,11 @@
           "initial_done": false,
           "guide": {
             "where": "Atelier → Samples et personnalité → fiche du WAV → Passages validés",
-            "steps": ["Repérer la sélection validée comme Référence vocale candidate et d’humeur neutral.", "Cliquer sur Utiliser cette voix avec Chatterbox · neutral. Le réglage est conservé sur Debian après redémarrage et après les mises à jour.", "Dans Voix et enregistrements, choisir le routage Local et une phrase nouvelle. Faire parler et vérifier que Source indique chatterbox. Une source system signale un repli générique à corriger ; le modèle n’est pas entraîné par ce bouton."],
+            "steps": [
+              "Repérer la sélection validée comme Référence vocale candidate et d’humeur neutral.",
+              "Cliquer sur Utiliser cette voix avec Chatterbox · neutral. Le réglage est conservé sur Debian après redémarrage et après les mises à jour.",
+              "Dans Voix et enregistrements, choisir le routage Local et une phrase nouvelle. Faire parler et vérifier que Source indique chatterbox. Une source system signale un repli générique à corriger ; le modèle n’est pas entraîné par ce bouton."
+            ],
             "expected": "Le bouton indique Référence Chatterbox active et une nouvelle phrase est réellement générée par chatterbox.",
             "record": "Nom de la référence, phrase testée, ressemblance et temps d’attente. Un WAV ElevenLabs ne garantit pas une voix Chatterbox identique."
           }
@@ -439,21 +696,13 @@
           "initial_done": false,
           "guide": {
             "where": "ElevenLabs puis Samples et personnalité ; Voix et enregistrements pour l’essai",
-            "steps": ["Commencer seulement après un essai neutre convaincant. Générer un nouvel extrait avec la même voix et le ton souhaité.", "Importer puis valider ce passage comme référence vocale avec l’humeur correspondante ; l’activer avec son bouton Chatterbox.", "Comparer plusieurs phrases inédites avec les références Neutre puis Sarcastique ou Énergique. Garder seulement celles qui améliorent le résultat ; plusieurs fichiers ne constituent pas un entraînement cumulatif."],
+            "steps": [
+              "Commencer seulement après un essai neutre convaincant. Générer un nouvel extrait avec la même voix et le ton souhaité.",
+              "Importer puis valider ce passage comme référence vocale avec l’humeur correspondante ; l’activer avec son bouton Chatterbox.",
+              "Comparer plusieurs phrases inédites avec les références Neutre puis Sarcastique ou Énergique. Garder seulement celles qui améliorent le résultat ; plusieurs fichiers ne constituent pas un entraînement cumulatif."
+            ],
             "expected": "Les variantes retenues gardent la même identité et apportent une différence utile à l’écoute.",
             "record": "Référence et humeur retenues, phrases de comparaison, défauts et temps de génération."
-          }
-        },
-        {
-          "id": "s3-t14",
-          "title": "Brancher l’API ElevenLabs et tester le mode hybride",
-          "detail": "Option cloud pour les actualités et narrations ; la référence Chatterbox reste utilisable hors ligne.",
-          "initial_done": false,
-          "guide": {
-            "where": "Debian → .env et voice.json ; atelier → Voix et enregistrements",
-            "steps": ["Si tu veux activer les appels cloud, créer une clé API ElevenLabs et la renseigner uniquement dans ELEVENLABS_API_KEY du fichier .env sur Debian. Ne pas la coller dans le chat ni dans la roadmap.", "Dans voice.json, renseigner elevenlabs.voice_id avec le Voice ID de ta voix et activer elevenlabs.enabled. Vérifier les plafonds quotidiens et mensuels de caractères, puis redémarrer bender.service.", "Tester une phrase inédite en mode Cloud et vérifier Source elevenlabs. En mode Automatique, utiliser le sujet Actualités ou Narration pour le cloud, et Réponse habituelle pour le local. Rejouer ensuite la même phrase pour vérifier le cache et les avertissements de repli."],
-            "expected": "Les sources et le cache correspondent au routage demandé, ou le choix de reporter le cloud est consigné. Les plafonds applicatifs ne représentent pas le solde exact ElevenLabs.",
-            "record": "Voice ID, modèle, plafonds choisis et sources observées. Aucune clé secrète dans ces notes."
           }
         },
         {
@@ -475,14 +724,14 @@
         {
           "id": "s3-t2",
           "title": "Cataloguer quelques répliques propres",
-          "detail": "Associer à chaque audio son texte exact, son thème, son humeur et sa durée.",
+          "detail": "11 sélections de répliques existent au dernier inventaire ; vérifier leur texte exact, leur propreté et les déclencheurs avant de clore cette action.",
           "initial_done": false,
           "guide": {
-            "where": "bender voice sample → catalogue de répliques",
+            "where": "Atelier → Samples et personnalité → Préparer les samples / Versions de Bender",
             "steps": [
-              "Choisir quelques extraits courts avec une voix claire et une fin propre.",
-              "Pour chacun, écrire le texte exact, le thème, l’humeur et le nom du fichier source.",
-              "Préparer une copie de travail homogène sans modifier les originaux, puis vérifier l’écoute de chaque extrait."
+              "Choisir une sélection validée dans Versions de Bender et écouter l’audio exact.",
+              "Revenir au sample source pour corriger le texte et vérifier que seul Bender parle, avec des bornes propres.",
+              "Conserver une humeur et des déclencheurs utiles, puis tester la réplique enregistrée avec la bouche."
             ],
             "expected": "Une petite collection exploitable est décrite et chaque entrée retrouve le bon audio.",
             "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
@@ -491,7 +740,7 @@
         {
           "id": "s3-t3",
           "title": "Unifier les quatre sources de parole",
-          "detail": "Cache, synthèse locale, API vocale et réplique sélectionnée fournissent tous audio + chronologie de bouche.",
+          "detail": "Le routage et le lecteur commun sont codés : enregistrements/cache d’abord, API pour la conversation, Chatterbox pour les préparations. Finir les essais réels de chaque chemin.",
           "initial_done": false,
           "guide": {
             "where": "Code → bender_voice/service.py et lecteurs audio",
@@ -551,24 +800,10 @@
             "expected": "La bouche exprime l’intensité tout en restant cohérente avec les sons et stable pendant les pauses.",
             "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
           }
-        },
-        {
-          "id": "s3-t7",
-          "title": "Évaluer la voix locale sur le Dell",
-          "detail": "Mesurer la qualité et le temps de génération avant de figer le moteur et la voix.",
-          "initial_done": false,
-          "guide": {
-            "where": "Dell → moteur de synthèse local et référence de voix",
-            "steps": [
-              "Choisir une référence vocale propre et préparer plusieurs phrases françaises de longueurs différentes.",
-              "Tester la génération locale sur le Dell avec son matériel réel et relever le temps d’attente.",
-              "Écouter prononciation, régularité et expressivité, puis consigner si la qualité et le délai conviennent à la conversation."
-            ],
-            "expected": "Le choix de voix locale est fondé sur des essais mesurés sur le Dell, avec ses limites connues.",
-            "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
-          }
         }
-      ]
+      ],
+      "initial_status": "in_progress",
+      "initial_notes": "[Point projet — 25/10/2026]\nÉtat acquis : voix ElevenLabs créée et API active, Chatterbox installé, Whisper medium prêt pour les samples, bibliothèque par humeur livrée. Dernier inventaire Debian : 25 samples, dont 14 à vérifier et 11 avec sélections validées ; 11 répliques, 5 références vocales, 1 repère d’expression. Références actives : neutre et énergique ; pas encore de sélection triste.\n\nPrêt dans le code : 45 scénarios (5 humeurs × 3 intensités × 3 variantes), phrases ou répliques enregistrées, yeux intégrés/personnalisés et tirage sans répétition immédiate du même scénario. 171 tests réussis. Cela ne valide pas encore le rendu réel ni l’intonation sur Bender.\n\nProchaines actions :\n1. Terminer le déploiement et vérifier la révision réellement servie.\n2. Importer les nouveaux contenus parmi les 53 sources Windows ; les doublons par empreinte ne sont pas réimportés.\n3. Vérifier les 14 samples restants, puis les nouveaux ; corriger les textes et choisir les passages propres.\n4. Compléter les humeurs manquantes et attribuer phrases, répliques et yeux par intensité.\n5. Tester « sois un peu triste », « sois triste », « sois très triste », les variantes aléatoires et leur persistance.\n6. Préparer les deux phrases d’attente si souhaité, puis mesurer délai et synchro sur des phrases nouvelles.\n\nAttention aux preuves : les anciennes transcriptions sans provenance Whisper ne sont pas toutes forcément Vosk ; conserver les corrections manuelles. L’intensité choisit le texte et les yeux, mais la prosodie dépend du moteur et de la référence.\n[/Point projet]"
     },
     {
       "id": "step-4",
@@ -676,7 +911,9 @@
             "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
           }
         }
-      ]
+      ],
+      "initial_status": "todo",
+      "initial_notes": ""
     },
     {
       "id": "step-5",
@@ -800,10 +1037,42 @@
             "expected": "Les pièces définitives reposent sur des essais réussis et des paramètres d’impression vérifiés.",
             "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
           }
+        },
+        {
+          "id": "s5-t8",
+          "title": "Revoir le tunnel de ventilation du bloc arrière",
+          "detail": "Point CAO signalé par Benjamin dans sa note de projet : le flux d’air du bloc arrière reste à revoir.",
+          "initial_done": false,
+          "guide": {
+            "where": "CAO de la tête → bloc arrière",
+            "steps": [
+              "Reprendre le modèle validé et repérer entrée, trajet et sortie d’air.",
+              "Vérifier le passage avec les composants, câbles et connecteurs prévus.",
+              "Reporter les cotes à confirmer à réception ; ne pas valider le refroidissement réel sur une simple simulation de forme."
+            ],
+            "expected": "La correction CAO est identifiée ; les contrôles physiques et thermiques sont conservés pour l’essai avec composants.",
+            "record": "Date, résultat réel, version testée et éventuel point bloquant. Une validation du code ne remplace pas un essai sur le robot."
+          }
+        },
+        {
+          "id": "s5-t9",
+          "title": "Vérifier les trous de la visière",
+          "detail": "Point CAO signalé par Benjamin : revoir les trous de visière avant les impressions définitives.",
+          "initial_done": false,
+          "guide": {
+            "where": "CAO → visière et fixations",
+            "steps": [
+              "Identifier les trous concernés et leur fonction dans la version de tête retenue.",
+              "Vérifier position, jeux et accès au montage sans écraser les autres versions validées.",
+              "Prévoir une éprouvette ou une portion de façade quand les composants sont reçus."
+            ],
+            "expected": "Les ajustements CAO sont documentés et les essais matériels nécessaires restent ouverts.",
+            "record": "Date, résultat réel, version testée et éventuel point bloquant. Une validation du code ne remplace pas un essai sur le robot."
+          }
         }
       ],
       "initial_status": "in_progress",
-      "initial_notes": "23/10/2026 — Toute la tête est validée en CAO. En attente de réception des composants pour vérifier les dimensions réelles, les connecteurs et le montage. Les cases liées aux essais matériels restent ouvertes pour cette raison."
+      "initial_notes": "23/10/2026 — Toute la tête est validée en CAO. En attente de réception des composants pour vérifier les dimensions réelles, les connecteurs et le montage. Les cases liées aux essais matériels restent ouvertes pour cette raison.\n\n[Point projet — 25/10/2026]\nLa tête reste validée en CAO d’après Benjamin. Les composants ne sont pas encore reçus : cotes réelles, montage et impressions définitives restent à vérifier. Deux actions ajoutées à partir de sa note en étape 0 : revoir le tunnel de flux d’air du bloc arrière et vérifier les trous de visière. La validation CAO ne ferme pas les essais matériels.\n[/Point projet]"
     },
     {
       "id": "step-6",
@@ -896,7 +1165,9 @@
             "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
           }
         }
-      ]
+      ],
+      "initial_status": "todo",
+      "initial_notes": ""
     },
     {
       "id": "step-7",
@@ -944,7 +1215,7 @@
         {
           "id": "s7-t3",
           "title": "Lire une information demandée",
-          "detail": "Tester une réponse longue et le choix de sa source vocale.",
+          "detail": "Relier la lecture d’informations au bulletin RSS préparé à l’avance et à sa source datée ; ne pas annoncer des nouvelles en direct sans collecte réelle.",
           "initial_done": false,
           "guide": {
             "where": "Conversation → information et voix longue",
@@ -1004,8 +1275,26 @@
             "expected": "Le résultat affiché correspond à ce qui a réellement été exécuté.",
             "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
           }
+        },
+        {
+          "id": "s7-t7",
+          "title": "Choisir les flux RSS et préparer le bulletin du matin",
+          "detail": "Architecture retenue : préparation Chatterbox à 6 h, puis lecture de l’audio disponible à la demande vers 8 h 30–9 h.",
+          "initial_done": false,
+          "guide": {
+            "where": "Voix et enregistrements → Bulletin du matin",
+            "steps": [
+              "Choisir les flux RSS, l’heure Europe/Paris et la référence Chatterbox adaptée.",
+              "Lancer une préparation explicite et vérifier la date, les sources et la présence de l’audio terminé.",
+              "Demander les infos et vérifier la lecture du bulletin préparé sans relancer une synthèse lente ni publier un ancien bulletin comme nouveau."
+            ],
+            "expected": "Le bulletin daté est prêt avant la demande et sa lecture réutilise l’audio local.",
+            "record": "Date, résultat réel, version testée et éventuel point bloquant. Une validation du code ne remplace pas un essai sur le robot."
+          }
         }
-      ]
+      ],
+      "initial_status": "todo",
+      "initial_notes": "[Point projet — 25/10/2026]\nParcours retenu pour les infos : choisir les flux RSS, préparer le bulletin avec Chatterbox à 6 h (Europe/Paris), puis lire l’audio déjà prêt quand il est demandé vers 8 h 30–9 h. Le code de préparation est présent ; les flux et le scénario réel restent à valider. Domotique, minuteurs et mémoire persistante utile restent à raccorder et tester ; aucune action réelle n’est cochée sur la seule présence du code.\n[/Point projet]"
     },
     {
       "id": "step-8",
@@ -1053,14 +1342,14 @@
         {
           "id": "s8-t3",
           "title": "Documenter les sauvegardes",
-          "detail": "Sauvegarder les données utiles et vérifier une procédure de restauration.",
+          "detail": "Inclure progression roadmap/Kanban, scénarios personnalisés, références, catalogue et médias validés dans la sauvegarde hors Git, puis tester la restauration.",
           "initial_done": false,
           "guide": {
             "where": "Stockage de sauvegarde et documentation de restauration",
             "steps": [
-              "Identifier code, configuration privée, mémoire, bibliothèque audio et progression de la roadmap à sauvegarder.",
-              "Créer une sauvegarde protégée puis vérifier sa lecture et la présence des fichiers utiles.",
-              "Essayer une restauration dans un dossier de test et documenter l’ordre des opérations sans écraser le système courant."
+              "Lister les données hors Git : roadmap.sqlite3, mood-scenarios.json personnalisé, références, bibliothèque, catalogue des samples, poses et configurations privées.",
+              "Préparer une sauvegarde séparée et conserver le manifeste de rangement ; ne jamais publier les secrets avec le code.",
+              "Restaurer sur une copie de test et vérifier notes, cases, scénarios, références et répliques avant de considérer la procédure validée."
             ],
             "expected": "Une sauvegarde vérifiée et une procédure de restauration testée sont disponibles.",
             "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
@@ -1098,7 +1387,9 @@
             "record": "Date de l’essai, résultat observé et éventuel point restant à corriger dans le suivi du projet."
           }
         }
-      ]
+      ],
+      "initial_status": "todo",
+      "initial_notes": "[Point projet — 25/10/2026]\nAjouter à la sauvegarde les notes/cases de roadmap et Kanban, les scénarios personnalisés, les références, les répliques validées, les poses, le catalogue des médias et le manifeste de rangement. Tester une restauration sur une copie avant de valider cette étape. Les secrets restent hors Git.\n[/Point projet]"
     }
   ]
 }
